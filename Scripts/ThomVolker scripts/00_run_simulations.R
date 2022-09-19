@@ -14,6 +14,7 @@ library(RcppArmadillo)
 # devtools::build("DataCpp")
 # devtools::install("DataCpp")
 library(DataCpp)
+library(MASS)
 
 source("scripts/functions.R")
 
@@ -53,10 +54,10 @@ pcor <- c(0.3)
 ## Test model specifications
 ################################################################################
 
-gen_dat(0.02, 
-        coefs(0.02, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
-        cormat(pcor, length(ratio_beta)),
-        100000,
+gen_dat(r2=0.02, 
+        betas=coefs(0.02, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+        rho=cormat(pcor, length(ratio_beta)),
+        n=3000,
         "normal") %$%
   lm(Y ~ V1 + V2 + V3 + V4 + V5 + V6) %>%
   summary()

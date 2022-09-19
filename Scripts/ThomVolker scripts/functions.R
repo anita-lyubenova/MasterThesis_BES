@@ -23,7 +23,7 @@ coefs <- function(r2, ratio, rho, model = c("normal", "logit", "probit")) {
 gen_dat <- function(r2, betas, rho, n, model = c("normal", "logit", "probit"), 
                     mutate_args = NULL, select_args = quos(everything())) {
   # generate predictors X
-  X <- mvrnormArma(n, mu = rep(0, length(betas)), sigma = rho)
+  X <- mvrnorm(n, mu = rep(0, length(betas)), Sigma = rho)
   
   # generate outcome variable Y
   if (model == "normal") {
@@ -36,9 +36,9 @@ gen_dat <- function(r2, betas, rho, n, model = c("normal", "logit", "probit"),
     Y <- rbinom(n, 1, pnorm(X %*% betas))
   }
   # output data
-  bind_cols(X = as.data.frame(X), Y = Y) %>%
-    mutate(!!!mutate_args) %>%
-    select(!!!select_args)
+  bind_cols(X = as.data.frame(X), Y = Y) #%>%
+    # mutate(!!!mutate_args) %>%
+    # select(!!!select_args)
 }
 
 q_glm <- quietly(glm)
