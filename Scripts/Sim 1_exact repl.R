@@ -71,6 +71,11 @@ dat<-gen_dat(r2=0.09,
 
 fullm<-lm(Y ~ V1 + V2 + V3 + V4 + V5 + V6, data = dat) %>% summary()
 fullm$r.squared
+fullm$coefficients[5:7,1]
+betas<-fullm$coefficients[5:7,1]
+names(betas)<-c("b4","b5","b6")
+
+betas["b4"]
 
 redm<-lm(Y ~ V1 + V2 + V3 + V4 + V5 , data = dat) %>% summary()
 redm$r.squared
@@ -89,7 +94,6 @@ N.power.V6<-data.frame(variable = "V6",
                        N=NA
 )
 
-
 for(i in 1:length(power.levels)){
   N.power$N[i]<- wp.regression(n=NULL, p1 = 6, p2=5, f2=f2.V6, power = power.levels[i])$n
   
@@ -97,33 +101,106 @@ for(i in 1:length(power.levels)){
 
 
 
-N.power.V6<-data.frame(variable = "V6",
-                       power=power.levels,
-                       p1 = 6, p2=5, f2=f2.V6,
-                       N=NA
+## Power simulation ------
+
+### per coef -------------
+power<-data.frame(var = paste0("V", 2:6),
+                       N=rep(n, each=5),
+                        r2=rep(r2, each=30),
+                       sig.count = 0,
+                       power=NA
+                       )
+
+
+
+#for each sample size
+for(s in n){
+  #for each effect size
+  for(f in r2){
+    
+    for (i in 1:10000){
+      #simulate data
+      p.vals<-gen_dat(r2=f, 
+              betas=coefs(f, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+              rho=cormat(pcor, length(ratio_beta)),
+              n=s,
+              "normal") %$%
+              #perform linear regression
+              lm(Y ~ V1 + V2 + V3 + V4 + V5 + V6) %>%
+              summary() %$% coefficients[3:7,4]
+    
+        print(i)
+        power[power$N==s & power$r2==f,]$sig.count<-power[power$N==s & power$r2==f,]$sig.count + (p.vals < .05)
+
+}
+    
+  }
+  
+}
+power$power<- power$sig.count/10000
+
+#save(power, file = "Outputs/sim1/power.sig.coef.RData")
+
+
+#power for each informative hypothesis
+
+hypotheses<-c(
+  "b5>b4",
+  "b6>b4",
+  "b6>b5"
 )
 
-
-for(i in 1:length(power.levels)){
-  N.power$N[i]<- wp.regression(n=NULL, p1 = 6, p2=5, f2=f2.V6, power = power.levels[i])$n
+power.H<-data.frame(hypothesis = rep(hypotheses, each=18),
+                  r2=rep(r2, each=length(n)),
+                  N=n,
+                  TRUE.count = 0,
+                  power=NA
+)
+k<-0
+### per hypothesis -----
+for(h in hypotheses){
   
+  #for each sample size
+  for(s in n){
+    
+    #for each effect size
+    for(f in r2){
+      
+      for (i in 1:10000){
+        k=k+1
+        
+        #simulate data
+        betas<-gen_dat(r2=f, 
+                        betas=coefs(f, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+                        rho=cormat(pcor, length(ratio_beta)),
+                        n=s,
+                        "normal") %$%
+          #perform linear regression
+          lm(Y ~ V1 + V2 + V3 + V4 + V5 + V6) %>%
+          summary() %$% coefficients[5:7,1]
+        b4<-betas[1]
+        b5<-betas[2]
+        b6<-betas[3]
+        
+        
+        #print(power.H[power.H$N==s & power.H$r2==f & power.H$hypothesis==h,]$TRUE.count)
+        print(k)
+        
+        power.H[power.H$N==s & power.H$r2==f & power.H$hypothesis==h,]$TRUE.count<-
+          power.H[power.H$N==s & power.H$r2==f & power.H$hypothesis==h,]$TRUE.count + (eval(parse(text = h)))
+        
+        
+        
+      }
+      
+    }
+    
+  }
+
 }
 
+power.H$power<- power.H$TRUE.count/10000
 
+save(power.H, file = "Outputs/sim1/power.hypotheses.RData")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+power.H.mid<-subset(power.H, r2==.09)
