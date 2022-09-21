@@ -311,16 +311,23 @@ powerH.SE$power<- powerH.SE$TRUE.count/10000
 
 # Simulation 1 -----------------------------------------------------------
 # r2=0.09
-# size of the study set: T= 5, 10, 20, 40
+# size of the study set: T= 10, 20, 40
 # manipulate sample sizes in each set
 
 
+# ## Number of simulations 
+# nsim <- 100
 
-## Number of simulations 
-nsim <- 100
+# ## Sample sizes
+# n <- 25 * 2^{0:5}
 
-## Sample sizes
-n <- 25 * 2^{0:5}
+
+## Specify relative importance of the regression coefficients
+ratio_beta <- c(0, 1, 1, 1, 2, 3)
+
+## Specify the bivariate correlations between predictors
+pcor <- c(0.3)
+
 
 ## Models
 models <- c("normal")
@@ -328,11 +335,9 @@ models <- c("normal")
 ## r2 of the regression model
 r2 <- .09
 
-## Specify relative importance of the regression coefficients
-ratio_beta <- c(0, 1, 1, 1, 2, 3)
+hypothesis<-"V4 < V5"
 
-## Specify the bivariate correlations between predictors
-pcor <- c(0.3)
+complement<-TRUE
 
 #draw overall sample = 40studies x N=200 = 8000
 set.seed(123)
@@ -342,19 +347,109 @@ pop<-gen_dat(r2=r2,
         n=8000,
         "normal")
 
-lm(Y ~ V1 + V2 + V3 + V4 + V5 + V6, data = pop)
+a<-lm(Y ~ V1 + V2 + V3 + V4 + V5 + V6, data = pop) %>%
+  BF(hypothesis = hypothesis, complement = FALSE) %$%
+  BFtable_confirmatory %>% as.data.frame() %$% BF
+a
+
+gen_dat(r2=r2, 
+        betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+        rho=cormat(pcor, length(ratio_beta)),
+        n=50,
+        "normal")%$%
+  lm(Y ~ V1 + V2 + V3 + V4 + V5 + V6) %>%
+  BF(hypothesis = hypothesis, complement = FALSE) %$%
+  BFtable_confirmatory %>% as.data.frame()
 
 
-#
 
- 1.1 equal n(adequate power)
+1.9998914587/(1.9998914587+0.0001085413)
 
-df<-list()
-st.n <- rep(200, times=10)
 
-#for each study
-for(d in 1:10){
-  sample(pop,  size = st.n[d])
+a[1]/a[2]
+
+(a$`fit>`[1]/a$`complex>`[1])/(a$`fit>`[2]/a$`complex>`[2])
+
+### 1.1 equal n(adequate power) -----------------
+
+
+n <- rep(200, times=10)
+iter<-15
+
+BFiu<-matrix(NA,nrow = iter, # a row per iteration
+          ncol=length(n)) %>% as.data.frame() #columns represent each study in the set
+BFic<-matrix(NA,nrow = iter, # a row per iteration
+             ncol=length(n)) %>% as.data.frame() #columns represent each study in the set
+
+all.rows<-1:nrow(pop)
+used.rows<-c()
+seed<-123
+
+#for each iteration
+for(i in 1:iter) {
+  
+  #clear the used rows because iterations are independent from each other
+  used.rows<-c()
+  sum.BF.iu.cu<-c()
+  sum.BF.iu.uu<-c()
+  
+  BFcu<-c()
+  
+  #for each study
+  for(s in 1:length(n)){
+    
+    seed=seed+1
+    set.seed(seed)
+    
+    sampled.rows<-c()
+    #sample data for each study in the set
+    #note: sample from rows that have not been sampled for another study in the same set
+    sampled.rows<-sample(all.rows[!all.rows %in% used.rows],  size = n[s], replace = FALSE)
+    
+    used.rows<-c(used.rows, sampled.rows)
+    
+     BF<-pop[sampled.rows,]%$%
+          lm(Y ~ V1 + V2 + V3 + V4 + V5 + V6) %>%
+          BF(hypothesis = hypothesis, complement = complement) %$%
+          BFtable_confirmatory %>% as.data.frame()%$% BF
+      
+     # BFiu[i,s] <-log(BF[1])
+     # BFic[i,s]<-log(BF[1]) - log(BF[2]) 
+     
+     # #save the sum of the BF for the two hypotheses
+     # sum.BF.iu.uu<-c(sum.BF.iu.uu, log(1+BF[1]))
+     # sum.BF.iu.cu<-c(sum.BF.iu.cu, log(BF[1]+BF[2]))
+     
+     BFiu[i,s] <-BF[1]
+     BFic[i,s]<-BF[1]/BF[2] 
+     
+     BFcu<-c(BFcu, BF[2])
+    
+     
+
+  }
+  # #Attempt 1
+  # BFiu$PMPiu_T[i] <- sum(BFiu[i,1:10]) / sum(BFiu[1,1:10])
+  # BFic$PMPic_T[i] <- sum(BFic[i,1:10]) / prod(sum.BF)
+  
+  # #Attempt 2: s
+  # BFiu$PMPiu_T[i] <- sum(BFiu[i,1:10]) / sum(sum.BF.iu.uu)
+  # BFic$PMPic_T[i] <- sum(BFic[i,1:10]) / sum(sum.BF.iu.cu)
+  
+  # #Attempt 3: s
+  # BFiu$PMPiu_T[i] <- exp(sum(BFiu[i,1:10]) - sum(sum.BF.iu.uu))
+  # BFic$PMPic_T[i] <- exp(sum(BFic[i,1:10]) - sum(sum.BF.iu.cu))
+  
+  #Attempt 4:
+  BFiu$PMPiu_T[i] <- prod(BFiu[i,1:10])/(prod(BFiu[i,1:10]) + 1)
+  BFic$PMPic_T[i] <- prod(BFiu[i,1:10])/(prod(BFiu[i,1:10]) + prod(BFcu))
 }
 
 
+
+boxplot(BFic$PMPic_T)
+
+
+boxplot(BFiu$PMPiu_T)
+log(10)
+log(1)
