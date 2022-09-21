@@ -1,3 +1,15 @@
+
+library(tidyverse)
+library(magrittr)
+library(furrr)
+library(BFpack)
+library(Rcpp)
+library(RcppArmadillo)
+# devtools::build("DataCpp")
+# devtools::install("DataCpp")
+# library(DataCpp)
+library(MASS)
+
 cormat <- function(partial_cor, diag_length) {
   r <- diag(diag_length)    # fill correlation matrix with partial correlation
   r[r != 1] <- partial_cor  # between variables

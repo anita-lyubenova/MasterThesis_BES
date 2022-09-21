@@ -13,7 +13,7 @@ library(Rcpp)
 library(RcppArmadillo)
 # devtools::build("DataCpp")
 # devtools::install("DataCpp")
-library(DataCpp)
+# library(DataCpp)
 library(MASS)
 
 source("scripts/functions.R")
