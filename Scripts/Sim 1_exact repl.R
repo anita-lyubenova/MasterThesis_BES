@@ -352,23 +352,6 @@ a<-lm(Y ~ V1 + V2 + V3 + V4 + V5 + V6, data = pop) %>%
   BFtable_confirmatory %>% as.data.frame() %$% BF
 a
 
-gen_dat(r2=r2, 
-        betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
-        rho=cormat(pcor, length(ratio_beta)),
-        n=50,
-        "normal")%$%
-  lm(Y ~ V1 + V2 + V3 + V4 + V5 + V6) %>%
-  BF(hypothesis = hypothesis, complement = FALSE) %$%
-  BFtable_confirmatory %>% as.data.frame()
-
-
-
-1.9998914587/(1.9998914587+0.0001085413)
-
-
-a[1]/a[2]
-
-(a$`fit>`[1]/a$`complex>`[1])/(a$`fit>`[2]/a$`complex>`[2])
 
 ### 1.1 equal n -----------------
 
@@ -455,6 +438,8 @@ viol.df<-data.frame(iu = BFiu$PMPiu_T,
 
 viol.df$alternative<-as.factor(viol.df$alternative)
 
+
+
 library(ggstatsplot)
 
 
@@ -463,7 +448,31 @@ plt <- ggbetweenstats(
   x = alternative,
   y = aggr.PMP
 )
-
+a<-list()
+a[[1]] <-viol.df %>% ggbetweenstats(x = alternative,
+                           y = aggr.PMP,
+                           pairwise.comparisons = FALSE,
+                           results.subtitle=FALSE,
+                           type = "nonparametric"
+                           ) +
+  labs(
+    x = "Alternative hypothesis",
+    y = "aggregate PMP",
+    title = "Distribution of aggregate PMPs (from 10 studies) across iterations when testing against Hc or Hu",
+    subtitle = paste(as.character(planned.n[7,2:12]), collapse = " ")
+  )+ 
+  # Customizations
+  theme(
+    # This is the new default font in the plot
+    text = element_text( size = 10, color = "black"),
+    # Statistical annotations below the main title
+    plot.subtitle = element_text(
+      size = 8, 
+      color="black"
+    ),
+    axis.line.x= element_line(colour = "red")
+  )
+  
 
 plt <- plt + 
   # Add labels and title
@@ -483,10 +492,46 @@ plt <- plt +
     )
   )
 
+ggplotly(plt)
+
+
+plotPMPs<-function(BFiu=BFiu, BFic=BFic){
+  data.frame(iu = BFiu$aggr.PMP,
+             ic = BFic$aggr.PMP) %>% pivot_longer(cols = c("iu", "ic"),
+                                                  names_to = "alternative",
+                                                  values_to = "aggr.PMP") %>% 
+  ggbetweenstats(x = alternative,
+                       y = aggr.PMP,
+                       pairwise.comparisons = FALSE,
+                       results.subtitle=FALSE,
+                       type = "nonparametric"
+    ) +
+    labs(
+      x = "Alternative hypothesis",
+      y = "aggregate PMP",
+      title = "Distribution of aggregate PMPs (from 10 studies) across iterations when testing against Hc or Hu"
+    )+ 
+    # Customizations
+    theme(
+      # This is the new default font in the plot
+      text = element_text( size = 10, color = "black"),
+      # Statistical annotations below the main title
+      plot.subtitle = element_text(
+        size = 2, 
+        color="grey"
+      ),
+      axis.line.x= element_line(colour = "red")
+    )
+  
+  
+}
+
+
+
 ### different n ------------
 library(readxl)
 
-planned.n<-read_xlsx("Simulations planning.xlsx")
+planned.n<-read_xlsx("Simulations planning.xlsx", sheet = "Sim1")
 
 iter<-100
 
@@ -496,7 +541,7 @@ slice.names<-paste0("Condition.", seq(1:nrow(planned.n)))
 
 BFiu<-BFic<-array(NA, dim = c(iterations=iter, studies=11, conditions=nrow(planned.n)),
                   dimnames = list(row.names,column.names, slice.names))
-
+vioplot<-list()
 all.rows<-1:nrow(pop)
 used.rows<-c()
 seed<-123
@@ -536,12 +581,158 @@ for(m in 1:nrow(planned.n)){
       
       BFcu<-c(BFcu, BF[2])
     
-    }
+    }# end iterations loop
     
     #after all 10 studies in the set were simulated and evaluated in iteration i => calculate the PMPs for iteration i
     BFiu[i,11,m] <- prod(BFiu[i,1:10,m])/(prod(BFiu[i,1:10,m]) + 1)
     BFic[i,11,m] <- prod(BFiu[i,1:10,m])/(prod(BFiu[i,1:10,m]) + prod(BFcu))
     
-  }
+  }# end study loop
+  
+  
+  vioplot[[m]]<-data.frame(iu = BFiu[,"aggr.PMP",m],
+                         ic = BFic[,"aggr.PMP",m]) %>% 
+    pivot_longer(cols = c("iu", "ic"),
+                names_to = "alternative",
+                values_to = "aggr.PMP") %>% 
+    ggbetweenstats(x = alternative,
+                   y = aggr.PMP,
+                   pairwise.comparisons = FALSE,
+                   results.subtitle=FALSE,
+                   type = "nonparametric"
+    ) +
+    labs(
+      x = "Alternative hypothesis",
+      y = "aggregate PMP",
+      title = "Distribution of aggregate PMPs (from 10 studies) across iterations when testing against Hc or Hu"
+    )+ 
+    # Customizations
+    theme(
+      # This is the new default font in the plot
+      text = element_text( size = 10, color = "black"),
+      # Statistical annotations below the main title
+      plot.subtitle = element_text(
+        size = 2, 
+        color="grey"
+      ),
+      axis.line.x= element_line(colour = "red")
+    )
+  
 
+}#end conditions loop; THE END
+
+### Visualize results
+library(reactable)
+
+tbl.plot<-planned.n
+tbl.plot$plot.aggr.PMP<-NA
+
+for(i in 1:nrow(tbl.plot)){
+  tbl.plot$plot.aggr.PMP[i]<-list(vioplot[[i]])
 }
+
+
+vioplot[[9]]
+
+### overall N = 4000 ----------------
+planned.n<-read_xlsx("Simulations planning.xlsx", sheet = "Sim1 N=4000")
+
+#draw overall sample = 10studies x N=100 = 1000
+set.seed(123)
+pop<-gen_dat(r2=r2, 
+             betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+             rho=cormat(pcor, length(ratio_beta)),
+             n=1000,
+             "normal")
+
+
+iter<-100
+
+row.names<-paste0("Iter.", seq(1:iter))
+column.names<-c(paste0("Study.", seq(1:10)), "aggr.PMP")
+slice.names<-paste0("Condition.", seq(1:nrow(planned.n)))
+
+BFiu<-BFic<-array(NA, dim = c(iterations=iter, studies=11, conditions=nrow(planned.n)),
+                  dimnames = list(row.names,column.names, slice.names))
+vioplot<-list()
+all.rows<-1:nrow(pop)
+used.rows<-c()
+seed<-123
+
+#for each condition (manipulated sample size distribution in the set of studies) (slice m in the array)
+for(m in 1:nrow(planned.n)){
+  n<-planned.n[m, 3:12] %>% as.numeric()
+  
+  #for each iteration (row i in the array)
+  for(i in 1:iter) {
+    
+    #clear the used rows because iterations are independent from each other
+    used.rows<-c()
+    BFcu<-c()
+    
+    #for each study; column s in the array
+    for(s in 1:length(n)){
+      
+      seed=seed+1
+      set.seed(seed)
+      
+      sampled.rows<-c()
+      #sample data for each study in the set
+      #note: sample from rows that have not been sampled for another study in the same set
+      print(paste("Condition m:", m, ", Iteration i:", i, "Study s:", s))
+      sampled.rows<-sample(all.rows[!all.rows %in% used.rows],  size = n[s], replace = FALSE)
+      
+      used.rows<-c(used.rows, sampled.rows)
+      
+      BF<-pop[sampled.rows,]%$%
+        lm(Y ~ V1 + V2 + V3 + V4 + V5 + V6) %>%
+        BF(hypothesis = hypothesis, complement = complement) %$%
+        BFtable_confirmatory %>% as.data.frame()%$% BF
+      
+      BFiu[i,s,m] <-BF[1]
+      BFic[i,s,m]<-BF[1]/BF[2] 
+      
+      BFcu<-c(BFcu, BF[2])
+      
+    }# end iterations loop
+    
+    #after all 10 studies in the set were simulated and evaluated in iteration i => calculate the PMPs for iteration i
+    BFiu[i,11,m] <- prod(BFiu[i,1:10,m])/(prod(BFiu[i,1:10,m]) + 1)
+    BFic[i,11,m] <- prod(BFiu[i,1:10,m])/(prod(BFiu[i,1:10,m]) + prod(BFcu))
+    
+  }# end study loop
+  
+  
+  vioplot[[m]]<-data.frame(iu = BFiu[,"aggr.PMP",m],
+                           ic = BFic[,"aggr.PMP",m]) %>% 
+    pivot_longer(cols = c("iu", "ic"),
+                 names_to = "alternative",
+                 values_to = "aggr.PMP") %>% 
+    ggbetweenstats(x = alternative,
+                   y = aggr.PMP,
+                   pairwise.comparisons = FALSE,
+                   results.subtitle=FALSE,
+                   type = "nonparametric"
+    ) +
+    labs(
+      x = "Alternative hypothesis",
+      y = "aggregate PMP",
+      title = "Distribution of aggregate PMPs (from 10 studies) across iterations when testing against Hc or Hu",
+      subtitle = paste(as.character(planned.n[m,2:12]), collapse = " ")
+    )+ 
+    # Customizations
+    theme(
+      # This is the new default font in the plot
+      text = element_text( size = 10, color = "black"),
+      # Statistical annotations below the main title
+      plot.subtitle = element_text(
+        size = 2, 
+        color="grey"
+      ),
+      axis.line.x= element_line(colour = "red")
+    )
+  
+  
+}#end conditions loop; THE END
+
+vioplot[[7]]
