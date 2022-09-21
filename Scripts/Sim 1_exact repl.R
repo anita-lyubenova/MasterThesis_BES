@@ -370,7 +370,7 @@ a[1]/a[2]
 
 (a$`fit>`[1]/a$`complex>`[1])/(a$`fit>`[2]/a$`complex>`[2])
 
-### 1.1 equal n(adequate power) -----------------
+### 1.1 equal n -----------------
 
 
 n <- rep(200, times=10)
@@ -483,6 +483,65 @@ plt <- plt +
     )
   )
 
+### different n ------------
+library(readxl)
 
+planned.n<-read_xlsx("Simulations planning.xlsx")
 
+iter<-100
 
+row.names<-paste0("Iter.", seq(1:iter))
+column.names<-c(paste0("Study.", seq(1:10)), "aggr.PMP")
+slice.names<-paste0("Condition.", seq(1:nrow(planned.n)))
+
+BFiu<-BFic<-array(NA, dim = c(iterations=iter, studies=11, conditions=nrow(planned.n)),
+                  dimnames = list(row.names,column.names, slice.names))
+
+all.rows<-1:nrow(pop)
+used.rows<-c()
+seed<-123
+
+#for each condition (manipulated sample size distribution in the set of studies) (slice m in the array)
+for(m in 1:nrow(planned.n)){
+  n<-planned.n[m, 3:12] %>% as.numeric()
+
+  #for each iteration (row i in the array)
+  for(i in 1:iter) {
+    
+    #clear the used rows because iterations are independent from each other
+    used.rows<-c()
+    BFcu<-c()
+    
+    #for each study; column s in the array
+    for(s in 1:length(n)){
+      
+      seed=seed+1
+      set.seed(seed)
+      
+      sampled.rows<-c()
+      #sample data for each study in the set
+      #note: sample from rows that have not been sampled for another study in the same set
+      print(paste("Condition m:", m, ", Iteration i:", i, "Study s:", s))
+      sampled.rows<-sample(all.rows[!all.rows %in% used.rows],  size = n[s], replace = FALSE)
+      
+      used.rows<-c(used.rows, sampled.rows)
+      
+      BF<-pop[sampled.rows,]%$%
+        lm(Y ~ V1 + V2 + V3 + V4 + V5 + V6) %>%
+        BF(hypothesis = hypothesis, complement = complement) %$%
+        BFtable_confirmatory %>% as.data.frame()%$% BF
+      
+      BFiu[i,s,m] <-BF[1]
+      BFic[i,s,m]<-BF[1]/BF[2] 
+      
+      BFcu<-c(BFcu, BF[2])
+    
+    }
+    
+    #after all 10 studies in the set were simulated and evaluated in iteration i => calculate the PMPs for iteration i
+    BFiu[i,11,m] <- prod(BFiu[i,1:10,m])/(prod(BFiu[i,1:10,m]) + 1)
+    BFic[i,11,m] <- prod(BFiu[i,1:10,m])/(prod(BFiu[i,1:10,m]) + prod(BFcu))
+    
+  }
+
+}
