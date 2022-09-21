@@ -374,7 +374,7 @@ a[1]/a[2]
 
 
 n <- rep(200, times=10)
-iter<-15
+iter<-100
 
 BFiu<-matrix(NA,nrow = iter, # a row per iteration
           ncol=length(n)) %>% as.data.frame() #columns represent each study in the set
@@ -443,13 +443,46 @@ for(i in 1:iter) {
   #Attempt 4:
   BFiu$PMPiu_T[i] <- prod(BFiu[i,1:10])/(prod(BFiu[i,1:10]) + 1)
   BFic$PMPic_T[i] <- prod(BFiu[i,1:10])/(prod(BFiu[i,1:10]) + prod(BFcu))
+  
 }
 
 
 
-boxplot(BFic$PMPic_T)
+viol.df<-data.frame(iu = BFiu$PMPiu_T,
+                    ic = BFic$PMPic_T) %>% pivot_longer(cols = c("iu", "ic"),
+                                                        names_to = "alternative",
+                                                        values_to = "aggr.PMP")
+
+viol.df$alternative<-as.factor(viol.df$alternative)
+
+library(ggstatsplot)
 
 
-boxplot(BFiu$PMPiu_T)
-log(10)
-log(1)
+plt <- ggbetweenstats(
+  data = viol.df,
+  x = alternative,
+  y = aggr.PMP
+)
+
+
+plt <- plt + 
+  # Add labels and title
+  labs(
+    x = "Alternative hypothesis",
+    y = "aggregate PMP",
+    title = "Distribution of aggregate PMPs (from 10 studies) across iterations when testing against Hc or Hu"
+  ) + 
+  # Customizations
+  theme(
+    # This is the new default font in the plot
+    text = element_text( size = 8, color = "black"),
+    # Statistical annotations below the main title
+    plot.subtitle = element_text(
+      size = 5, 
+      color="grey"
+    )
+  )
+
+
+
+
