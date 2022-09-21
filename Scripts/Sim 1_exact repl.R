@@ -1,5 +1,17 @@
-library(WebPower)
 
+library(tidyverse)
+library(magrittr)
+library(furrr)
+library(BFpack)
+library(Rcpp)
+library(RcppArmadillo)
+# devtools::build("DataCpp")
+# devtools::install("DataCpp")
+# library(DataCpp)
+
+library(MASS)
+library(dplyr)
+library(WebPower) #needed for ws.regression(): calculating power for multiple regression
 #___________________________________________________________________________________
 ## Specify simulation conditions-----------------------------------------
 #__________________________________________________________________________________
@@ -39,13 +51,19 @@ gen_dat(r2=0.02,
 coefs(0.02, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
 
 
-gen_dat(r2=0.09, 
+a<-gen_dat(r2=0.09, 
         betas=coefs(0.09, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
         rho=cormat(pcor, length(ratio_beta)),
-        n=200,
+        n=50,
         "normal") %$%
   lm(Y ~ V1 + V2 + V3 + V4 + V5 + V6) %>%
-  summary()
+  summary()%$% coefficients[5:6,1:2] %>% as.data.frame()
+
+
+a$CI.lb<- a$Estimate-1.96*a$`Std. Error`
+a$CI.ub<- a$Estimate+1.96*a$`Std. Error`
+a[,-2]
+
 
 coefs(0.09, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
 
@@ -142,8 +160,13 @@ power$power<- power$sig.count/10000
 #save(power, file = "Outputs/sim1/power.sig.coef.RData")
 
 
-#power for each informative hypothesis
+### per hypothesis -----
+#I.e. the probability of the posterior having locations that represent the correct ordering of the parameters
+# which increases the probability of having a good fit when the hypothesis is true
 
+#### Option 1: no SEs ----------------
+#how often is the ordering of the parameters correctlooking only at point estimates of the
+# parameters and disregarding SEs
 hypotheses<-c(
   "b5>b4",
   "b6>b4",
@@ -157,7 +180,7 @@ power.H<-data.frame(hypothesis = rep(hypotheses, each=18),
                   power=NA
 )
 k<-0
-### per hypothesis -----
+
 for(h in hypotheses){
   
   #for each sample size
@@ -203,4 +226,135 @@ power.H$power<- power.H$TRUE.count/10000
 
 save(power.H, file = "Outputs/sim1/power.hypotheses.RData")
 
+power.H$hypothesis<-recode(power.H$hypothesis,
+                "b6>b5" = "b5<b6",
+                "b5>b4"="b4<b5",
+                "b6>b4"="b4<b6"
+                )
 power.H.mid<-subset(power.H, r2==.09)
+
+power.H.sub<-subset(power.H, hypothesis!="b4<b6")
+
+
+
+
+#### Option 2: eval with SE -----
+# Frequentist way of determiningn whether one parameter is significantly larger then another one
+# by comparing the upper and lower bounds of the 95% CIs.
+n <- 25 * 2^{0:6}
+
+hypotheses.SE<-c(
+  "b4+1.96*SE_b4 < b5-1.96*SE_b5",
+  "b5+1.96*SE_b5 < b6-1.96*SE_b6"
+  
+)
+
+powerH.SE<-data.frame(hypothesis = rep(hypotheses.SE, each=length(n)),
+                    r2=0.25,
+                    N=n,
+                    TRUE.count = 0,
+                    power=NA
+)
+
+k<-0
+
+for(h in hypotheses.SE){
+  
+  #for each sample size
+  for(s in n){
+    
+    #for each effect size
+    for(f in 0.25){
+      
+      for (i in 1:10000){
+        k=k+1
+        
+        #simulate data
+        betas<-gen_dat(r2=f, 
+                       betas=coefs(f, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+                       rho=cormat(pcor, length(ratio_beta)),
+                       n=s,
+                       "normal") %$%
+          #perform linear regression
+          lm(Y ~ V1 + V2 + V3 + V4 + V5 + V6) %>%
+          summary() %$% coefficients[5:7,1:2]
+        b4<-betas[1,1]
+        b5<-betas[2,1]
+        b6<-betas[3,1]
+        
+        SE_b4<-betas[1,2]
+        SE_b5<-betas[2,2]
+        SE_b6<-betas[3,2]
+        
+        #print(power.H[power.H$N==s & power.H$r2==f & power.H$hypothesis==h,]$TRUE.count)
+        print(k)
+        
+        powerH.SE[powerH.SE$N==s & powerH.SE$r2==f & powerH.SE$hypothesis==h,]$TRUE.count<-
+          powerH.SE[powerH.SE$N==s & powerH.SE$r2==f & powerH.SE$hypothesis==h,]$TRUE.count + (eval(parse(text = h)))
+        
+        
+        
+      }
+      
+    }
+    
+  }
+  
+}
+
+
+(eval(parse(text = h[1])))
+
+powerH.SE$power<- powerH.SE$TRUE.count/10000
+
+
+
+# Simulation 1 -----------------------------------------------------------
+# r2=0.09
+# size of the study set: T= 5, 10, 20, 40
+# manipulate sample sizes in each set
+
+
+
+## Number of simulations 
+nsim <- 100
+
+## Sample sizes
+n <- 25 * 2^{0:5}
+
+## Models
+models <- c("normal")
+
+## r2 of the regression model
+r2 <- .09
+
+## Specify relative importance of the regression coefficients
+ratio_beta <- c(0, 1, 1, 1, 2, 3)
+
+## Specify the bivariate correlations between predictors
+pcor <- c(0.3)
+
+#draw overall sample = 40studies x N=200 = 8000
+set.seed(123)
+pop<-gen_dat(r2=r2, 
+        betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+        rho=cormat(pcor, length(ratio_beta)),
+        n=8000,
+        "normal")
+
+lm(Y ~ V1 + V2 + V3 + V4 + V5 + V6, data = pop)
+
+
+#
+
+ 1.1 equal n(adequate power)
+
+df<-list()
+st.n <- rep(200, times=10)
+
+#for each study
+for(d in 1:10){
+  sample(pop,  size = st.n[d])
+}
+
+
