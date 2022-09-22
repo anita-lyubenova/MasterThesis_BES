@@ -471,7 +471,8 @@ a[[1]] <-viol.df %>% ggbetweenstats(x = alternative,
       color="black"
     ),
     axis.line.x= element_line(colour = "red")
-  )
+  )+ geom_hline(yintercept=0.5, linetype="dashed", 
+                color = "red", size=1)
   
 
 plt <- plt + 
@@ -532,6 +533,16 @@ plotPMPs<-function(BFiu=BFiu, BFic=BFic){
 library(readxl)
 
 planned.n<-read_xlsx("Simulations planning.xlsx", sheet = "Sim1")
+
+
+#draw overall sample = 40studies x N=200 = 8000
+set.seed(123)
+pop<-gen_dat(r2=r2, 
+             betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+             rho=cormat(pcor, length(ratio_beta)),
+             n=2000,
+             "normal")
+
 
 iter<-100
 
@@ -604,35 +615,23 @@ for(m in 1:nrow(planned.n)){
     labs(
       x = "Alternative hypothesis",
       y = "aggregate PMP",
-      title = "Distribution of aggregate PMPs (from 10 studies) across iterations when testing against Hc or Hu"
+      title = "Distribution of aggregate PMPs (from 10 studies) across iterations when testing against Hc or Hu",
+      subtitle = paste(as.character(planned.n[m,2:12]), collapse = " ")
     )+ 
     # Customizations
     theme(
       # This is the new default font in the plot
-      text = element_text( size = 10, color = "black"),
-      # Statistical annotations below the main title
-      plot.subtitle = element_text(
-        size = 2, 
-        color="grey"
-      ),
-      axis.line.x= element_line(colour = "red")
-    )
+      text = element_text( size = 10, color = "black")
+    )+ 
+    geom_hline(yintercept=0.5, linetype="dashed", 
+               color = "red", size=1)
   
 
 }#end conditions loop; THE END
 
-### Visualize results
-library(reactable)
-
-tbl.plot<-planned.n
-tbl.plot$plot.aggr.PMP<-NA
-
-for(i in 1:nrow(tbl.plot)){
-  tbl.plot$plot.aggr.PMP[i]<-list(vioplot[[i]])
-}
-
 
 vioplot[[9]]
+
 
 ### overall N = 4000 ----------------
 planned.n<-read_xlsx("Simulations planning.xlsx", sheet = "Sim1 N=4000")
@@ -718,21 +717,22 @@ for(m in 1:nrow(planned.n)){
       x = "Alternative hypothesis",
       y = "aggregate PMP",
       title = "Distribution of aggregate PMPs (from 10 studies) across iterations when testing against Hc or Hu",
-      subtitle = paste(as.character(planned.n[m,2:12]), collapse = " ")
+      subtitle = paste(as.character(planned.n[2,2:12]), collapse = " ")
     )+ 
     # Customizations
     theme(
       # This is the new default font in the plot
       text = element_text( size = 10, color = "black"),
-      # Statistical annotations below the main title
-      plot.subtitle = element_text(
-        size = 2, 
-        color="grey"
-      ),
       axis.line.x= element_line(colour = "red")
-    )
+    )+ 
+    geom_hline(yintercept=0.5, linetype="dashed", 
+               color = "red", size=1)
   
   
 }#end conditions loop; THE END
 
 vioplot[[7]]
+remove(plt)
+remove(a)
+remove(viol.df)
+remove(tbl.plot)
