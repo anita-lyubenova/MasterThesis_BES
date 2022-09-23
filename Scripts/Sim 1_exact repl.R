@@ -330,7 +330,7 @@ pcor <- c(0.3)
 models <- c("normal")
 
 ## r2 of the regression model
-r2 <- 0.30 #.09 - too small if testing the difference between two parameters
+r2 <- 0.20 #.09 - too small if testing the difference between two parameters
 
 hypothesis<-"V4 < V5"
 
@@ -343,7 +343,6 @@ complement<-TRUE
 
 planned.n<-read_xlsx("Simulations planning.xlsx", sheet = "Sim1")
 
-r2=0.30
 #draw overall sample = 10studies x N=200 = 2000
 set.seed(123)
 
@@ -532,58 +531,211 @@ hc <- BFiu[,1:10,1] %>% as.data.frame() %>%
 
 
 
-BFiu[,1:10,1] %>% as.data.frame() %>%
-  pivot_longer(cols = c(1:10),
-               names_to = "study",
-               values_to = "BFiu")
+
+
+# # Sample size determinantion --------------------------------
+# #from Fu (2022)
+# 
+# #library(devtools)
+# #install_github("Qianrao-Fu/SSDbain",upgrade="never")
+# library(SSDbain)
+# 
+# ## Specify relative importance of the regression coefficients
+# ratio_beta <- c(0, 1, 1, 1, 2, 3)
+# ## Specify the bivariate correlations between predictors
+# pcor <- c(0.3)
+# ## r2 of the regression model
+# r2 <- .30
+# 
+# 
+# #draw overall sample = 40studies x N=200 = 8000
+# set.seed(123)
+# pop<-gen_dat(r2=r2, 
+#              betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+#              rho=cormat(pcor, length(ratio_beta)),
+#              n=8000,
+#              "normal")
+# 
+# 
+# 
+# lm(Y ~ V1 + V2 + V3 + V4 + V5 + V6)
+# 
+# ratio_beta<-c(1,2)
+# a<-SSDRegression(Hyp1 = "beta2>beta1", Hyp2 = "Hc", k=2, 
+#               rho = cormat(pcor, length(ratio_beta)),
+#               R_square1=0.30,
+#               R_square2 = 0.30,
+#               T_sim = 100,
+#               BFthresh=2,
+#               eta=0.8,
+#               standardize = TRUE,
+#               ratio = ratio_beta
+#               )
+# 
+# 
+# a
+
+#TPS_i --------------------
+# calculate maximum possible true parameter space in line with Hi depending on effect size d and the correlation who
+library(mvtnorm)
+
+mu1<-mu2<-0
+rho<-0.3
+m1<-0
+m2<-d+
+
+
+pmvnorm(lower = c(-Inf, 0), upper =c(0,+Inf), 
+        mean = c(mu1,mu2),
+        corr = cormat(rho, 2),
+        )+
+  pmvnorm(lower = c(-Inf, -Inf), upper =c(0,0), 
+          mean = c(mu1,mu2),
+          corr = cormat(rho, 2),
+  )/2+
+  pmvnorm(lower = c(0, 0), upper =c(Inf,Inf), 
+          mean = c(mu1,mu2),
+          corr = cormat(rho, 2),
+  )/2
+
+
+#rho<-c(.1, .2, .3)
+rho<-.2
+d<-seq(0,3, by=0.1)
+
+mu1<-0
+
+TPSi<-matrix(NA, nrow = length(d), ncol = length(rho), dimnames = list( paste0("d.", 0:(length(d)-1)),
+                                                                        paste0("rho.", 1:(length(rho)))
+                                                                        )
+)
+for(i in 1:length(d)){
+  
+  mu2<-d[i]+mu1
+  
+  for(j in 1:length(rho)){
+  
+    TPSi[i,j]<-pmvnorm(lower = c(-Inf, 0), upper =c(0,+Inf), 
+                       mean = c(mu1,mu2),
+                       corr = cormat(rho[j], 2),
+    )+
+      pmvnorm(lower = c(-Inf, -Inf), upper =c(0,0), 
+              mean = c(mu1,mu2),
+              corr = cormat(rho[j], 2),
+      )/2+
+      pmvnorm(lower = c(0, 0), upper =c(Inf,Inf), 
+              mean = c(mu1,mu2),
+              corr = cormat(rho[j], 2),
+      )/2
+    
+  }
+}
+
+#The prop. of true parameter space (TPI) in line with Hi does not depend on rho
+View(TPSi)
+
+plot(d, TPSi[,1])
+abline(lm(TPSi[,1] ~ d))
+
+
+
+### explicit integration -------------
+
+library(cubature)
+
+rho<-0.2
+
+mu1<-0
+mu2<-0
+
+
+
+cbind(seq(-3,3, by=0.1),seq(-3,3, by=0.1))
+
+x<-seq(-3,3, by=0.1)
+n <- length(x)
+l <- rep(list(x), n)
+
+expand.grid(l)
+
+dmvnorm(cbind(seq(-3,3, by=0.1),seq(-3,3, by=0.1)), mean = c(mu1,mu2), sigma = cormat(rho, 2))
+
+dnorm(x=seq(-3,3, by=0.1), mean=0, sd=1) %>% plot
+
+cbind(seq(-3,3, by=0.1),seq(-3,3, by=0.1))
+
+adaptIntegrate(f, lowerLimit = c(0, 0, 0), upperLimit = c(0.5, 0.5, 0.5))
 
 
 
 
-# Sample size determinantion --------------------------------
-#from Fu (2022)
+integrate(Vectorize(function(x,y)integrate(function(y)0.5*x*y, 0, x)[[1]]), 0, 10)
 
-library(devtools)
-#install_github("Qianrao-Fu/SSDbain",upgrade="never")
-library(SSDbain)
+remove(x)
 
+integrate(Vectorize(function(x,y)integrate( function(y) dmvnorm(c(x,y), mean = c(mu1,mu2), sigma = cormat(rho, 2)),lower = x, upper = 0)[[1]]),lower=-Inf, upper=0)
 
 
+rho<-0
 
-## Specify relative importance of the regression coefficients
-ratio_beta <- c(0, 1, 1, 1, 2, 3)
-## Specify the bivariate correlations between predictors
-pcor <- c(0.3)
-## r2 of the regression model
-r2 <- .09
+mu1<-0
+mu2<-0
 
+#bivariate normal density with sd=1 for both random vars
+f<-function(x,y){
+  (
+    exp(-1/2*(1-rho^2))*(
+    (x-mu1)^2 - 2*rho*(x-mu1)*(y-mu2) + (y-mu2)^2
+  ))/(
+  2*pi*sqrt(1-rho^2)
+)
+}
 
-#draw overall sample = 40studies x N=200 = 8000
-set.seed(123)
-pop<-gen_dat(r2=r2, 
-             betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
-             rho=cormat(pcor, length(ratio_beta)),
-             n=8000,
-             "normal")
+f(0,0)
 
 
 
+x <- seq(-3, 3, 0.05) 
+y <- seq(-3, 3, 0.05)
+
+#x is a vector of lenth the number of provided means
+f<-function(x,y) {
+  dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho, 2))
+}
+
+f(x,y)
+
+integrate(Vectorize(function(x,y)integrate( function(y) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho, 2)),lower = 0, upper = Inf)[[1]]),lower=-Inf, upper=0)
+
+integrate(Vectorize(function(x,y)integrate( function(y) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho, 2)),lower = x, upper = 0)[[1]]),lower=-Inf, upper=0)
+
+integrate(Vectorize(function(y,x)integrate( function(x) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho, 2)),lower = 0, upper = y)[[1]]),lower=0, upper=+Inf)
 
 
+rho<-c(.1, .2, .3)
+#rho<-.2
+d<-seq(0,3, by=0.1)
 
+mu1<-0
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+TPSi<-matrix(NA, nrow = length(d), ncol = length(rho), dimnames = list( paste0("d.", 0:(length(d)-1)),
+                                                                        paste0("rho.", 1:(length(rho)))
+)
+)
+for(i in 1:length(d)){
+  
+  mu2<-d[i]+mu1
+  
+  for(j in 1:length(rho)){
+    
+    TPSi[i,j]<-
+      integrate(Vectorize(function(x,y)integrate( function(y) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho[j], 2)),lower = 0, upper = Inf)[[1]]),lower=-Inf, upper=0)[[1]]+
+      integrate(Vectorize(function(x,y)integrate( function(y) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho[j], 2)),lower = x, upper = 0)[[1]]),lower=-Inf, upper=0)[[1]]+
+      integrate(Vectorize(function(y,x)integrate( function(x) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho[j], 2)),lower = 0, upper = y)[[1]]),lower=0, upper=+Inf)[[1]]
+    
+    
+    
+  }
+}
 
 
