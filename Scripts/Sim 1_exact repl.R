@@ -579,28 +579,13 @@ hc <- BFiu[,1:10,1] %>% as.data.frame() %>%
 # calculate maximum possible true parameter space in line with Hi depending on effect size d and the correlation who
 library(mvtnorm)
 
-mu1<-mu2<-0
-rho<-0.3
-m1<-0
-m2<-d+
+
+integrate(Vectorize(function(x,y)integrate( function(y) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho, 2)),lower = 0, upper = Inf)[[1]]),lower=-Inf, upper=0)
+integrate(Vectorize(function(x,y)integrate( function(y) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho, 2)),lower = x, upper = 0)[[1]]),lower=-Inf, upper=0)
+integrate(Vectorize(function(y,x)integrate( function(x) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho, 2)),lower = 0, upper = y)[[1]]),lower=0, upper=+Inf)
 
 
-pmvnorm(lower = c(-Inf, 0), upper =c(0,+Inf), 
-        mean = c(mu1,mu2),
-        corr = cormat(rho, 2),
-        )+
-  pmvnorm(lower = c(-Inf, -Inf), upper =c(0,0), 
-          mean = c(mu1,mu2),
-          corr = cormat(rho, 2),
-  )/2+
-  pmvnorm(lower = c(0, 0), upper =c(Inf,Inf), 
-          mean = c(mu1,mu2),
-          corr = cormat(rho, 2),
-  )/2
-
-
-#rho<-c(.1, .2, .3)
-rho<-.2
+rho<-c(.1, .2, .3)
 d<-seq(0,3, by=0.1)
 
 mu1<-0
@@ -608,120 +593,8 @@ mu1<-0
 TPSi<-matrix(NA, nrow = length(d), ncol = length(rho), dimnames = list( paste0("d.", 0:(length(d)-1)),
                                                                         paste0("rho.", 1:(length(rho)))
                                                                         )
-)
-for(i in 1:length(d)){
-  
-  mu2<-d[i]+mu1
-  
-  for(j in 1:length(rho)){
-  
-    TPSi[i,j]<-pmvnorm(lower = c(-Inf, 0), upper =c(0,+Inf), 
-                       mean = c(mu1,mu2),
-                       corr = cormat(rho[j], 2),
-    )+
-      pmvnorm(lower = c(-Inf, -Inf), upper =c(0,0), 
-              mean = c(mu1,mu2),
-              corr = cormat(rho[j], 2),
-      )/2+
-      pmvnorm(lower = c(0, 0), upper =c(Inf,Inf), 
-              mean = c(mu1,mu2),
-              corr = cormat(rho[j], 2),
-      )/2
-    
-  }
-}
+                            )
 
-#The prop. of true parameter space (TPI) in line with Hi does not depend on rho
-View(TPSi)
-
-plot(d, TPSi[,1])
-abline(lm(TPSi[,1] ~ d))
-
-
-
-### explicit integration -------------
-
-library(cubature)
-
-rho<-0.2
-
-mu1<-0
-mu2<-0
-
-
-
-cbind(seq(-3,3, by=0.1),seq(-3,3, by=0.1))
-
-x<-seq(-3,3, by=0.1)
-n <- length(x)
-l <- rep(list(x), n)
-
-expand.grid(l)
-
-dmvnorm(cbind(seq(-3,3, by=0.1),seq(-3,3, by=0.1)), mean = c(mu1,mu2), sigma = cormat(rho, 2))
-
-dnorm(x=seq(-3,3, by=0.1), mean=0, sd=1) %>% plot
-
-cbind(seq(-3,3, by=0.1),seq(-3,3, by=0.1))
-
-adaptIntegrate(f, lowerLimit = c(0, 0, 0), upperLimit = c(0.5, 0.5, 0.5))
-
-
-
-
-integrate(Vectorize(function(x,y)integrate(function(y)0.5*x*y, 0, x)[[1]]), 0, 10)
-
-remove(x)
-
-integrate(Vectorize(function(x,y)integrate( function(y) dmvnorm(c(x,y), mean = c(mu1,mu2), sigma = cormat(rho, 2)),lower = x, upper = 0)[[1]]),lower=-Inf, upper=0)
-
-
-rho<-0
-
-mu1<-0
-mu2<-0
-
-#bivariate normal density with sd=1 for both random vars
-f<-function(x,y){
-  (
-    exp(-1/2*(1-rho^2))*(
-    (x-mu1)^2 - 2*rho*(x-mu1)*(y-mu2) + (y-mu2)^2
-  ))/(
-  2*pi*sqrt(1-rho^2)
-)
-}
-
-f(0,0)
-
-
-
-x <- seq(-3, 3, 0.05) 
-y <- seq(-3, 3, 0.05)
-
-#x is a vector of lenth the number of provided means
-f<-function(x,y) {
-  dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho, 2))
-}
-
-f(x,y)
-
-integrate(Vectorize(function(x,y)integrate( function(y) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho, 2)),lower = 0, upper = Inf)[[1]]),lower=-Inf, upper=0)
-
-integrate(Vectorize(function(x,y)integrate( function(y) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho, 2)),lower = x, upper = 0)[[1]]),lower=-Inf, upper=0)
-
-integrate(Vectorize(function(y,x)integrate( function(x) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho, 2)),lower = 0, upper = y)[[1]]),lower=0, upper=+Inf)
-
-
-rho<-c(.1, .2, .3)
-#rho<-.2
-d<-seq(0,3, by=0.1)
-
-mu1<-0
-
-TPSi<-matrix(NA, nrow = length(d), ncol = length(rho), dimnames = list( paste0("d.", 0:(length(d)-1)),
-                                                                        paste0("rho.", 1:(length(rho)))
-)
-)
 for(i in 1:length(d)){
   
   mu2<-d[i]+mu1
