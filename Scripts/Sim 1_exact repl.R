@@ -1,21 +1,24 @@
 # 
-# library(tidyverse)
-# library(magrittr)
-# library(furrr)
-# library(BFpack)
-# library(Rcpp)
-# library(RcppArmadillo)
+library(tidyverse)
+library(magrittr)
+library(furrr)
+library(BFpack)
+library(Rcpp)
+library(RcppArmadillo)
 # # devtools::build("DataCpp")
 # # devtools::install("DataCpp")
 # # library(DataCpp)
 # 
-# library(MASS)
+ library(MASS)
 library(dplyr)
 library(ggplot2)
 library(ggstatsplot)
 library(plotly)
 library(readxl)
-library(WebPower) #needed for ws.regression(): calculating power for multiple regression
+library(mvtnorm)
+library(highcharter)
+#
+#library(WebPower) #needed for ws.regression(): calculating power for multiple regression
 #___________________________________________________________________________________
 ## Specify simulation conditions-----------------------------------------
 #__________________________________________________________________________________
@@ -330,7 +333,7 @@ pcor <- c(0.3)
 models <- c("normal")
 
 ## r2 of the regression model
-r2 <- 0.20 #.09 - too small if testing the difference between two parameters
+r2 <- 0.30 #.09 - too small if testing the difference between two parameters
 
 hypothesis<-"V4 < V5"
 
@@ -353,7 +356,7 @@ pop<-gen_dat(r2=r2,
              "normal")
 
 
-iter<-100
+iter<-10
 
 row.names<-paste0("Iter.", seq(1:iter))
 column.names<-c(paste0("Study.", seq(1:10)), "aggr.PMP")
@@ -362,8 +365,7 @@ slice.names<-paste0("Condition.", seq(1:nrow(planned.n)))
 BFiu<-BFic<-array(NA, dim = c(iterations=iter, studies=11, conditions=nrow(planned.n)),
                   dimnames = list(row.names,column.names, slice.names))
 
-vioplot.iu<-list()
-vioplot.ic<-list()
+
 scatterp.BFiu<-list()
 scatterp.BFic<-list()
 all.rows<-1:nrow(pop)
@@ -415,15 +417,16 @@ for(m in 1:nrow(planned.n)){
   
   
   
-  ### scatterplot of the BFs ------------
-  # scatterp.BFiu[[m]] <-BFiu[,1:10,m] %>% as.data.frame() %>%
-  #   pivot_longer(cols = c(1:10),
-  #                names_to = "study",
-  #                values_to = "BFiu") %>% 
-  #   mutate(iter = rep(seq(1:iter), each=length(n))) %>% 
-  #   hchart('scatter', hcaes(x = iter, y = BFiu, group = study)) %>% 
-  #   hc_title(text="Scatterplot of the BFiu across iterations grouped by study") %>% 
-  #   hc_subtitle(text = paste0(colnames(BFiu[,1:10,m]),": ", n))
+  ## scatterplot of the BFs ------------
+  scatterp.BFiu[[m]] <-BFiu[,1:10,m] %>% as.data.frame() %>%
+    pivot_longer(cols = c(1:10),
+                 names_to = "study",
+                 values_to = "BFiu") %>%
+    arrange(BFiu) %>% 
+    mutate(iter = rep(seq(1:iter), each=length(n))) %>%
+    hchart('scatter', hcaes(x = iter, y = BFiu, group = study)) %>%
+    hc_title(text="Scatterplot of the BFiu across iterations grouped by study") %>%
+    hc_subtitle(text = paste0(colnames(BFiu[,1:10,m]),": ", n))
   # 
   # scatterp.BFic[[m]] <-BFic[,1:10,m] %>% as.data.frame() %>%
   #   pivot_longer(cols = c(1:10),
@@ -514,17 +517,16 @@ vioplot.iu
 vioplot.ic
 
 
-scatterp.BFiu[[7]]
+scatterp.BFiu[[3]]
 scatterp.BFic[[7]]
 
-
-library(highcharter)
 
 # Visualization: scatterplots with highcharter
 hc <- BFiu[,1:10,1] %>% as.data.frame() %>%
   pivot_longer(cols = c(1:10),
                names_to = "study",
-               values_to = "BFiu") %>% 
+               values_to = "BFiu") %>%
+  arrange(BFiu) %>% 
   mutate(iter = rep(seq(1:iter), each=length(n))) %>% 
   hchart('scatter', hcaes(x = iter, y = BFiu, group = study))
 
@@ -577,22 +579,17 @@ hc <- BFiu[,1:10,1] %>% as.data.frame() %>%
 
 #TPS_i --------------------
 # calculate maximum possible true parameter space in line with Hi depending on effect size d and the correlation who
-library(mvtnorm)
 
-
-integrate(Vectorize(function(x,y)integrate( function(y) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho, 2)),lower = 0, upper = Inf)[[1]]),lower=-Inf, upper=0)
-integrate(Vectorize(function(x,y)integrate( function(y) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho, 2)),lower = x, upper = 0)[[1]]),lower=-Inf, upper=0)
-integrate(Vectorize(function(y,x)integrate( function(x) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho, 2)),lower = 0, upper = y)[[1]]),lower=0, upper=+Inf)
 
 
 rho<-c(.1, .2, .3)
-d<-seq(0,3, by=0.1)
+d<-seq(0,3.5, by=0.05)
 
 mu1<-0
 
-TPSi<-matrix(NA, nrow = length(d), ncol = length(rho), dimnames = list( paste0("d.", 0:(length(d)-1)),
+fit.pop<-matrix(NA, nrow = length(d), ncol = length(rho), dimnames = list( paste0("d.", d),
                                                                         paste0("rho.", 1:(length(rho)))
-                                                                        )
+                                                                    )
                             )
 
 for(i in 1:length(d)){
@@ -601,14 +598,74 @@ for(i in 1:length(d)){
   
   for(j in 1:length(rho)){
     
-    TPSi[i,j]<-
+    fit.pop[i,j]<-
       integrate(Vectorize(function(x,y)integrate( function(y) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho[j], 2)),lower = 0, upper = Inf)[[1]]),lower=-Inf, upper=0)[[1]]+
       integrate(Vectorize(function(x,y)integrate( function(y) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho[j], 2)),lower = x, upper = 0)[[1]]),lower=-Inf, upper=0)[[1]]+
       integrate(Vectorize(function(y,x)integrate( function(x) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = cormat(rho[j], 2)),lower = 0, upper = y)[[1]]),lower=0, upper=+Inf)[[1]]
     
     
-    
   }
 }
 
+fit.pop<-as.data.frame(fit.pop)
+fit.pop$d<-d
+#calculate the "true BF_iu" for a hypothesis with a single inequality constraint b5>b4(i.e complexity=0.5)
+#tested against the complement
+compl.i<-0.5
+BFpop<-cbind(fit.pop[,1:3]/compl.i, d)
 
+
+ggplot(BFpop) +
+  geom_point(aes(x=d, y=rho.3))
+  
+
+#Sim 0: Performance of BF ---------------------------------------------
+#how much does the BF vary across iterations depending on sample size
+#(when the true parameter space, i.e. the effect size, is kept constant)
+
+
+## Specify relative importance of the regression coefficients
+ratio_beta <- c(1,2)
+
+## Specify the bivariate correlations between predictors
+pcor <- c(0.3)
+
+#the resulting coefficients
+coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+## Models
+models <- c("normal")
+
+## r2 of the regression model
+r2 <- 0.30 #.09 - too small if testing the difference between two parameters
+
+complement<-TRUE
+hypothesis<-"V1 < V2"
+
+#n<-seq(20,200, by=10)
+n<-c(50,1500)
+
+iter<-100
+
+S0_BFiu<-matrix(NA, nrow = iter, ncol = length(n), dimnames = list(1:iter,
+                                                                   paste0("n.",n)
+                                                                   )) %>% as.data.frame()
+
+seed<-123
+for(s in 1:length(n)){
+  
+  for(i in 1:iter){
+    
+  #seed=seed+1
+    BF<-gen_dat(r2=r2, 
+          betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+          rho=cormat(pcor, length(ratio_beta)),
+          n=n[s],
+          "normal")%$%
+    lm(Y ~ V1 + V2) %>%
+    BF(hypothesis = hypothesis, complement = complement) %$%
+    BFtable_confirmatory %>% as.data.frame()%$% BF
+  
+  S0_BFiu[i,s] <- BF[1]
+  
+  }
+}
