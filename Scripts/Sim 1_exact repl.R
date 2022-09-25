@@ -17,6 +17,7 @@ library(plotly)
 library(readxl)
 library(mvtnorm)
 library(highcharter)
+library(lavaan)
 #
 #library(WebPower) #needed for ws.regression(): calculating power for multiple regression
 #___________________________________________________________________________________
@@ -583,7 +584,7 @@ hc <- BFiu[,1:10,1] %>% as.data.frame() %>%
 
 
 rho<-c(.1, .2, .3)
-d<-seq(0,3.5, by=0.05)
+d<-seq(0,3.5, by=0.1)
 
 mu1<-0
 
@@ -617,38 +618,76 @@ BFpop<-cbind(fit.pop[,1:3]/compl.i, d)
 
 ggplot(BFpop) +
   geom_point(aes(x=d, y=rho.3))
-  
+
+# TPSi -- add variation in mu1 -------------------------------------------------
+# This is all wrong -- sigma should be diagonal matirx with very low values on its diagonal so that the density 
+#resembles the density of the population (i.e population has n->inf => var->0)
+#currently sigma has 1 on its diagonal
+mu1<-seq(0, 1, by=0.2)
+d<-seq(0,2, by=0.1)
+rho=0.0001
+
+fit.pop<-data.frame(mu1 = rep(mu1, each=length(d)),
+                    mu2 = NA,
+                    d = d,
+                    rho=rho,
+                    fit.pop=NA
+)
+
+for(i in 1:length(d)){
+  for(m in 1:length(mu1)){
+    
+    #calculate mu2
+    mu2<-d[i]+mu1[m]
+    fit.pop[fit.pop$mu1==mu1[m] & fit.pop$d==d[i],]$mu2<-mu2
+      
+    for(j in 1:length(rho)){
+      
+      fit.pop[fit.pop$mu1==mu1[m] & fit.pop$d==d[i] & fit.pop$rho==rho[j],]$fit.pop<-
+        integrate(Vectorize(function(x,y)integrate( function(y) dmvnorm(cbind(x,y), mean = c(mu1[m],mu2), sigma = cormat(rho[j], 2)),lower = 0, upper = Inf)[[1]]),lower=-Inf, upper=0)[[1]]+
+        integrate(Vectorize(function(x,y)integrate( function(y) dmvnorm(cbind(x,y), mean = c(mu1[m],mu2), sigma = cormat(rho[j], 2)),lower = x, upper = 0)[[1]]),lower=-Inf, upper=0)[[1]]+
+        integrate(Vectorize(function(y,x)integrate( function(x) dmvnorm(cbind(x,y), mean = c(mu1[m],mu2), sigma = cormat(rho[j], 2)),lower = 0, upper = y)[[1]]),lower=0, upper=+Inf)[[1]]
+      
+      
+     }
+  }
+}
 
 #Sim 0: Performance of BF ---------------------------------------------
 #how much does the BF vary across iterations depending on sample size
 #(when the true parameter space, i.e. the effect size, is kept constant)
 
+#Model: Y ~ V1 + V2, where
+#b2 = 2*b1, b2-b1 = 0.2199706
+# cor(V1,V2) = 0.3
 
 ## Specify relative importance of the regression coefficients
 ratio_beta <- c(1,2)
-
 ## Specify the bivariate correlations between predictors
 pcor <- c(0.3)
+## r2 of the regression model
+r2 <- 0.09 #.09 - too small if testing the difference between two parameters
 
-#the resulting coefficients
+#coefficients in the population
 coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+
 ## Models
 models <- c("normal")
-
-## r2 of the regression model
-r2 <- 0.30 #.09 - too small if testing the difference between two parameters
-
 complement<-TRUE
 hypothesis<-"V1 < V2"
 
 #n<-seq(20,200, by=10)
-n<-c(50,1500)
+n<-c(50,100,150,200,250,300)
 
-iter<-100
+iter<-1000
 
 S0_BFiu<-matrix(NA, nrow = iter, ncol = length(n), dimnames = list(1:iter,
                                                                    paste0("n.",n)
                                                                    )) %>% as.data.frame()
+
+S0_BFiu<-matrix(NA, nrow = iter, ncol = length(n), dimnames = list(1:iter,
+                                                                   paste0("n.",n)
+)) %>% as.data.frame()
 
 seed<-123
 for(s in 1:length(n)){
@@ -669,3 +708,117 @@ for(s in 1:length(n)){
   
   }
 }
+
+
+
+vioplot.BFiu<-S0_BFiu%>% 
+  pivot_longer(cols = paste0("n.", n),
+               names_to = "n",
+               values_to = "BF_iu") %>%
+  mutate(BF_iu_log=log(BF_iu)) %>%  
+  #boxplot with the BFs per sample size 
+  ggbetweenstats(x = n,
+                 y = BF_iu_log,
+                 pairwise.comparisons = FALSE,
+                 results.subtitle=FALSE,
+                 type = "nonparametric",
+                 plot.type = "violin"
+  ) +
+  labs(
+    x = "Sample size",
+    y = "BF_iu",
+    title = "Distribution of Bayes factors (y-axis) for different sample sizes (x-axis) when testing Hi against Hu across 100 iterations"
+  )+ 
+  # Customizations
+  theme(
+    # This is the new default font in the plot
+    text = element_text( size = 10, color = "black"),
+    axis.text.x = element_text(size=10)
+  )+ 
+  geom_hline(yintercept=c(0), linetype="dashed", 
+             color = "grey", size=1)
+
+vioplot.BFiu
+log(2)
+
+S0_BFiu%>% 
+  pivot_longer(cols = paste0("n.", n),
+               names_to = "n",
+               values_to = "BF_iu") %>%
+  mutate(BF_iu_log=log(BF_iu)) %>% 
+  group_by(n) %>% 
+  summarise(against.Hi=sum(BF_iu_log<0)/iter,
+            suff.support.Hi=sum(BF_iu>1.33)/iter
+            
+            )
+  
+
+
+
+S0_BFiu%>% 
+  mutate(iter=seq(1:nrow(S0_BFiu))) %>% 
+  pivot_longer(cols = paste0("n.", n),
+               names_to = "n",
+               values_to = "BF_iu") %>%
+  arrange(BF_iu)%>% 
+  hchart('scatter', hcaes(x = iter, y = BF_iu, group = n)) %>%
+  hc_title(text="Scatterplot of the BFiu across iterations grouped by sample size") 
+  
+
+
+
+
+
+#
+
+# a function to caluclate the proportion of the true parameter space that is in line with Hi: b2>b1
+popfit<-function(mu1,mu2,sigma){
+  
+  integrate(Vectorize(function(x,y)integrate( function(y) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = sigma),lower = 0, upper = Inf)[[1]]),lower=-Inf, upper=0)[[1]]+
+    integrate(Vectorize(function(x,y)integrate( function(y) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = sigma),lower = x, upper = 0)[[1]]),lower=-Inf, upper=0)[[1]]+
+    integrate(Vectorize(function(y,x)integrate( function(x) dmvnorm(cbind(x,y), mean = c(mu1,mu2), sigma = sigma),lower = 0, upper = y)[[1]]),lower=0, upper=+Inf)[[1]]
+  
+}
+
+
+## Specify relative importance of the regression coefficients
+ratio_beta <- c(1,2)
+## Specify the bivariate correlations between predictors
+pcor <- c(0.3)
+## r2 of the regression model
+r2 <- 0.30 #.09 - too small if testing the difference between two parameters
+
+#the resulting coefficients
+b<- coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+
+dat<-gen_dat(r2=r2, 
+             betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+             rho=cormat(pcor, length(ratio_beta)),
+             n=10000,
+             "normal")
+cor(dat$V1, dat$V2)
+
+mod<-'#the regression model
+                    Y ~ V1 +V2 
+
+                    #show that dependent variable has variance
+                    Y ~~ Y
+
+                    #we want to have an intercept
+                    Y ~ 1'
+
+regr<-lavaan(model=mod, data = dat)
+regr %>% summary()
+
+#the covariance matrix of the parameters
+sigma<-vcov(regr)[1:2,1:2]
+
+
+
+sigma
+#fit of Hi: b2>b1 at the population level, i.e the proportion of true parameter space in line with Hi
+popfit(b[1],b[2] , sigma)
+
+#BF 
+popfit(b[1],b[2] , rho)/0.5
+
