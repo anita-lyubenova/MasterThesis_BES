@@ -1,3 +1,4 @@
+library(beepr)
 #load the functions
 load("Outputs/functions.RData")
 
@@ -24,7 +25,7 @@ complement<-TRUE
 
 set.seed(123)
 
-iter<-10000
+iter<-1000
 
 row.names<-paste0("Iter.", seq(1:iter))
 column.names<-c(paste0("Study.", seq(1:10)), "log.aggr.BF", "aggr.PMP")
@@ -81,24 +82,36 @@ for(m in 1:nrow(planned.n)){
 
 #### Violin plots(aggr.PMPs) ----------------------------------------------------
 
-vioplot.ic<-data.frame(BFic[,"aggr.PMP",1:5]) %>% 
-  pivot_longer(cols = paste0("Condition.", seq(1:5)),
+vioplot.ic.df<-data.frame(BFic[,"aggr.PMP",1:nrow(planned.n)]) %>% 
+  pivot_longer(cols = paste0("Condition.", 1:nrow(planned.n)),
                names_to = "condition",
                values_to = "aggr.PMP") %>% 
-  arrange(condition) %>% 
+  arrange(match(condition, paste0("Condition.", 1:nrow(planned.n)))) %>% 
+  mutate(power=rep(planned.n$power, each=iter))
+
+vioplot.ic.df$condition<-factor(vioplot.ic.df$condition, levels = unique(vioplot.ic.df$condition))
+
+correct.aggr<-vioplot.ic.df %>% 
+  group_by(condition,power) %>% 
+  summarize(correct.aggr = sum(aggr.PMP>.75)/iter)
+
+vioplot.ic.df <- mutate(vioplot.ic.df,correct.aggr=rep(correct.aggr$correct.aggr, each=iter))
+
+
+vioplot.ic<-vioplot.ic.df %>% 
   #boxplot with the PMPs per condition 
   ggbetweenstats(x = condition,
                  y = aggr.PMP,
                  pairwise.comparisons = FALSE,
                  results.subtitle=FALSE,
                  type = "nonparametric",
-                 plot.type = "violin"
+                 plot.type = "boxviolin"
   ) +
   labs(
     x = "Condition",
     y = "aggregate PMP",
     title = "Distribution of aggregate PMPs from 10 studies with equal power (eta) when testing Hi against Hc",
-    subtitle = "In the conditions the power level eta is manipulated"
+    subtitle = "Across conditions the power level eta is manipulated"
   )+ 
   # Customizations
   theme(
@@ -108,29 +121,19 @@ vioplot.ic<-data.frame(BFic[,"aggr.PMP",1:5]) %>%
   )+ 
   geom_hline(yintercept=0.5, linetype="dashed", 
              color = "grey", size=1)+
-  scale_x_discrete(labels=paste(paste0("Cond.", 1:5, ": \n"),
-                                "eta =", planned.n$power 
-  )
-  )
+  scale_x_discrete(labels=paste(paste("eta =", planned.n$power,"\n"), "n = ", planned.n$Study.1)
+                   )+
+  annotate("label",
+           x = seq(1:nrow(planned.n))+0.3,
+           y = rep(c(0.77, 0.82), times=nrow(planned.n)/2),
+           label =paste("P(PMP>.75) =", correct.aggr$correct.aggr),
+           size=2.7)
 
-beep("coin")
 vioplot.ic
 
-
-scatterp.BFiu[[3]]
-scatterp.BFic[[7]]
-
-
-# Visualization: scatterplots with highcharter
-hc <- BFiu[,1:10,1] %>% as.data.frame() %>%
-  pivot_longer(cols = c(1:10),
-               names_to = "study",
-               values_to = "BFiu") %>%
-  arrange(BFiu) %>% 
-  mutate(iter = rep(seq(1:iter), each=length(n))) %>% 
-  hchart('scatter', hcaes(x = iter, y = BFiu, group = study))
+beep("coin")
 
 
 
-install.packages("beepr")
-library(beepr)
+
+

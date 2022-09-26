@@ -208,14 +208,16 @@ pcor <- c(0.2)
 #SDSRegression()----------------------------------------------------------------------
 # Find sample sizes that correspond to the power of 
 power.lvls<-c(.50, .60, .70, .80, .90, .95, .99)
+power.lvls<-c(.55, .65, .75, .85)
 #These would be the sample sizes I will use for Sim1
 
-
+#(I've run them separately but in the end they should be in the same file)
 
 ## for K=2 ------------------------------- 
 r2<-.04
 ratio_beta <- c(2,1)
 coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+pcor<-0.2
 
 power.k2<-data.frame(power=power.lvls,
                      n=NA)
@@ -235,7 +237,7 @@ for(p in 1:length(power.lvls)){
   
 
 }
-
+beep("coin")
 power.k2$k<-2
 power.k2$r2<-0.04
 power.k2$d<-0.08304548
