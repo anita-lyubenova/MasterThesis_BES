@@ -24,7 +24,7 @@ complement<-TRUE
 
 set.seed(123)
 
-iter<-1000
+iter<-10000
 
 row.names<-paste0("Iter.", seq(1:iter))
 column.names<-c(paste0("Study.", seq(1:10)), "log.aggr.BF", "aggr.PMP")
@@ -113,6 +113,7 @@ vioplot.ic<-data.frame(BFic[,"aggr.PMP",1:5]) %>%
   )
   )
 
+beep("coin")
 vioplot.ic
 
 
@@ -130,3 +131,6 @@ hc <- BFiu[,1:10,1] %>% as.data.frame() %>%
   hchart('scatter', hcaes(x = iter, y = BFiu, group = study))
 
 
+
+install.packages("beepr")
+library(beepr)
