@@ -57,8 +57,10 @@ library(SSDbain)
 
 #SDSRegression()----------------------------------------------------------------------
 # Find sample sizes that correspond to the power of 
-power.lvls<-c(.50, .60, .70, .80, .90, .95, .99)
-power.lvls<-c(.55, .65, .75, .85)
+# power.lvls<-c(.50, .60, .70, .80, .90, .95, .99)
+# power.lvls<-c(.55, .65, .75, .85)
+power.lvls<-c(seq(from=0.5, to=0.95, by=0.05),0.99)
+
 #These would be the sample sizes I will use for Sim1
 
 #(I've run them separately but in the end they should be in the same file)
@@ -67,10 +69,13 @@ power.lvls<-c(.55, .65, .75, .85)
 pcor<-0.2
 r2<-.04
 ratio_beta <- c(2,1)
-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+betas<-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
 
-
-power.k2<-data.frame(power=power.lvls,
+betas[length(betas)]
+power.k2<-data.frame(k=2,
+                     r2=0.04,
+                     d=betas[length(betas)],
+                     power=power.lvls,
                      n=NA)
 for(p in 1:length(power.lvls)){
   
@@ -102,12 +107,12 @@ power.lvls<-c(seq(from=0.5, to=0.95, by=0.05),0.99)
 pcor<-0.2
 r2<-.13
 ratio_beta <- c(3,2,1)
-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+betas<-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
 
 power.k3<-data.frame(power=power.lvls,
                      k=3,
                      r2=0.13,
-                     d=0.84,
+                     d=betas[length(betas)],
                      n=NA)
 for(p in 1:length(power.lvls)){
   
@@ -138,3 +143,5 @@ colorder <-c("k", "r2", "d", "power", "n")
 power.k2<-power.k2[,colorder]
 power.k3<-power.k3[,colorder]
 rbind(power.k2, power.k3)
+
+plot(power.k3$power, power.k3$n)
