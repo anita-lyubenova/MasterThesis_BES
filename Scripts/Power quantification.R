@@ -53,7 +53,6 @@ library(SSDbain)
 # ratio_beta <- c(4,3,2,1)
 # coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
 
-pcor <- c(0.2)
 
 
 #SDSRegression()----------------------------------------------------------------------
@@ -65,10 +64,11 @@ power.lvls<-c(.55, .65, .75, .85)
 #(I've run them separately but in the end they should be in the same file)
 
 ## for K=2 ------------------------------- 
+pcor<-0.2
 r2<-.04
 ratio_beta <- c(2,1)
 coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
-pcor<-0.2
+
 
 power.k2<-data.frame(power=power.lvls,
                      n=NA)
@@ -97,10 +97,44 @@ write_xlsx(power.k2, "Outputs/power quantification/SDSpower.k(2).r2(.05),d(.08).
 plot(power.k2)
 
 
-## for K=2 ------------------------------- 
-
-
-
-
-
 ## for K=3 ------------------------------- 
+power.lvls<-c(seq(from=0.5, to=0.95, by=0.05),0.99)
+pcor<-0.2
+r2<-.13
+ratio_beta <- c(3,2,1)
+coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+
+power.k3<-data.frame(power=power.lvls,
+                     k=3,
+                     r2=0.13,
+                     d=0.84,
+                     n=NA)
+for(p in 1:length(power.lvls)){
+  
+  power.k3[p,"n"] <-SSDRegression(Hyp1 = "beta1>beta2>beta3", Hyp2 = "Hc", k=3,
+                                rho = cormat(pcor, length(ratio_beta)),
+                                R_square1=r2,
+                                R_square2 = r2,
+                                T_sim = 10000,
+                                BFthresh=1,
+                                eta=power.lvls[p],
+                                standardize = TRUE,
+                                ratio = ratio_beta
+  )[[1]]
+  
+  
+  
+}
+
+
+## for K=4 ------------------------------- 
+
+
+
+# Summarize and export results -----------------
+colnames(power.k2)
+colorder <-c("k", "r2", "d", "power", "n")
+
+power.k2<-power.k2[,colorder]
+power.k3<-power.k3[,colorder]
+rbind(power.k2, power.k3)
