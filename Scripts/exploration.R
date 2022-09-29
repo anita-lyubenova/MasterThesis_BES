@@ -822,3 +822,19 @@ popfit(b[1],b[2] , sigma)
 #BF 
 popfit(b[1],b[2] , rho)/0.5
 
+
+# Calculation of betas depending on R2 -----------------------------------
+r2<-0.04
+ratio<-c(2,1)
+pcor<-0.2
+rho<-cormat(pcor, length(ratio_beta))
+
+var_y <- r2
+sqrt(var_y / sum(ratio %*% t(ratio) * rho)) * ratio
+
+ratio %*% t(ratio) %*% rho
+0.2*2
+
+#Calculation of R2 depending on betas
+
+0.16810970^2 + 0.08405485^2 + 2*0.08405485*0.16810970*0.2

@@ -68,6 +68,9 @@ power.lvls<-c(seq(from=0.5, to=0.95, by=0.05),0.99)
 ## for K=2 ------------------------------- 
 pcor<-0.2
 r2<-.04
+#r2= b1^2 + b2^2 + 2*b1*b2*pcor, where b1 and b2 are the coefficients found in the section K=3 and r2=0.13
+r2 = 0.16810970^2 + 0.08405485^2 + 2*0.08405485*0.16810970*0.2
+
 ratio_beta <- c(2,1)
 betas<-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
 
@@ -102,6 +105,8 @@ write_xlsx(power.k2, "Outputs/power quantification/SDSpower.k(2).r2(.05),d(.08).
 plot(power.k2)
 
 
+
+
 ## for K=3 ------------------------------- 
 power.lvls<-c(seq(from=0.5, to=0.95, by=0.05),0.99)
 pcor<-0.2
@@ -114,6 +119,8 @@ power.k3<-data.frame(power=power.lvls,
                      r2=0.13,
                      d=betas[length(betas)],
                      n=NA)
+
+#This took about 14-15 hours to run
 for(p in 1:length(power.lvls)){
   
   power.k3[p,"n"] <-SSDRegression(Hyp1 = "beta1>beta2>beta3", Hyp2 = "Hc", k=3,
