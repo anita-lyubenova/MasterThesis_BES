@@ -67,22 +67,22 @@ power.lvls<-c(seq(from=0.5, to=0.95, by=0.05),0.99)
 
 ## for K=2 ------------------------------- 
 pcor<-0.2
-r2<-.04
+#r2<-.04
 #r2= b1^2 + b2^2 + 2*b1*b2*pcor, where b1 and b2 are the coefficients found in the section K=3 and r2=0.13
 r2 = 0.16810970^2 + 0.08405485^2 + 2*0.08405485*0.16810970*0.2
 
 ratio_beta <- c(2,1)
 betas<-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
 
-betas[length(betas)]
 power.k2<-data.frame(k=2,
-                     r2=0.04,
+                     ratio="2:1",
+                     r2=r2,
                      d=betas[length(betas)],
                      power=power.lvls,
                      n=NA)
 for(p in 1:length(power.lvls)){
   
-  power.k2[p,2] <-SSDRegression(Hyp1 = "beta1>beta2", Hyp2 = "Hc", k=2,
+  power.k2[p,ncol(power.k2)] <-SSDRegression(Hyp1 = "beta1>beta2", Hyp2 = "Hc", k=2,
                    rho = cormat(pcor, length(ratio_beta)),
                    R_square1=r2,
                    R_square2 = r2,
@@ -101,7 +101,8 @@ power.k2$k<-2
 power.k2$r2<-0.04
 power.k2$d<-0.08304548
 
-write_xlsx(power.k2, "Outputs/power quantification/SDSpower.k(2).r2(.05),d(.08).xlsx")
+save(power.k2, file="Outputs/power quantification/power.k2.RData")
+write_xlsx(power.k2, "Outputs/power quantification/power.k2.xlsx")
 plot(power.k2)
 
 
@@ -138,17 +139,26 @@ for(p in 1:length(power.lvls)){
   
 }
 
+save(power.k3, file="Outputs/power quantification/power.k3.RData")
+
 
 ## for K=4 ------------------------------- 
 
 
 
 # Summarize and export results -----------------
-colnames(power.k2)
-colorder <-c("k", "r2", "d", "power", "n")
 
-power.k2<-power.k2[,colorder]
-power.k3<-power.k3[,colorder]
-rbind(power.k2, power.k3)
+power.k3$ratio<-"3:2:1"
+
+colnames(power.k2)
+colnames(power.k3)
+
+power.k3$d<-0.08405485
+
+power.k3<-power.k3[,colnames(power.k2)]
+power.results<-rbind(power.k2, power.k3)
 
 plot(power.k3$power, power.k3$n)
+
+save(power.results, file="Outputs/power quantification/power.results.RData")
+write_xlsx(power.results, "Outputs/power quantification/power.results.xlsx")
