@@ -41,7 +41,7 @@ planned.n<-read_xlsx("Simulations planning.xlsx", sheet = "Sim1")
 #Research Question: Given that all studies have the same power to support the true hypothesis over the complement,
 #                   what power level is enough to produce reliable BES-aggregate support?
 
-
+### Hi == TRUE-------------------------
 models <- c("normal")
 pcor <- c(0.2)
 r2<-0.0409782632894305
@@ -141,7 +141,7 @@ vioplot.ic<-vioplot.ic.df %>%
   labs(
     x = "Condition",
     y = "aggregate PMP",
-    title = paste("Distribution of aggregate PMPs from 10 studies with equal power (eta) when testing Hi against Hc across", iter, "iterations"),
+    title = paste("Distribution of aggregate PMPs from 10 studies with equal power (eta) when testing Hi against Hc across", iter, "iterations when Hi is true in the population"),
     subtitle = "Each point represents an aggregate PMP from 10 studies from one iteration"
   )+ 
   # Customizations
@@ -171,6 +171,159 @@ vioplot.ic<-vioplot.ic.df %>%
            size=2.7)
 
 vioplot.ic
+
+
+
+### Hc == TRUE -------------------------
+# Ratio_beta is switched
+models <- c("normal")
+pcor <- c(0.2)
+r2<-0.0409782632894305
+ratio_beta <- c(1,2)
+coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+
+hypothesis<-"V1 > V2"
+
+complement<-TRUE
+
+iter<-1000
+
+row.names<-paste0("Iter.", seq(1:iter))
+column.names<-c(paste0("Study.", seq(1:10)), "log.aggr.BF", "aggr.PMP")
+slice.names<-paste0("Condition.", seq(1:nrow(planned.n)))
+
+BFic<-array(NA, dim = c(iterations=iter, studies=length(column.names), conditions=nrow(planned.n)),
+            dimnames = list(row.names,column.names, slice.names))
+
+scatterp.BFic<-list()
+
+seed<-123
+
+#for each condition (manipulated sample size distribution in the set of studies) (slice m in the array)
+for(m in 1:nrow(planned.n)){
+  
+  n<-planned.n[m, 3:12] %>% as.numeric()
+  
+  #for each iteration (row i in the array)
+  for(i in 1:iter) {
+    
+    #for each study; column s in the array
+    for(s in 1:length(n)){
+      
+      seed=seed+1
+      set.seed(seed)
+      
+      print(paste("Condition m:", m, ", Iteration i:", i, "Study s:", s))
+      
+      BF<-gen_dat(r2=r2, 
+                  betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+                  rho=cormat(pcor, length(ratio_beta)),
+                  n=n[s],
+                  "normal")%$%
+        lm(Y ~ V1 + V2) %>%
+        BF(hypothesis = hypothesis, complement = complement) %$%
+        BFtable_confirmatory %>% as.data.frame()%$% BF
+      
+      BFic[i,s,m]<-BF[1]/BF[2] 
+      
+      
+    }# end iterations loop i
+    
+    #after all 10 studies in the set were simulated and evaluated in iteration i => calculate the log aggregate BF for iteration i
+    BFic[i,11,m] <-sum(log(BFic[i,1:10,m]))
+    #calculate the aggregate PMPs
+    BFic[i,12,m] <- prod(BFic[i,1:10,m])/(prod(BFic[i,1:10,m]) + 1)
+    
+  }# end study loop s
+  
+}#end conditions loop; THE END
+
+
+
+
+
+#### Violin plots(aggr.PMPs) ----------------------------------------------------
+
+vioplot.ic.df<-data.frame(BFic[,"aggr.PMP",1:nrow(planned.n)]) %>% 
+  pivot_longer(cols = paste0("Condition.", 1:nrow(planned.n)),
+               names_to = "condition",
+               values_to = "aggr.PMP") %>% 
+  arrange(match(condition, paste0("Condition.", 1:nrow(planned.n)))) %>% 
+  mutate(power=rep(planned.n$power, each=iter))
+
+vioplot.ic.df$condition<-factor(vioplot.ic.df$condition, levels = unique(vioplot.ic.df$condition))
+
+correct.aggr<-vioplot.ic.df %>% 
+  group_by(condition,power) %>% 
+  summarize(correct.75 = sum(aggr.PMP<1-.75)/iter,
+            correct.90 = sum(aggr.PMP<1-.90)/iter,
+            correct.95 = sum(aggr.PMP<1-.95)/iter
+  )
+
+
+
+vioplot.ic<-vioplot.ic.df %>% 
+  #boxplot with the PMPs per condition 
+  ggbetweenstats(x = condition,
+                 y = aggr.PMP,
+                 pairwise.comparisons = FALSE,
+                 results.subtitle=FALSE,
+                 type = "nonparametric",
+                 plot.type = "boxviolin",
+                 centrality.plotting=FALSE
+  ) +
+  labs(
+    x = "Condition",
+    y = "aggregate PMP",
+    title = paste("Distribution of aggregate PMPs from 10 studies with equal power (eta) when testing Hi against Hc across", iter, "iterations when Hc is true in the population"),
+    subtitle = "Each point represents an aggregate PMP from 10 studies from one iteration"
+  )+ 
+  # Customizations
+  theme(
+    # This is the new default font in the plot
+    text = element_text( size = 10, color = "black"),
+    axis.text.x = element_text(size=8)
+  )+ 
+  geom_hline(yintercept=c(0.25, 0.10, 0.05), linetype="dashed", 
+             color = "red", size=0.8)+
+  scale_x_discrete(labels=paste(paste("eta =", planned.n$power,"\n"), "n = ", planned.n$Study.1)
+  )+
+  annotate("label",
+           x = seq(1:nrow(planned.n))+0.3,
+           y = rep(c(0.23), times=nrow(planned.n)),
+           label =paste("P(PMP<.25) =", correct.aggr$correct.75),
+           size=2.7)+
+  annotate("label",
+           x = seq(1:nrow(planned.n))+0.3,
+           y = rep(c(0.08), times=nrow(planned.n)),
+           label =paste("P(PMP<.10) =", correct.aggr$correct.90),
+           size=2.7)+
+  annotate("label",
+           x = seq(1:nrow(planned.n))+0.3,
+           y = rep(c(0.03), times=nrow(planned.n)),
+           label =paste("P(PMP<.5) =", correct.aggr$correct.95),
+           size=2.7)
+
+vioplot.ic
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
