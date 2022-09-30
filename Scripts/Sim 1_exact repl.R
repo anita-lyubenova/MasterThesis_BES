@@ -41,17 +41,16 @@ planned.n<-read_xlsx("Simulations planning.xlsx", sheet = "Sim1")
 #Research Question: Given that all studies have the same power to support the true hypothesis over the complement,
 #                   what power level is enough to produce reliable BES-aggregate support?
 
-r2<-.04
-ratio_beta <- c(2,1)
 
-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
-pcor <- c(0.2)
 models <- c("normal")
+pcor <- c(0.2)
+r2<-0.0409782632894305
+ratio_beta <- c(2,1)
+coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+
 hypothesis<-"V1 > V2"
 
 complement<-TRUE
-
-set.seed(123)
 
 iter<-1000
 
@@ -98,6 +97,7 @@ for(m in 1:nrow(planned.n)){
     
     #after all 10 studies in the set were simulated and evaluated in iteration i => calculate the log aggregate BF for iteration i
     BFic[i,11,m] <-sum(log(BFic[i,1:10,m]))
+    #calculate the aggregate PMPs
     BFic[i,12,m] <- prod(BFic[i,1:10,m])/(prod(BFic[i,1:10,m]) + 1)
     
   }# end study loop s
@@ -171,7 +171,6 @@ vioplot.ic<-vioplot.ic.df %>%
            size=2.7)
 
 vioplot.ic
-
 
 
 
