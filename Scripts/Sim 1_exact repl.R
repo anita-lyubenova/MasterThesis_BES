@@ -52,16 +52,15 @@ hypothesis<-"V1 > V2"
 
 complement<-TRUE
 
-iter<-1000
+iter<-10000
 
 row.names<-paste0("Iter.", seq(1:iter))
 column.names<-c(paste0("Study.", seq(1:10)), "log.aggr.BF", "aggr.PMP")
 slice.names<-paste0("Condition.", seq(1:nrow(planned.n)))
 
-BFic<-array(NA, dim = c(iterations=iter, studies=length(column.names), conditions=nrow(planned.n)),
+BFic1<-array(NA, dim = c(iterations=iter, studies=length(column.names), conditions=nrow(planned.n)),
                   dimnames = list(row.names,column.names, slice.names))
 
-scatterp.BFic<-list()
 
 seed<-123
 
@@ -90,15 +89,15 @@ for(m in 1:nrow(planned.n)){
         BF(hypothesis = hypothesis, complement = complement) %$%
         BFtable_confirmatory %>% as.data.frame()%$% BF
       
-      BFic[i,s,m]<-BF[1]/BF[2] 
+      BFic1[i,s,m]<-BF[1]/BF[2] 
       
       
     }# end iterations loop i
     
     #after all 10 studies in the set were simulated and evaluated in iteration i => calculate the log aggregate BF for iteration i
-    BFic[i,11,m] <-sum(log(BFic[i,1:10,m]))
+    BFic1[i,11,m] <-sum(log(BFic1[i,1:10,m]))
     #calculate the aggregate PMPs
-    BFic[i,12,m] <- prod(BFic[i,1:10,m])/(prod(BFic[i,1:10,m]) + 1)
+    BFic1[i,12,m] <- prod(BFic1[i,1:10,m])/(prod(BFic1[i,1:10,m]) + 1)
     
   }# end study loop s
   
@@ -110,16 +109,16 @@ for(m in 1:nrow(planned.n)){
 
 #### Violin plots(aggr.PMPs) ----------------------------------------------------
 
-vioplot.ic.df<-data.frame(BFic[,"aggr.PMP",1:nrow(planned.n)]) %>% 
+vioplot.ic1.df<-data.frame(BFic1[,"aggr.PMP",1:nrow(planned.n)]) %>% 
   pivot_longer(cols = paste0("Condition.", 1:nrow(planned.n)),
                names_to = "condition",
                values_to = "aggr.PMP") %>% 
   arrange(match(condition, paste0("Condition.", 1:nrow(planned.n)))) %>% 
   mutate(power=rep(planned.n$power, each=iter))
 
-vioplot.ic.df$condition<-factor(vioplot.ic.df$condition, levels = unique(vioplot.ic.df$condition))
+vioplot.ic1.df$condition<-factor(vioplot.ic1.df$condition, levels = unique(vioplot.ic1.df$condition))
 
-correct.aggr<-vioplot.ic.df %>% 
+correct.aggr<-vioplot.ic1.df %>% 
   group_by(condition,power) %>% 
   summarize(correct.75 = sum(aggr.PMP>.75)/iter,
             correct.90 = sum(aggr.PMP>.90)/iter,
@@ -128,7 +127,7 @@ correct.aggr<-vioplot.ic.df %>%
 
 
 
-vioplot.ic<-vioplot.ic.df %>% 
+vioplot.ic1<-vioplot.ic1.df %>% 
   #boxplot with the PMPs per condition 
   ggbetweenstats(x = condition,
                  y = aggr.PMP,
@@ -142,7 +141,9 @@ vioplot.ic<-vioplot.ic.df %>%
     x = "Condition",
     y = "aggregate PMP",
     title = paste("Distribution of aggregate PMPs from 10 studies with equal power (eta) when testing Hi against Hc across", iter, "iterations when Hi is true in the population"),
-    subtitle = "Each point represents an aggregate PMP from 10 studies from one iteration"
+    subtitle = "Each point represents an aggregate PMP from 10 studies from one iteration",
+    caption = paste("Population specifications: pcor:",pcor, ";r2 =", r2 , "; b1:b2 = ",ratio_beta[1],":",ratio_beta[2],"; d = b1 - b2 =", d, "; Hi:", hypothesis)
+    
   )+ 
   # Customizations
   theme(
@@ -170,7 +171,7 @@ vioplot.ic<-vioplot.ic.df %>%
            label =paste("P(PMP>.95) =", correct.aggr$correct.95),
            size=2.7)
 
-vioplot.ic
+vioplot.ic1
 
 
 
@@ -186,16 +187,15 @@ hypothesis<-"V1 > V2"
 
 complement<-TRUE
 
-iter<-1000
+iter<-10000
 
 row.names<-paste0("Iter.", seq(1:iter))
 column.names<-c(paste0("Study.", seq(1:10)), "log.aggr.BF", "aggr.PMP")
 slice.names<-paste0("Condition.", seq(1:nrow(planned.n)))
 
-BFic<-array(NA, dim = c(iterations=iter, studies=length(column.names), conditions=nrow(planned.n)),
+BFci1<-array(NA, dim = c(iterations=iter, studies=length(column.names), conditions=nrow(planned.n)),
             dimnames = list(row.names,column.names, slice.names))
 
-scatterp.BFic<-list()
 
 seed<-123
 
@@ -224,15 +224,15 @@ for(m in 1:nrow(planned.n)){
         BF(hypothesis = hypothesis, complement = complement) %$%
         BFtable_confirmatory %>% as.data.frame()%$% BF
       
-      BFic[i,s,m]<-BF[1]/BF[2] 
+      BFci1[i,s,m]<-BF[1]/BF[2] 
       
       
     }# end iterations loop i
     
     #after all 10 studies in the set were simulated and evaluated in iteration i => calculate the log aggregate BF for iteration i
-    BFic[i,11,m] <-sum(log(BFic[i,1:10,m]))
+    BFci1[i,11,m] <-sum(log(BFci1[i,1:10,m]))
     #calculate the aggregate PMPs
-    BFic[i,12,m] <- prod(BFic[i,1:10,m])/(prod(BFic[i,1:10,m]) + 1)
+    BFci1[i,12,m] <- prod(BFci1[i,1:10,m])/(prod(BFci1[i,1:10,m]) + 1)
     
   }# end study loop s
   
@@ -244,16 +244,16 @@ for(m in 1:nrow(planned.n)){
 
 #### Violin plots(aggr.PMPs) ----------------------------------------------------
 
-vioplot.ic.df<-data.frame(BFic[,"aggr.PMP",1:nrow(planned.n)]) %>% 
+vioplot.ci1.df<-data.frame(BFci1[,"aggr.PMP",1:nrow(planned.n)]) %>% 
   pivot_longer(cols = paste0("Condition.", 1:nrow(planned.n)),
                names_to = "condition",
                values_to = "aggr.PMP") %>% 
   arrange(match(condition, paste0("Condition.", 1:nrow(planned.n)))) %>% 
   mutate(power=rep(planned.n$power, each=iter))
 
-vioplot.ic.df$condition<-factor(vioplot.ic.df$condition, levels = unique(vioplot.ic.df$condition))
+vioplot.ci1.df$condition<-factor(vioplot.ci1.df$condition, levels = unique(vioplot.ci1.df$condition))
 
-correct.aggr<-vioplot.ic.df %>% 
+correct.aggr<-vioplot.ci1.df %>% 
   group_by(condition,power) %>% 
   summarize(correct.75 = sum(aggr.PMP<1-.75)/iter,
             correct.90 = sum(aggr.PMP<1-.90)/iter,
@@ -262,7 +262,7 @@ correct.aggr<-vioplot.ic.df %>%
 
 
 
-vioplot.ic<-vioplot.ic.df %>% 
+vioplot.ci1<-vioplot.ci1.df %>% 
   #boxplot with the PMPs per condition 
   ggbetweenstats(x = condition,
                  y = aggr.PMP,
@@ -276,7 +276,9 @@ vioplot.ic<-vioplot.ic.df %>%
     x = "Condition",
     y = "aggregate PMP",
     title = paste("Distribution of aggregate PMPs from 10 studies with equal power (eta) when testing Hi against Hc across", iter, "iterations when Hc is true in the population"),
-    subtitle = "Each point represents an aggregate PMP from 10 studies from one iteration"
+    subtitle = "Each point represents an aggregate PMP from 10 studies from one iteration",
+    caption = paste("Population specifications: pcor:",pcor, ";r2 =", r2 , "; b1:b2 = ",ratio_beta[1],":",ratio_beta[2],"; d = b1 - b2 =", d, "; Hi:", hypothesis)
+    
   )+ 
   # Customizations
   theme(
@@ -304,7 +306,7 @@ vioplot.ic<-vioplot.ic.df %>%
            label =paste("P(PMP<.5) =", correct.aggr$correct.95),
            size=2.7)
 
-vioplot.ic
+vioplot.ci1
 
 
 
