@@ -140,7 +140,7 @@ vioplot.ic1<-vioplot.ic1.df %>%
   labs(
     x = "Condition",
     y = "aggregate PMP",
-    title = paste("Distribution of aggregate PMPs from 10 studies with equal power (eta) when testing Hi against Hc across", iter, "iterations when Hi is true in the population"),
+    title = paste("Distribution of aggregate PMPs from 10 studies with equal power (eta) when testing Hi:",hypothesis ," against Hc across", iter, "iterations when Hi is true in the population"),
     subtitle = "Each point represents an aggregate PMP from 10 studies from one iteration",
     caption = paste("Population specifications: pcor:",pcor, ";r2 =", r2 , "; b1:b2 = ",ratio_beta[1],":",ratio_beta[2],"; d = b1 - b2 =", d, "; Hi:", hypothesis)
     
@@ -275,7 +275,7 @@ vioplot.ci1<-vioplot.ci1.df %>%
   labs(
     x = "Condition",
     y = "aggregate PMP",
-    title = paste("Distribution of aggregate PMPs from 10 studies with equal power (eta) when testing Hi against Hc across", iter, "iterations when Hc is true in the population"),
+    title = paste("Distribution of aggregate PMPs from 10 studies with equal power (eta) when testing Hi:",hypothesis ," against Hc across", iter, "iterations when Hc is true in the population"),
     subtitle = "Each point represents an aggregate PMP from 10 studies from one iteration",
     caption = paste("Population specifications: pcor:",pcor, ";r2 =", r2 , "; b1:b2 = ",ratio_beta[1],":",ratio_beta[2],"; d = b1 - b2 =", d, "; Hi:", hypothesis)
     

@@ -32,7 +32,6 @@ planned.n<-read_xlsx("Simulations planning.xlsx", sheet = "Sim2")
 planned.n$total.n <- apply(planned.n[3:12], 1, sum)
 
 
-
 # Simulation 2 ---------------
 
 ## Hi=TRUE----------------
@@ -40,7 +39,8 @@ models <- c("normal")
 pcor <- c(0.2)
 r2<-0.0409782632894305
 ratio_beta <- c(2,1)
-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+betas<-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+d=betas[1]-betas[2]
 hypothesis<-"V1 > V2"
 complement<-TRUE
 
@@ -96,7 +96,6 @@ for(m in 1:nrow(planned.n)){
 
 
 
-
 #### Violin plots(aggr.PMPs) ----------------------------------------------------
 
 vioplot.ic2.df<-data.frame(BFic2[,"aggr.PMP",1:nrow(planned.n)]) %>% 
@@ -108,7 +107,7 @@ vioplot.ic2.df<-data.frame(BFic2[,"aggr.PMP",1:nrow(planned.n)]) %>%
 
 vioplot.ic2.df$condition<-factor(vioplot.ic2.df$condition, levels = unique(vioplot.ic2.df$condition))
 
-correct.aggr<-vioplot.ic2.df %>% 
+correct.aggr.ic2<-vioplot.ic2.df %>% 
   group_by(condition,power) %>% 
   summarize(correct.75 = sum(aggr.PMP>.75)/iter,
             correct.90 = sum(aggr.PMP>.90)/iter,
@@ -130,7 +129,7 @@ vioplot.ic2<-vioplot.ic2.df %>%
   labs(
     x = "Condition",
     y = "aggregate PMP",
-    title = paste("Distribution of aggregate PMPs from a set of 10 studies with the same average power (0.75) when testing Hi against Hc across", iter, "iterations"),
+    title = paste("Distribution of aggregate PMPs from a set of 10 studies with the same average power (0.75) when testing Hi:",hypothesis ,"against Hc across", iter, "iterations"),
     subtitle = "Each point represents an aggregate PMP from 10 studies from one iteration",
     caption = paste("Population specifications: pcor:",pcor, ";r2 =", r2 , "; b1:b2 = ",ratio_beta[1],":",ratio_beta[2],"; d = b1 - b2 =", d, "; Hi:", hypothesis)
   )+ 
@@ -264,7 +263,6 @@ vioplot.ci2<-vioplot.ci2.df %>%
   labs(
     x = "Condition",
     y = "aggregate PMP",
-    title = paste("Distribution of aggregate PMPs from a set of 10 studies with the same average power (0.75) when testing Hi against Hc across", iter, "iterations"),
     subtitle = "Each point represents an aggregate PMP from 10 studies from one iteration",
     caption = paste("Population specifications: pcor:",pcor, ";r2 =", r2 , "; b1:b2 = ",ratio_beta[1],":",ratio_beta[2],"; d = b1 - b2 =", d, "; Hi:", hypothesis)
   )+ 
@@ -273,10 +271,6 @@ vioplot.ci2<-vioplot.ci2.df %>%
     # This is the new default font in the plot
     text = element_text( size = 10, color = "black"),
     axis.text.x = element_text(size=8)
-  )+ 
-  geom_hline(yintercept=c(0.25, 0.10, 0.05), linetype="dashed", 
-             color = "red", size=0.8)+
-  scale_x_discrete(labels=paste(paste("eta =", planned.n$power,"\n"), "n = ", planned.n$Study.1)
   )+
   annotate("label",
            x = seq(1:nrow(planned.n))+0.3,
@@ -295,4 +289,3 @@ vioplot.ci2<-vioplot.ci2.df %>%
            size=2.7)
 
 vioplot.ci2
-
