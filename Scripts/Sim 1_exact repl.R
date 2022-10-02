@@ -254,9 +254,9 @@ vioplot.ci1.df$condition<-factor(vioplot.ci1.df$condition, levels = unique(viopl
 
 correct.aggr.ci1<-vioplot.ci1.df %>% 
   group_by(condition,power) %>% 
-  summarize(correct.75 = sum(aggr.PMP<1-.75)/iter,
-            correct.90 = sum(aggr.PMP<1-.90)/iter,
-            correct.95 = sum(aggr.PMP<1-.95)/iter
+  summarize(correct.25 = sum(aggr.PMP<1-.75)/iter,
+            correct.10 = sum(aggr.PMP<1-.90)/iter,
+            correct.05 = sum(aggr.PMP<1-.95)/iter
   )
 
 
@@ -292,22 +292,20 @@ vioplot.ci1<-vioplot.ci1.df %>%
   annotate("label",
            x = seq(1:nrow(planned.n))+0.3,
            y = rep(c(0.23), times=nrow(planned.n)),
-           label =paste("P(PMP<.25) =", correct.aggr.ci1$correct.75),
+           label =paste("P(PMP<.25) =", correct.aggr.ci1$correct.25),
            size=2.7)+
   annotate("label",
            x = seq(1:nrow(planned.n))+0.3,
            y = rep(c(0.08), times=nrow(planned.n)),
-           label =paste("P(PMP<.10) =", correct.aggr.ci1$correct.90),
+           label =paste("P(PMP<.10) =", correct.aggr.ci1$correct.10),
            size=2.7)+
   annotate("label",
            x = seq(1:nrow(planned.n))+0.3,
            y = rep(c(0.03), times=nrow(planned.n)),
-           label =paste("P(PMP<.5) =", correct.aggr.ci1$correct.95),
+           label =paste("P(PMP<.5) =", correct.aggr.ci1$correct.05),
            size=2.7)
 
 vioplot.ci1
-
-
 
 
 
@@ -413,46 +411,6 @@ library(ggrepel)
 library(htmltools)
 
 #how the power of individual studies varies with the power of BES
-correct.aggr.ci1$power<-as.factor(correct.aggr.ci1$power)
-a<-correct.aggr.ci1 %>% 
-  ggplot(aes(x=power,y=correct.75,group=1, color="red")) +
-  geom_line()+
-  geom_point()+
-  geom_text(aes(label=correct.75), hjust=1, vjust=-0.8)
-  
-correct.aggr.ci1 %>% 
-  ggplot(aes(x=power,y=correct.95,group=1)) +
-  geom_line()+
-  geom_point()+
-  geom_text(aes(label=correct.95), hjust=-0.2, vjust=+1.3)
-
-ggarrange(a,b)
-
-correct.aggr.ci1 %>% 
-  ggplot(aes(x=power,y=correct.75,group=1)) +
-  geom_line(aes(color="red"))+
-  geom_point(color="red")+
-  geom_text(aes(label=correct.75,color="red"), hjust=1, vjust=-0.8)+
-  
-  geom_line(aes(x=power,y=correct.95,group=1))+
-  geom_point(aes(x=power,y=correct.95,group=1))+
-  geom_text(aes(label=correct.95), hjust=0, vjust=c(rep(6,times=3), 2.5, 3.5, rep(1.8, times=5)))+
-  
-  scale_y_continuous(breaks = seq(0,1, 0.05), lim=c(0.45,1))
-  
-correct.aggr.ci1 %>% ggplot(aes(x=power, group=1)) + 
-  geom_line(aes(y = correct.75), color = "red") + 
-  geom_point(aes(y = correct.75), color = "red")+
-  geom_line(aes(y = correct.90), color="black") +
-  geom_point(aes(y = correct.90), color="black") +
-  geom_text(aes(y = correct.75,label = correct.75, color="red"), hjust=+1, vjust=-0.5)+
-  geom_text(aes(y = correct.90,label = correct.90), hjust=0, vjust=1.2)+
-  labs(title = "Increase of BES-power with the increase of the power in the study set (when all studies have equal power)",
-       x="Study set power",
-       y="BES-power"
-       )
-  
-
 correct.aggr.ic1.long<-correct.aggr.ic1 %>% 
   pivot_longer(cols=c("correct.75", "correct.90", "correct.95"),
                names_to = "stakes_level",
@@ -477,7 +435,7 @@ correct.aggr.ic1.long %>%
   
 
 
-
+vioplot.ci2
 
 
 
