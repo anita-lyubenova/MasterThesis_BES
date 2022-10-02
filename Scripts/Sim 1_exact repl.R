@@ -46,8 +46,8 @@ models <- c("normal")
 pcor <- c(0.2)
 r2<-0.0409782632894305
 ratio_beta <- c(2,1)
-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
-
+betas<-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+d=betas[1]-betas[2]
 hypothesis<-"V1 > V2"
 
 complement<-TRUE
@@ -118,7 +118,7 @@ vioplot.ic1.df<-data.frame(BFic1[,"aggr.PMP",1:nrow(planned.n)]) %>%
 
 vioplot.ic1.df$condition<-factor(vioplot.ic1.df$condition, levels = unique(vioplot.ic1.df$condition))
 
-correct.aggr<-vioplot.ic1.df %>% 
+correct.aggr.ic1<-vioplot.ic1.df %>% 
   group_by(condition,power) %>% 
   summarize(correct.75 = sum(aggr.PMP>.75)/iter,
             correct.90 = sum(aggr.PMP>.90)/iter,
@@ -140,7 +140,8 @@ vioplot.ic1<-vioplot.ic1.df %>%
   labs(
     x = "Condition",
     y = "aggregate PMP",
-    title = paste("Distribution of aggregate PMPs from 10 studies with equal power (eta) when testing Hi:",hypothesis ," against Hc across", iter, "iterations when Hi is true in the population"),
+    title = paste("Distribution of aggregate PMPs from 10 studies with equal power (eta) when testing Hi:",hypothesis ," against Hc across", iter, "iterations
+                  when Hi is true in the population"),
     subtitle = "Each point represents an aggregate PMP from 10 studies from one iteration",
     caption = paste("Population specifications: pcor:",pcor, ";r2 =", r2 , "; b1:b2 = ",ratio_beta[1],":",ratio_beta[2],"; d = b1 - b2 =", d, "; Hi:", hypothesis)
     
@@ -158,17 +159,17 @@ vioplot.ic1<-vioplot.ic1.df %>%
   annotate("label",
            x = seq(1:nrow(planned.n))+0.3,
            y = rep(c(0.77), times=nrow(planned.n)),
-           label =paste("P(PMP>.75) =", correct.aggr$correct.75),
+           label =paste("P(PMP>.75) =", correct.aggr.ic1$correct.75),
            size=2.7)+
   annotate("label",
            x = seq(1:nrow(planned.n))+0.3,
            y = rep(c(0.92), times=nrow(planned.n)),
-           label =paste("P(PMP>.90) =", correct.aggr$correct.90),
+           label =paste("P(PMP>.90) =", correct.aggr.ic1$correct.90),
            size=2.7)+
   annotate("label",
            x = seq(1:nrow(planned.n))+0.3,
            y = rep(c(0.97), times=nrow(planned.n)),
-           label =paste("P(PMP>.95) =", correct.aggr$correct.95),
+           label =paste("P(PMP>.95) =", correct.aggr.ic1$correct.95),
            size=2.7)
 
 vioplot.ic1
@@ -181,8 +182,8 @@ models <- c("normal")
 pcor <- c(0.2)
 r2<-0.0409782632894305
 ratio_beta <- c(1,2)
-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
-
+betas<-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+d=betas[1]-betas[2]
 hypothesis<-"V1 > V2"
 
 complement<-TRUE
@@ -240,8 +241,6 @@ for(m in 1:nrow(planned.n)){
 
 
 
-
-
 #### Violin plots(aggr.PMPs) ----------------------------------------------------
 
 vioplot.ci1.df<-data.frame(BFci1[,"aggr.PMP",1:nrow(planned.n)]) %>% 
@@ -253,7 +252,7 @@ vioplot.ci1.df<-data.frame(BFci1[,"aggr.PMP",1:nrow(planned.n)]) %>%
 
 vioplot.ci1.df$condition<-factor(vioplot.ci1.df$condition, levels = unique(vioplot.ci1.df$condition))
 
-correct.aggr<-vioplot.ci1.df %>% 
+correct.aggr.ci1<-vioplot.ci1.df %>% 
   group_by(condition,power) %>% 
   summarize(correct.75 = sum(aggr.PMP<1-.75)/iter,
             correct.90 = sum(aggr.PMP<1-.90)/iter,
@@ -293,17 +292,17 @@ vioplot.ci1<-vioplot.ci1.df %>%
   annotate("label",
            x = seq(1:nrow(planned.n))+0.3,
            y = rep(c(0.23), times=nrow(planned.n)),
-           label =paste("P(PMP<.25) =", correct.aggr$correct.75),
+           label =paste("P(PMP<.25) =", correct.aggr.ci1$correct.75),
            size=2.7)+
   annotate("label",
            x = seq(1:nrow(planned.n))+0.3,
            y = rep(c(0.08), times=nrow(planned.n)),
-           label =paste("P(PMP<.10) =", correct.aggr$correct.90),
+           label =paste("P(PMP<.10) =", correct.aggr.ci1$correct.90),
            size=2.7)+
   annotate("label",
            x = seq(1:nrow(planned.n))+0.3,
            y = rep(c(0.03), times=nrow(planned.n)),
-           label =paste("P(PMP<.5) =", correct.aggr$correct.95),
+           label =paste("P(PMP<.5) =", correct.aggr.ci1$correct.95),
            size=2.7)
 
 vioplot.ci1
