@@ -162,3 +162,24 @@ plot(power.k3$power, power.k3$n)
 
 save(power.results, file="Outputs/power quantification/power.results.RData")
 write_xlsx(power.results, "Outputs/power quantification/power.results.xlsx")
+
+
+
+
+#Analyse results -----------------------------------------------------------
+
+#Visualize how the power increases with sample size
+library(ggplot2)
+power.results<-as.data.frame(power.results)
+ggplot(data=power.results) %>% 
+  geom_line(mapping = aes(x=n, y=power), group=ratio)
+power.results %>% 
+  ggplot(aes(x=n, y=power, group=ratio, color=ratio))+
+  geom_line()+
+  geom_point()+
+  scale_y_continuous(breaks = seq(0, 1, by=0.05))+
+  geom_text(aes(label=n),
+          #  vjust=c(rep(0.5, times=11), rep(-0.5, times=11)),
+            hjust=c(rep(-0.8, times=10),-0.1, rep(+1.8, times=10),-0.4))
+
+

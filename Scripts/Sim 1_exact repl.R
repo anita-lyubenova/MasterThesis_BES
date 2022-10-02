@@ -406,3 +406,83 @@ for(m in 1:nrow(planned.n)){
 }#end conditions loop; THE END
 
 
+#Visualization of results ---------------------------
+library(ggplot2)
+library(ggpubr)
+library(ggrepel)
+library(htmltools)
+
+#how the power of individual studies varies with the power of BES
+correct.aggr.ci1$power<-as.factor(correct.aggr.ci1$power)
+a<-correct.aggr.ci1 %>% 
+  ggplot(aes(x=power,y=correct.75,group=1, color="red")) +
+  geom_line()+
+  geom_point()+
+  geom_text(aes(label=correct.75), hjust=1, vjust=-0.8)
+  
+correct.aggr.ci1 %>% 
+  ggplot(aes(x=power,y=correct.95,group=1)) +
+  geom_line()+
+  geom_point()+
+  geom_text(aes(label=correct.95), hjust=-0.2, vjust=+1.3)
+
+ggarrange(a,b)
+
+correct.aggr.ci1 %>% 
+  ggplot(aes(x=power,y=correct.75,group=1)) +
+  geom_line(aes(color="red"))+
+  geom_point(color="red")+
+  geom_text(aes(label=correct.75,color="red"), hjust=1, vjust=-0.8)+
+  
+  geom_line(aes(x=power,y=correct.95,group=1))+
+  geom_point(aes(x=power,y=correct.95,group=1))+
+  geom_text(aes(label=correct.95), hjust=0, vjust=c(rep(6,times=3), 2.5, 3.5, rep(1.8, times=5)))+
+  
+  scale_y_continuous(breaks = seq(0,1, 0.05), lim=c(0.45,1))
+  
+correct.aggr.ci1 %>% ggplot(aes(x=power, group=1)) + 
+  geom_line(aes(y = correct.75), color = "red") + 
+  geom_point(aes(y = correct.75), color = "red")+
+  geom_line(aes(y = correct.90), color="black") +
+  geom_point(aes(y = correct.90), color="black") +
+  geom_text(aes(y = correct.75,label = correct.75, color="red"), hjust=+1, vjust=-0.5)+
+  geom_text(aes(y = correct.90,label = correct.90), hjust=0, vjust=1.2)+
+  labs(title = "Increase of BES-power with the increase of the power in the study set (when all studies have equal power)",
+       x="Study set power",
+       y="BES-power"
+       )
+  
+
+correct.aggr.ic1.long<-correct.aggr.ic1 %>% 
+  pivot_longer(cols=c("correct.75", "correct.90", "correct.95"),
+               names_to = "stakes_level",
+               values_to = "BES_power"
+               )
+
+correct.aggr.ic1.long$stakes_level<-as.factor(correct.aggr.ic1.long$stakes_level)
+levels(correct.aggr.ic1.long$stakes_level)<-c("low (PMP>.75)", "high (PMP>.90)", "very high (PMP>.95)")
+correct.aggr.ic1.long %>% 
+  ggplot(aes(x=power, y=BES_power, group=stakes_level, color=stakes_level))+
+  geom_line()+
+  geom_point()+
+  geom_text_repel(aes(y=BES_power, label=round(BES_power,2), color=stakes_level),
+            size=4)+
+  labs(title = "Variation of BES-power (y-axis) depending on power in the study set (x-axis) and level of the stakes (separate lines)",
+       x="Study set power",
+       y="BES-power",
+       color="Stakes",
+       caption ="Conditions: Test of the Hi V1>V2 agains Hc, when k=2, pcor = 0.2, R2 = 0.04, b1:b2 = 2:1, d = b1-b2 = 0.084; Study set: T = 10, the studies have equal power"
+         )+
+  scale_y_continuous(breaks = seq(0.45,1, 0.05))
+  
+
+
+
+
+
+
+
+
+
+
+
