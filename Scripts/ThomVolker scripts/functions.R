@@ -1,15 +1,22 @@
-
 library(tidyverse)
 library(magrittr)
 library(furrr)
 library(BFpack)
 library(Rcpp)
 library(RcppArmadillo)
-# devtools::build("DataCpp")
-# devtools::install("DataCpp")
-# library(DataCpp)
 library(MASS)
-
+library(dplyr)
+library(ggplot2)
+library(ggstatsplot)
+library(plotly)
+library(readxl)
+library(mvtnorm)
+library(highcharter)
+library(lavaan)
+library(writexl)
+library(devtools)
+library(SSDbain)
+#
 cormat <- function(partial_cor, diag_length) {
   r <- diag(diag_length)    # fill correlation matrix with partial correlation
   r[r != 1] <- partial_cor  # between variables
@@ -96,3 +103,50 @@ gg_color_hue <- function(n) {
   hues = seq(15, 375, length = n + 1)
   hcl(h = hues, l = 65, c = 100)[1:n]
 }
+
+
+#function to perform sample size determination for specified power levels
+#when testing Hi agaitst its complement
+
+power_to_N<-function(power.lvls,
+                     r2,
+                     pcor,
+                     ratio_beta,
+                     k=k,
+                     H1, #e.g. "beta1>beta2>beta3",
+                     T_sim=10000
+              
+){
+  
+  betas<-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+  
+  power<-data.frame(power=power.lvls,
+                       k=k,
+                       pcor=pcor,
+                       r2=r2,
+                       d=betas[length(betas)],
+                       n=NA)
+  
+  
+  for(p in 1:length(power.lvls)){
+    
+    power[p,"n"] <-SSDRegression(Hyp1 = hypothesis, Hyp2 = "Hc", k=k,
+                                    rho = cormat(pcor, k),
+                                    R_square1=r2,
+                                    R_square2 = r2,
+                                    T_sim = T_sim,
+                                    BFthresh=1,
+                                    eta=power.lvls[p],
+                                    standardize = TRUE,
+                                    ratio = ratio_beta
+    )[[1]]
+    
+    
+    
+  }
+  
+}
+
+
+
+
