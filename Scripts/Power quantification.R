@@ -109,6 +109,7 @@ plot(power.k2)
 
 ### R2=.02------------------------
 power.lvls<-c(seq(0.50, 0.95, by=0.05),99)
+r2=.02
 ratio_beta<-c(2,1)
 pcor<-0.3
 rho<-cormat(pcor, length(ratio_beta))
@@ -123,11 +124,11 @@ m<-gen_dat(r2=r2,
   lm(Y ~ V1 + V2) %>% 
   summ(part.corr=TRUE)
 
-r1<-m$coeftable[2,5]
-r2<-m$coeftable[3,5]
+part.cor1<-m$coeftable[2,5]
+part.cor2<-m$coeftable[3,5]
 
-z1<-log((1+r1)/(1-r1))
-z2<-log((1+r2)/(1-r2))
+z1<-log((1+part.cor1)/(1-part.cor1))
+z2<-log((1+part.cor2)/(1-part.cor2))
 
 q=z1-z2
 q 
@@ -232,4 +233,153 @@ power.results %>%
           #  vjust=c(rep(0.5, times=11), rep(-0.5, times=11)),
             hjust=c(rep(-0.8, times=10),-0.1, rep(+1.8, times=10),-0.4))
 
+
+
+
+#Hi effect size investigation --------------------------
+#Omportance of R2 and ratio_beta for the power of a study to test Hi
+
+
+## MAIN POWER simulation ------------------------
+power.lvls<-c(seq(0.40, 0.95, by=0.05),99)
+r2=.02
+ratio_beta<-c(2,1)
+pcor<-0.3
+rho<-cormat(pcor, length(ratio_beta))
+betas<-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+
+#obtain the semipartial correlations
+m<-gen_dat(r2=r2, 
+           betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+           rho=cormat(pcor, length(ratio_beta)),
+           n=1000000,
+           "normal")%$%
+  lm(Y ~ V1 + V2) %>% 
+  summ(part.corr=TRUE)
+
+part.cor1<-m$coeftable[2,5]
+part.cor2<-m$coeftable[3,5]
+
+z1<-log((1+part.cor1)/(1-part.cor1))
+z2<-log((1+part.cor2)/(1-part.cor2))
+
+q=z1-z2
+q 
+
+#compute power
+power.k2.p2<-power_to_N(power.lvls=power.lvls,
+                        r2=r2,
+                        pcor=pcor,
+                        ratio_beta=ratio_beta,
+                        k=length(ratio_beta),
+                        H1="beta1>beta2",
+                        T_sim=10000)
+
+
+## Change q------------------------
+#by increasing the ratio
+#However, there must be a limit to q depending on R2
+# the increase in q is very small after .20 even with large increase in the ratio,
+# the limit of q for r2=.02 must be around .27
+
+#a for loop to investigate how q increases with increasing ratio
+q<-c()
+rats<-seq(5,80, by=5)
+for(i in 1:length(rats)){
+  r2=.02
+  ratio_beta<-c(rats[i],1)
+  pcor<-0.3
+  
+  #obtain the semipartial correlations
+  m<-gen_dat(r2=r2, 
+             betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+             rho=cormat(pcor, length(ratio_beta)),
+             n=1000000,
+             "normal")%$%
+    lm(Y ~ V1 + V2) %>% 
+    summ(part.corr=TRUE)
+  
+  part.cor1<-m$coeftable[2,5]
+  part.cor2<-m$coeftable[3,5]
+  
+  z1<-log((1+part.cor1)/(1-part.cor1))
+  z2<-log((1+part.cor2)/(1-part.cor2))
+  
+  q[i] =z1-z2
+  print(i)
+  
+}
+cbind(rats, q)
+plot(1:16,q)
+
+power.lvls<-c(seq(0.40, 0.95, by=0.05),99)
+r2=.02
+ratio_beta<-c(55,1)
+pcor<-0.3
+betas<-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+
+#obtain the semipartial correlations
+m<-gen_dat(r2=r2, 
+           betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+           rho=cormat(pcor, length(ratio_beta)),
+           n=1000000,
+           "normal")%$%
+  lm(Y ~ V1 + V2) %>% 
+  summ(part.corr=TRUE)
+
+part.cor1<-m$coeftable[2,5]
+part.cor2<-m$coeftable[3,5]
+
+z1<-log((1+part.cor1)/(1-part.cor1))
+z2<-log((1+part.cor2)/(1-part.cor2))
+
+q.single=z1-z2
+q.single
+
+#compute power
+power.k2.p2.increase.q<-power_to_N(power.lvls=power.lvls,
+                        r2=r2,
+                        pcor=pcor,
+                        ratio_beta=ratio_beta,
+                        k=length(ratio_beta),
+                        H1="beta1>beta2",
+                        T_sim=10000)
+
+
+
+
+## increase R2 -----------------
+#and decrease the ratio to keep q = .112 ( as in the main power simulation)
+power.lvls<-c(seq(0.40, 0.95, by=0.05),99)
+r2=.13
+ratio_beta<-c(1.3,1)
+pcor<-0.3
+betas<-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+
+#obtain the semipartial correlations
+m<-gen_dat(r2=r2, 
+           betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+           rho=cormat(pcor, length(ratio_beta)),
+           n=1000000,
+           "normal")%$%
+  lm(Y ~ V1 + V2) %>% 
+  summ(part.corr=TRUE)
+
+part.cor1<-m$coeftable[2,5]
+part.cor2<-m$coeftable[3,5]
+
+z1<-log((1+part.cor1)/(1-part.cor1))
+z2<-log((1+part.cor2)/(1-part.cor2))
+
+q.single=z1-z2
+q.single
+
+#compute power
+power.k2.p2.increase.R2<-power_to_N(power.lvls=power.lvls,
+                        r2=r2,
+                        pcor=pcor,
+                        ratio_beta=ratio_beta,
+                        k=length(ratio_beta),
+                        H1="beta1>beta2",
+                        T_sim=10000)
 
