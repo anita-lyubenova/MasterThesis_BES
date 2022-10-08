@@ -14,6 +14,9 @@ library(mvtnorm)
 library(highcharter)
 library(lavaan)
 library(writexl)
+library(devtools)
+#install_github("Qianrao-Fu/SSDbain",upgrade="never")
+library(SSDbain)
 #
 
 #load the functions
@@ -23,9 +26,7 @@ load("Outputs/functions.RData")
 #SSDreegression() --------------------------------
 #from Fu (2021)
 
-library(devtools)
-#install_github("Qianrao-Fu/SSDbain",upgrade="never")
-library(SSDbain)
+
 
 
 #__________________________________________________________________________________________
@@ -66,6 +67,7 @@ power.lvls<-c(seq(from=0.5, to=0.95, by=0.05),0.99)
 #(I've run them separately but in the end they should be in the same file)
 
 ## for K=2 ------------------------------- 
+### previous version (mediumm R2) -------------------------
 pcor<-0.2
 #r2<-.04
 #r2= b1^2 + b2^2 + 2*b1*b2*pcor, where b1 and b2 are the coefficients found in the section K=3 and r2=0.13
@@ -105,10 +107,43 @@ save(power.k2, file="Outputs/power quantification/power.k2.RData")
 write_xlsx(power.k2, "Outputs/power quantification/power.k2.xlsx")
 plot(power.k2)
 
+### R2=.02------------------------
+power.lvls<-c(seq(0.50, 0.95, by=0.05),99)
+ratio_beta<-c(2,1)
+pcor<-0.3
+rho<-cormat(pcor, length(ratio_beta))
+betas<-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
 
+#obtain the semipartial correlations
+m<-gen_dat(r2=r2, 
+           betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+           rho=cormat(pcor, length(ratio_beta)),
+           n=1000000,
+           "normal")%$%
+  lm(Y ~ V1 + V2) %>% 
+  summ(part.corr=TRUE)
 
+r1<-m$coeftable[2,5]
+r2<-m$coeftable[3,5]
+
+z1<-log((1+r1)/(1-r1))
+z2<-log((1+r2)/(1-r2))
+
+q=z1-z2
+q 
+
+#compute power
+power.k2.p2<-power_to_N(power.lvls=power.lvls,
+                        r2=r2,
+                        pcor=pcor,
+                        ratio_beta=ratio_beta,
+                        k=length(ratio_beta),
+                        H1="beta1>beta2",
+                        T_sim=10000)
+#minimum power: 0.5834 0.5822 
 
 ## for K=3 ------------------------------- 
+### d=.08 -------------------------------
 power.lvls<-c(seq(from=0.5, to=0.95, by=0.05),0.99)
 pcor<-0.2
 r2<-.13
@@ -141,6 +176,21 @@ for(p in 1:length(power.lvls)){
 
 save(power.k3, file="Outputs/power quantification/power.k3.RData")
 
+### d=.05 -------------------------------
+power.lvls<-seq(0.05, 0.95, by=0.05)
+d<-0.05435573
+pcor<-0.2
+r2<-(3*d)^2+ (2*d)^2  + d^2 + 2*pcor*(d*2*d + d*3*d + 2*d*3*d) # = 0.05436364
+ratio_beta <- c(3,2,1)
+
+
+power.k3.d1.r2<-power_to_N(power.lvls=power.lvls,
+                         r2=r2,
+                         pcor=0.2,
+                         ratio_beta=ratio_beta,
+                         k=3,
+                         H1="beta1>beta2>beta3",
+                         T_sim=10000)
 
 ## for K=4 ------------------------------- 
 
