@@ -125,12 +125,30 @@ power_to_N<-function(power.lvls,
                        pcor=pcor,
                        r2=r2,
                        d=betas[length(betas)],
+                       q=NA,
                        n=NA)
   
+  #obtain effect size q as the difference between the z-standardized semipartial correlations (empirically)
+  m<-gen_dat(r2=r2, 
+             betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+             rho=cormat(pcor, length(ratio_beta)),
+             n=10000000,
+             "normal")%$%
+    lm(Y ~ V1 + V2) %>% 
+    summ(part.corr=TRUE)
+  
+  r1<-m$coeftable[2,5]
+  r2<-m$coeftable[3,5]
+  
+  z1<-log((1+r1)/(1-r1))
+  z2<-log((1+r2)/(1-r2))
+  
+  q=z1-z2
+  power$q<-q
   
   for(p in 1:length(power.lvls)){
     
-    power[p,"n"] <-SSDRegression(Hyp1 = hypothesis, Hyp2 = "Hc", k=k,
+    power[p,"n"] <-SSDRegression(Hyp1 = H1, Hyp2 = "Hc", k=k,
                                     rho = cormat(pcor, k),
                                     R_square1=r2,
                                     R_square2 = r2,
@@ -143,7 +161,10 @@ power_to_N<-function(power.lvls,
     
     
     
+    
   }
+  return(power)
+  
   
 }
 
