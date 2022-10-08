@@ -838,3 +838,180 @@ ratio %*% t(ratio) %*% rho
 #Calculation of R2 depending on betas
 
 0.16810970^2 + 0.08405485^2 + 2*0.08405485*0.16810970*0.2
+
+
+
+
+
+# If k=4 and r2=.13 (medium) what is the difference d?---------------
+r2<-0.13
+ratio_beta<-c(4:1)
+pcor<-0.2
+rho<-cormat(pcor, length(ratio_beta))
+
+coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+
+#d = 0.05435573
+
+
+#If d=0.05435573 and k=2, what is R2? 
+0.10871146 ^2 + 0.05435573^2 + 2*0.05435573*0.10871146 *0.2 #R2 = 0.01713636
+#check
+r2<-0.01713636
+ratio_beta<-c(2:1)
+pcor<-0.2
+rho<-cormat(pcor, length(ratio_beta))
+
+coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+
+#If d=0.05435573 and k=3, pcor=2, what is R2 ?
+d<-0.05435573
+pcor<-0.2
+(3*d)^2+ (2*d)^2  + d^2 + 2*pcor*(d*2*d + d*3*d + 2*d*3*d) # = R2 = 0.05436364
+
+
+
+
+
+## K=3, small R2=.02 ----------------------
+r2<-0.02
+ratio_beta<-c(3,2,1)
+pcor<-0
+rho<-cormat(pcor, length(ratio_beta))
+
+coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+
+#obtain the semipartial correlations
+m<-gen_dat(r2=r2, 
+           betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+           rho=cormat(pcor, length(ratio_beta)),
+           n=1000000,
+           "normal")%$%
+  lm(Y ~ V1 + V2+ V3) %>% 
+  summ(part.corr=TRUE)
+
+r1<-m$coeftable[2,5]
+r2<-m$coeftable[3,5]
+
+z1<-log((1+r1)/(1-r1))
+z2<-log((1+r2)/(1-r2))
+
+q=z1-z2
+q # 0.07375554
+
+
+r1<-m$coeftable[3,5]
+r2<-m$coeftable[4,5]
+
+z1<-log((1+r1)/(1-r1))
+z2<-log((1+r2)/(1-r2))
+
+q=z1-z2
+q #0.07773007
+
+
+
+
+## K=2, small R2 = .ß2
+r2<-0.02
+ratio_beta<-c(2,1)
+pcor<-0
+rho<-cormat(pcor, length(ratio_beta))
+
+coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+
+#obtain the semipartial correlations
+m<-gen_dat(r2=r2, 
+           betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+           rho=cormat(pcor, length(ratio_beta)),
+           n=1000000,
+           "normal")%$%
+  lm(Y ~ V1 + V2) %>% 
+  summ(part.corr=TRUE)
+
+r1<-m$coeftable[2,5]
+r2<-m$coeftable[3,5]
+
+z1<-log((1+r1)/(1-r1))
+z2<-log((1+r2)/(1-r2))
+
+q=z1-z2
+q 
+
+#Effect of pcor on q
+#q=0.09712248 (k=2, pcor=0.5, r2=.02)
+#q=0.1264518 (k=2, pcor=0, r2=.02)
+
+
+########### calculate semi-parital correlations of the predictors wiht the outcome -------------------
+# library(jtools)
+# m<-gen_dat(r2=r2, 
+#         betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+#         rho=cormat(pcor, length(ratio_beta)),
+#         n=10000,
+#         "normal")%$%
+#   lm(Y ~ V1 + V2) %>% 
+#   summ(part.corr = TRUE)
+# 
+# m$coeftable
+
+#analytically
+#r1=b1*p
+r1<-betas[1]*sqrt(1-pcor^2)
+r2<-betas[2]*sqrt(1-pcor^2)
+
+z1<-log((1+r1)/(1-r1))
+z2<-log((1+r2)/(1-r2))
+
+q=z1-z2
+q #=.16 small effect
+
+#if I had kept r2 to be .13 => q becomes medium effect
+pcor <- c(0.2)
+r2<-0.13
+ratio_beta <- c(2,1)
+betas<-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+
+r1<-betas[1]*sqrt(1-pcor^2)
+r2<-betas[2]*sqrt(1-pcor^2)
+
+z1<-log((1+r1)/(1-r1))
+z2<-log((1+r2)/(1-r2))
+
+q=z1-z2
+q
+
+
+r2<-.13
+ratio_beta <- c(3,2,1)
+pcor <- c(0.2)
+coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+models <- c("normal")
+
+m<-gen_dat(r2=r2, 
+           betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+           rho=cormat(pcor, length(ratio_beta)),
+           n=1000000,
+           "normal")%$%
+  lm(Y ~ V1 + V2 + V3) %>% 
+  summ(part.corr=TRUE)
+
+m$coeftable[,5]
+
+r1<-betas[1]*sqrt(1-pcor^2)
+r2<-betas[2]*sqrt(1-pcor^2)
+
+z1<-log((1+r1)/(1-r1))
+z2<-log((1+r2)/(1-r2))
+
+q=z1-z2
+q
+
+
+
+
+
+
+######################################################################
+
+
