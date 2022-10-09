@@ -425,4 +425,8 @@ power.importance.comparison %>%
   theme_minimal()+
   scale_x_continuous(breaks=seq(0.5,0.95, by = 0.05))+
   labs(title = "Importance of R2 and q for the power of a study to test H1: b1>b2 against Hc",
-       caption= "For specification of the conditions, see Outputs/power quanitfication7 power.k2.p2.xlsx")
+       caption= "Conditions. Main: R2=.02	ratio = c(2, 1), q = .112;
+                             Increase q: R2= .02, ratio = c(55, 1), q = .27,
+                             Increase R2: R2= .13, ratio = c(1.3, 1), q = .112;
+                             pcor (all) = .3
+       ")
