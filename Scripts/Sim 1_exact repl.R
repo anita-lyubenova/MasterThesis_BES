@@ -443,6 +443,28 @@ vioplot.ci2
 
 
 
+# 09.10.2022 ----------------------------------------------------------------------------
+#I chose to use a small R2=.02 and small q=.11 (for k=2)
+sim0<-read_xlsx("Simulations planning/SimPlanning.k2.p2.t10.exact_09.10.xlsx", sheet="Sim0")
+sim1<-read_xlsx("Simulations planning/SimPlanning.k2.p2.t10.exact_09.10.xlsx", sheet="Sim1")
+
+models <- c("normal")
+pcor <- c(0.3)
+r2<-0.02
+ratio_beta <- c(2,1)
+betas<-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+hypothesis<-"V1 > V2"
+
+complement<-TRUE
+
+iter<-10000
+
+row.names<-paste0("Iter.", seq(1:iter))
+column.names<-c(paste0("Study.", seq(1:10)), "log.aggr.BF", "aggr.PMP")
+slice.names<-paste0("Condition.", seq(1:nrow(planned.n)))
+
+BFic1<-array(NA, dim = c(iterations=iter, studies=length(column.names), conditions=nrow(planned.n)),
+             dimnames = list(row.names,column.names, slice.names))
 
 
-
+seed<-123
