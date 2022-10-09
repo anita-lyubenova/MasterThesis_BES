@@ -16,6 +16,7 @@ library(lavaan)
 library(writexl)
 library(devtools)
 library(SSDbain)
+library(jtools)
 #
 cormat <- function(partial_cor, diag_length) {
   r <- diag(diag_length)    # fill correlation matrix with partial correlation

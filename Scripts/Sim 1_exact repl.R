@@ -24,6 +24,8 @@ library(mvtnorm)
 library(highcharter)
 library(lavaan)
 library(writexl)
+library(ggplot2)
+library(ggrepel)
 #
 
 #load the functions
