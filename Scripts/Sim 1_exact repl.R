@@ -43,6 +43,181 @@ planned.n<-read_xlsx("Simulations planning.xlsx", sheet = "Sim1")
 #Research Question: Given that all studies have the same power to support the true hypothesis over the complement,
 #                   what power level is enough to produce reliable BES-aggregate support?
 
+#function for sim1
+
+
+
+run.sim<-function(pcor,
+                   r2,
+                   ratio_beta,
+                   q,
+                   hypothesis,
+                   iter,
+                   seed=123,
+                   t=10,
+                   planned.n, # a table with the sample sizes per condition, a sheet from SimPlanning excel file
+                   manipulated # what was manipulated in the simulation (e.g. avg. power, spread, median-mean, etc.)
+){
+  #predefined options
+  models <- c("normal")
+  complement<-TRUE
+  #caluclate beta coefficients
+  betas<-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+  
+  k<-length(ratio_beta)
+  d<-betas[1]-betas[2]
+  
+  #BFic loop-------
+  row.names<-paste0("Iter.", seq(1:iter))
+  column.names<-c(paste0("Study.", seq(1:t)), "log.aggr.BF", "aggr.PMP")
+  slice.names<-paste0("Condition.", seq(1:nrow(planned.n)))
+  
+  BFic<-array(NA, dim = c(iterations=iter, studies=length(column.names), conditions=nrow(planned.n)),
+               dimnames = list(row.names,column.names, slice.names))
+  
+  
+  #for each condition (manipulated sample size distribution in the set of studies) (slice m in the array)
+  for(m in 1:nrow(planned.n)){
+    
+    n<-planned.n[m, 3:(3+t-1)] %>% as.numeric()
+    
+    #for each iteration (row i in the array)
+    for(i in 1:iter) {
+      
+      #for each study; column s in the array
+      for(s in 1:length(n)){
+        
+        seed=seed+1
+        set.seed(seed)
+        
+        print(paste("Condition m:", m, ", Iteration i:", i, "Study s:", s))
+        
+        BF<-gen_dat(r2=r2, 
+                    betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+                    rho=cormat(pcor, length(ratio_beta)),
+                    n=n[s],
+                    "normal")%$%
+          lm(Y ~ V1 + V2) %>%
+          BF(hypothesis = hypothesis, complement = complement) %$%
+          BFtable_confirmatory %>% as.data.frame()%$% BF
+        
+        BFic[i,s,m]<-BF[1]/BF[2] 
+        
+        
+      }# end iterations loop i
+      
+      #after all 10 studies in the set were simulated and evaluated in iteration i => calculate the log aggregate BF for iteration i
+      BFic[i,11,m] <-sum(log(BFic[i,1:10,m]))
+      #calculate the aggregate PMPs
+      BFic[i,12,m] <- prod(BFic[i,1:10,m])/(prod(BFic[i,1:10,m]) + 1)
+      
+    }# end study loop s
+    
+  }#end conditions loop; THE END of BFic loop
+
+  # BES-power (aggr.PMPs) ----------------------------------------------------
+  
+  vioplot.ic.df<-data.frame(BFic[,"aggr.PMP",1:nrow(planned.n)]) %>% # a df with nrow=iter, and ncol=number of conditions
+    pivot_longer(cols = paste0("Condition.", 1:nrow(planned.n)),
+                 names_to = "condition",
+                 values_to = "aggr.PMP") %>% #long format df wtih 2 columns: condition and aggr.PMP, where each condition is repeated iter number of times
+    arrange(match(condition, paste0("Condition.", 1:nrow(planned.n)))) %>% #sort the df by Condition
+    mutate("{manipulated}":=rep(planned.n$Manipulated, each=iter)) #create a column that labels what was value of the manipulated aspect (e.g. power, sum of squares, median-mean, etc.) in each condition
+  
+  # condition as factor
+  vioplot.ic.df$condition<-factor(vioplot.ic.df$condition, levels = unique(vioplot.ic.df$condition)) 
+  
+  #compute BESpower as the proportion of aggr. PMPs that were above a certain threshold: .75, .90, .95
+  BESpower.ic<-vioplot.ic.df %>% 
+    group_by_at(c("condition", manipulated)) %>% 
+    summarize(correct.75 = sum(aggr.PMP>.75)/iter,
+              correct.90 = sum(aggr.PMP>.90)/iter,
+              correct.95 = sum(aggr.PMP>.95)/iter
+    )
+  
+  # Vioplots (aggr.PMPs) ----------------------------------------------------
+  vioplot.ic<-vioplot.ic.df %>% 
+    #boxplot with the PMPs per condition 
+    ggbetweenstats(x = condition,
+                   y = aggr.PMP,
+                   pairwise.comparisons = FALSE,
+                   results.subtitle=FALSE,
+                   type = "nonparametric",
+                   plot.type = "boxviolin",
+                   centrality.plotting=FALSE
+    ) +
+    labs(
+      x = manipulated,
+      y = "aggregate PMP",
+      title = paste("Distribution of aggregate PMPs from", t ," studies when testing Hi:",hypothesis ," against Hc across", iter, "iterations
+                  when Hi is true in the population across condions (", manipulated ,")"),
+      subtitle = "Each point represents an aggregate PMP from 10 studies from one iteration",
+      caption = paste("Population specifications: pcor:",pcor, ";r2 =", r2 , "; b1:b2 = ",ratio_beta[1],":",ratio_beta[2],"; d = b1 - b2 =", d, "q =",q ,"t =",t ,"; Hi:", hypothesis)
+      
+    )+ 
+    # Customizations
+    theme(
+      # This is the new default font in the plot
+      text = element_text( size = 10, color = "black"),
+      axis.text.x = element_text(size=8)
+    )+ 
+    geom_hline(yintercept=c(0.75, 0.90, 0.95), linetype="dashed", 
+               color = "red", size=0.8)+
+    scale_x_discrete(labels=planned.n$Manipulated
+    )+
+    annotate("label",
+             x = seq(1:nrow(planned.n))+0.3,
+             y = rep(c(0.77), times=nrow(planned.n)),
+             label =paste("P(PMP>.75) =", BESpower.ic$correct.75),
+             size=2.7)+
+    annotate("label",
+             x = seq(1:nrow(planned.n))+0.3,
+             y = rep(c(0.92), times=nrow(planned.n)),
+             label =paste("P(PMP>.90) =", BESpower.ic$correct.90),
+             size=2.7)+
+    annotate("label",
+             x = seq(1:nrow(planned.n))+0.3,
+             y = rep(c(0.97), times=nrow(planned.n)),
+             label =paste("P(PMP>.95) =", BESpower.ic$correct.95),
+             size=2.7)
+  
+  vioplot.ic
+  
+  #Plot: Manipulated aspect x BES power --------------------------------------------
+  
+  #how the power of individual studies varies with the power of BES
+  BESpower.ic.long<-BESpower.ic %>% 
+    pivot_longer(cols=c("correct.75", "correct.90", "correct.95"),
+                 names_to = "stakes_level",
+                 values_to = "BES_power"
+    )
+  
+  BESpower.ic.long$stakes_level<-as.factor(BESpower.ic.long$stakes_level)
+  levels(BESpower.ic.long$stakes_level)<-c("low (PMP>.75)", "high (PMP>.90)", "very high (PMP>.95)")
+  
+  plot.BESpower.per.cond<-BESpower.ic.long %>% 
+    ggplot(aes(x=!!(sym(manipulated)), y=BES_power, group=stakes_level, color=stakes_level))+
+    geom_line()+
+    geom_point()+
+    geom_text_repel(aes(y=BES_power, label=round(BES_power,2), color=stakes_level),
+                    size=4)+
+    labs(title = paste("Variation of BES-power (y-axis) across conditions(", manipulated ,") (x-axis) and level of the stakes (separate lines)"),
+         x=manipulated,
+         y="BES-power",
+         color="Stakes",
+         caption =paste("Specifications: pcor:",pcor, ";r2 =", r2 , "; b1:b2 = ",ratio_beta[1],":",ratio_beta[2],"; d = b1 - b2 =", d, "q =",q ,"t =",t, "; Hi:", hypothesis)
+    )+
+    scale_y_continuous(breaks = seq(0.45,1, 0.05))+
+    scale_x_continuous(breaks = BESpower.ic[[manipulated]])+
+    theme_minimal()
+  
+  
+  list(BFic = BFic, BESpower.ic = BESpower.ic, vioplot.ic = vioplot.ic, BESpower.ic.long = BESpower.ic.long,  plot.BESpower.per.cond=plot.BESpower.per.cond)
+  
+} #end run.sim1() -------------------
+
+
+
 ### Hi == TRUE-------------------------
 models <- c("normal")
 pcor <- c(0.2)
@@ -119,6 +294,7 @@ vioplot.ic1.df<-data.frame(BFic1[,"aggr.PMP",1:nrow(planned.n)]) %>%
   mutate(power=rep(planned.n$power, each=iter))
 
 vioplot.ic1.df$condition<-factor(vioplot.ic1.df$condition, levels = unique(vioplot.ic1.df$condition))
+
 
 correct.aggr.ic1<-vioplot.ic1.df %>% 
   group_by(condition,power) %>% 
@@ -421,6 +597,7 @@ correct.aggr.ic1.long<-correct.aggr.ic1 %>%
 
 correct.aggr.ic1.long$stakes_level<-as.factor(correct.aggr.ic1.long$stakes_level)
 levels(correct.aggr.ic1.long$stakes_level)<-c("low (PMP>.75)", "high (PMP>.90)", "very high (PMP>.95)")
+
 correct.aggr.ic1.long %>% 
   ggplot(aes(x=power, y=BES_power, group=stakes_level, color=stakes_level))+
   geom_line()+
@@ -433,7 +610,8 @@ correct.aggr.ic1.long %>%
        color="Stakes",
        caption ="Conditions: Test of the Hi V1>V2 agains Hc, when k=2, pcor = 0.2, R2 = 0.04, b1:b2 = 2:1, d = b1-b2 = 0.084; Study set: T = 10, the studies have equal power"
          )+
-  scale_y_continuous(breaks = seq(0.45,1, 0.05))
+  scale_y_continuous(breaks = seq(0.45,1, 0.05))+
+  theme_minimal()
   
 
 
@@ -445,26 +623,25 @@ vioplot.ci2
 
 # 09.10.2022 ----------------------------------------------------------------------------
 #I chose to use a small R2=.02 and small q=.11 (for k=2)
-sim0<-read_xlsx("Simulations planning/SimPlanning.k2.p2.t10.exact_09.10.xlsx", sheet="Sim0")
-sim1<-read_xlsx("Simulations planning/SimPlanning.k2.p2.t10.exact_09.10.xlsx", sheet="Sim1")
+sim0.plan<-read_xlsx("Simulations planning/SimPlanning.k2.p2.t10.exact_09.10.xlsx", sheet="Sim0")[1,]
+sim1.plan<-read_xlsx("Simulations planning/SimPlanning.k2.p2.t10.exact_09.10.xlsx", sheet="Sim1")
+sim2.plan<-read_xlsx("Simulations planning/SimPlanning.k2.p2.t10.exact_09.10.xlsx", sheet="Sim2")
 
-models <- c("normal")
-pcor <- c(0.3)
-r2<-0.02
-ratio_beta <- c(2,1)
-betas<-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
-hypothesis<-"V1 > V2"
+sim1.k2.p2.t10.exact<-run.sim(pcor = sim0$pcor,
+              r2 = sim0$r2,
+              ratio_beta = eval(parse(text=sim0$ratio_beta)),
+              q=sim0$q,
+              iter=10000,
+              seed=123,
+              hypothesis = "V1 > V2",
+              t=10,
+              planned.n = sim1.plan,
+              manipulated = "average power"
+)
 
-complement<-TRUE
-
-iter<-10000
-
-row.names<-paste0("Iter.", seq(1:iter))
-column.names<-c(paste0("Study.", seq(1:10)), "log.aggr.BF", "aggr.PMP")
-slice.names<-paste0("Condition.", seq(1:nrow(planned.n)))
-
-BFic1<-array(NA, dim = c(iterations=iter, studies=length(column.names), conditions=nrow(planned.n)),
-             dimnames = list(row.names,column.names, slice.names))
+save(sim1.k2.p2.t10.exact, file="Outputs/sim1/sim1.k2.p2.t10.exact.RData")
 
 
-seed<-123
+sim1.k2.p2.t10.exact$plot.BESpower.per.cond
+sim1.k2.p2.t10.exact$vioplot.ic
+

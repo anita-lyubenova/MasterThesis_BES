@@ -289,3 +289,24 @@ vioplot.ci2<-vioplot.ci2.df %>%
            size=2.7)
 
 vioplot.ci2
+
+
+
+# 09.10.2022 ----------------------------------------------------------------------------
+#I chose to use a small R2=.02 and small q=.11 (for k=2)
+sim0.plan<-read_xlsx("Simulations planning/SimPlanning.k2.p2.t10.exact_09.10.xlsx", sheet="Sim0")[1,]
+sim2.plan<-read_xlsx("Simulations planning/SimPlanning.k2.p2.t10.exact_09.10.xlsx", sheet="Sim2")
+
+
+
+sim2.k2.p2.t10.exact<-run.sim(pcor = sim0$pcor,
+                              r2 = sim0$r2,
+                              ratio_beta = eval(parse(text=sim0$ratio_beta)),
+                              q=sim0$q,
+                              hypothesis = "V1 > V2",
+                              t=10,
+                              planned.n = sim2.plan,
+                              manipulated = "sum of squares",
+                              iter=10000,
+                              seed=123,
+)
