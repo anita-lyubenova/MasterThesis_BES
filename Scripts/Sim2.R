@@ -303,10 +303,10 @@ sim2.k2.p2.t10.exact<-run.sim(pcor = sim0$pcor,
                               r2 = sim0$r2,
                               ratio_beta = eval(parse(text=sim0$ratio_beta)),
                               q=sim0$q,
+                              iter=10000,
+                              seed=123,
                               hypothesis = "V1 > V2",
                               t=10,
                               planned.n = sim2.plan,
-                              manipulated = "sum of squares",
-                              iter=10000,
-                              seed=123,
+                              manipulated = "sum of squares"
 )
