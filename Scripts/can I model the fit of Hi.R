@@ -396,34 +396,6 @@ compare.densities(a="1+q*n/100", b="1/(1+n/100*q)", "q<.40")
 compare.densities(a="1+q*n/100", b="1/(1+100*q^(2.2+q*1.76))", "0.30<q & q<.40")
 
 
-#Beta density exploration (phi and k) ------------------------
-phi<-alpha/(alpha+beta)
-k<-alpha+beta
-
-#a function that instead of alpha and beta takes on arguments
-# phi and k, where phi = alpha/(alpha + beta) [exp. value], k=alpha+beta
-my.dbeta<-function(phi, k){
-  alpha=phi*k
-  beta=k-phi*k
-  
-  x<-seq(from=0.01, to=0.99, by=0.01)
-  plot(dbeta(x, alpha,beta),type="l")
-  
-}
-
-#uniform
-my.dbeta(0.5,2)
-my.dbeta(0.5,20) #increasing k means reducing the variance
-#if phi=1 => uniform dist (makes sense: 1 can only then be the mean of the dist)
-my.dbeta(1,4)
-
-ES1<-0.5
-ES2<-0.1
-n1<-100
-
-
-my.dbeta(0.75,500)
-
   
 
 
