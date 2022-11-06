@@ -144,7 +144,7 @@ save(sim3.f1, file="Outputs/variation of fit/sim3.f1.RData")
 ## sim1 ---------------------
 q<-q.general.perf
 
-### Base R histograms ----------------
+## Hists base R ----------------
 #fit Hi
 par(mfrow = c(1, 1))
 par(mfrow = c(4, 5))
@@ -165,7 +165,7 @@ for(s in c(1:20)){
     )
 }
 
-# Ggplot hist with density ---------------------------
+## hist + density ggplot ---------------------------
 
 #ggplot histograms of the above
 gg.df<-sim1.f1[,,1] %>% 
@@ -198,104 +198,21 @@ gg.hist<-ggplot()+
 gg.hist
 
 
-
-##overlayed histograms of the fit of Hi and Hc -- useless -----------------
-# h<-c("i", "c")
-# sim1.f1.long<-matrix(NA, nrow = 910000)
-# l.sim1.f1<-data.frame(q=rep(q, times=10000))
-# for(i in 1:2){
-#   
-#   l.sim1.f1<-cbind(l.sim1.f1, 
-#     sim1.f1[,,i] %>% 
-#       as.data.frame() %>% 
-#       pivot_longer(cols = everything(),
-#                    names_to = paste0("ES_", h[i]),
-#                    values_to = paste0("fit_", h[i])
-#       )
-#   )
-# }
-# 
-# colnames(l.sim1.f1)<-c("q"  ,   "ES"  ,  "fit_i", "ES"  ,  "fit_c")
-# 
-# 
-# hist.df<-l.sim1.f1 %>% 
-#   select(-c(ES_c)) %>% 
-#   filter(q<0.29) %>% 
-#   pivot_longer(cols=c("fit_i", "fit_c"),
-#                names_to = "H",
-#                values_to = "fit") %>% 
-#   mutate(hypothesis=H1) 
-#   
-#   ggplot(hist.df,aes(x = fit, fill=H))+
-#   geom_histogram(bins = 50, colour="black", alpha=0.5)+
-#   facet_wrap(~ES_i)
-
-
-
-
-  
-
-
-
-
-## -----------------------
-
 #Beta density exploration (alpha and beta) --------------------
 #Goal: find alpha and beta coefficients that are a function of ES and n such that 
 # the Beta density has the form of the fit histograms 
 # (Later on probably complexity should be incorporated as well)
 
-##Sim1.f1: increasing ES, fixed n=632---------------
+## sim1.f1: model the effect of q---------------
 # alpha must increase with ES
 # beta must decrease with ES
 #   - should they increase and decrease at the same rate?
 #   - or should alpha increase more than beta?
-gg.hist
 
-x<-seq(from=0.01, to=0.99, by=0.01)
-plot(dbeta(x, 1,0.01),type="l")
-
-
-beta.par<-seq(1,0.77,by=-0.01)
-
-par(mfrow = c(1, 1))
-par(mfrow = c(5, 5))
-for(s in 1:length(beta.par)){
-  plot(dbeta(x, 1,beta.par[s]),type="l",
-       main = paste0("alpha=1", "; beta=",beta.par[s]),
-       ylim = c(0.6,1.4)
-       )
-  
-}
-
-
-
-alpha.par<-seq(1,1.23,by=0.01)
-
-par(mfrow = c(1, 1))
-par(mfrow = c(5, 5))
-for(s in 1:length(beta.par)){
-  plot(dbeta(x, alpha.par[s],beta.par[s]),
-       type="l",
-       main = paste0("alpha=",alpha.par[s], "; beta=",beta.par[s]),
-       ylim = c(0.6,1.4)
-       )
-  
-}
-
-## Density df ------------------
+### exploration ----------------
 x<-seq(from=0.01, to=0.99, by=0.01)
 dens.df<-matrix(NA, nrow=length(x), ncol = length(q), dimnames = list(x,q))
 n<-632
-
-for(i in 1:ncol(dens.df)){
-  dens.df[,i]<-dbeta(x, 1+q[i], 1-q[i])
-}
-
-for(i in 1:ncol(dens.df)){
-  dens.df[,i]<-dbeta(x, 1+q[i]*n/100, exp(q[i]))
-}
-
 
 alpha<-c()
 beta<-c()
@@ -336,8 +253,11 @@ ggplot()+
   scale_y_continuous(limits = c(0,15))+
   facet_wrap(~as.factor(q),ncol=5, nrow=3)
 
-#function to plot the observed vs. beta density
-compare.densities<-function(a,b, filter.q="q<.29"){
+### functional exploration ------------------
+###function to plot the observed vs. beta density
+compare.densities<-function(a,b, #alpha and beta parameters of the beta density
+                            filter.q="q<.29" #a subset of q (ES) to show plots for
+                            ){
   gg.df<-sim1.f1[,,1] %>% 
     as.data.frame() %>% 
     pivot_longer(cols = everything(),
@@ -396,6 +316,6 @@ compare.densities(a="1+q*n/100", b="1/(1+n/100*q)", "q<.40")
 compare.densities(a="1+q*n/100", b="1/(1+100*q^(2.2+q*1.76))", "0.30<q & q<.40")
 
 
-  
 
 
+## sim2.f1: model the effect of n ------------------------------------------
