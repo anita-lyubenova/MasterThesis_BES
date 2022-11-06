@@ -210,7 +210,7 @@ gg.hist
 #   - or should alpha increase more than beta?
 
 ### exploration ----------------
-x<-seq(from=0.01, to=0.99, by=0.01)
+
 dens.df<-matrix(NA, nrow=length(x), ncol = length(q), dimnames = list(x,q))
 n<-632
 
@@ -256,8 +256,12 @@ ggplot()+
 ### functional exploration ------------------
 ###function to plot the observed vs. beta density
 compare.densities<-function(a,b, #alpha and beta parameters of the beta density
-                            filter.q="q<.29" #a subset of q (ES) to show plots for
+                            filter.q="q<.29", #a subset of q (ES) to show plots for
+                            hyp=c("i", "c")
                             ){
+  x<-seq(from=0.01, to=0.99, by=0.01)
+  
+  s<-ifelse(hyp=="i",1,2)
   gg.df<-sim1.f1[,,1] %>% 
     as.data.frame() %>% 
     pivot_longer(cols = everything(),
@@ -313,9 +317,83 @@ compare.densities<-function(a,b, #alpha and beta parameters of the beta density
 
 compare.densities(a="1+q*n/100", b="1/(1+n/100*q)", "q<.40")
 
-compare.densities(a="1+q*n/100", b="1/(1+100*q^(2.2+q*1.76))", "0.30<q & q<.40")
+compare.densities(a="1+q*n/100", b="1/(1+100*q^(2.2+q*1.76))", "0.01<q & q<.24", hyp="i")
 
+compare.densities(b="1+q*n/100", a="1/(1+100*q^(2.2+q*1.76))", "0.01<q & q<.30", hyp="c")
 
 
 
 ## sim2.f1: model the effect of n ------------------------------------------
+
+sim2.f1
+n<-seq(50,1000, by=50)
+ratio1<-1.8 #corresponds to q=.21
+ratio_beta<-c(ratio1,1)
+q<-q[names(q)=="1.8:1"]
+
+compare.densities.n<-function(a,b, #alpha and beta parameters of the beta density
+                            filter.n="n<=600", #a subset of q (ES) to show plots for
+                            hyp=c("i", "c")
+){
+  x<-seq(from=0.01, to=0.99, by=0.01)
+  
+  s<-ifelse(hyp=="i",1,2)
+  gg.df<-sim2.f1[,,1] %>% 
+    as.data.frame() %>% 
+    pivot_longer(cols = everything(),
+                 names_to = "sample.size",
+                 values_to = "fit"
+    ) %>%
+    mutate(n=rep(n, times=10000),
+           sample.size=as.factor(sample.size),
+           q=q
+    ) %>% 
+    filter(eval(parse(text=filter.n)))
+  
+  dens.df<-matrix(NA, nrow=length(x), ncol = length(n), dimnames = list(x,n))
+  
+  alpha<-c()
+  beta<-c()
+  #modify the a and b input strings such that they specify [i] (needed in the for-loop below)
+  a.mod<-str_replace_all(a, "n", "n[i]")
+  b.mod<-str_replace_all(b,"n", "n[i]")
+  for(i in 1:ncol(dens.df)){
+    alpha[i]=eval(parse(text=a.mod))
+    beta[i]=eval(parse(text=b.mod))
+    dens.df[,i]<-dbeta(x, alpha[i], beta[i])
+  }
+  
+  gg.dens.df<-dens.df %>% 
+    as.data.frame() %>%
+    tibble::rownames_to_column(var="x") %>% 
+    pivot_longer(cols = !contains("x"),
+                 names_to = "n",
+                 values_to = "likelihood"
+    )  %>% 
+    mutate(q=q,
+           n=as.numeric(n),
+           alpha=eval(parse(text=a)),
+           beta=eval(parse(text=b))) %>% 
+    filter(eval(parse(text=filter.n)))
+  
+  #overlay observed density with beta density
+  ggplot()+
+    geom_histogram(data=gg.df,bins=50,colour="grey",size=0.2, fill="lightgray",
+                   aes(x=fit,y=..density..))+
+    geom_density(data=gg.df,mapping=aes(x=fit))+
+    facet_wrap(~sample.size)+
+    theme_minimal()+
+    geom_line(data=gg.dens.df,
+              mapping=aes(x=as.numeric(x),
+                          y=likelihood,
+                          group=as.factor(n),
+                          colour="red"))+
+    geom_text(data=gg.dens.df,
+              mapping=aes(label=paste("a=",round(alpha,2), "\nb=",round(beta,2)), x=0.3, y=13),
+              size=3)+
+    scale_y_continuous(limits = c(0,15))+
+    facet_wrap(~as.factor(n))
+  
+}
+
+
