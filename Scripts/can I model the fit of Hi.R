@@ -396,4 +396,8 @@ compare.densities.n<-function(a,b, #alpha and beta parameters of the beta densit
   
 }
 
-
+compare.densities.n(a="1+q*n/100",
+                    b="1/(1+n^(0.715)*q^(2.2+q*1.76))",
+                    filter.n="n<=1100", #a subset of q (ES) to show plots for
+                    hyp="i")
+q
