@@ -74,10 +74,11 @@ save(BFic.general.perf, file="Outputs/exploration/BFic.general.perf.RData")
 PMPic.general.perf<-BFic.general.perf/(BFic.general.perf+1)
 
 
+
 ## Plots -------------------
 ### BFic --------------------
 #Median BFic per effect size q with  an interval containing 95% of the BFs
-BFs.per.q.general<-log(BFic.general.perf) %>%
+BFs.per.q.general.df<-log(BFic.general.perf) %>%
   as.data.frame() %>%
   pivot_longer(cols = everything(), names_to = "ratio", values_to = "BF") %>%
   mutate(ratio=as.factor(ratio)) %>% 
@@ -85,14 +86,16 @@ BFs.per.q.general<-log(BFic.general.perf) %>%
   summarise(median=quantile(BF, probs = .5),
             PIlb=quantile(BF, probs = .025),
             PIub=quantile(BF, probs = .975),
-            P.BF.larger.than1=sum(BF>1)/iter
-  ) %>% 
+            P.BF.larger.than1=sum(BF>0)/iter
+  )
+
+
+BFs.per.q.general.df%>% 
   ggplot(aes(x=as.factor(ratio), y=median))+
   geom_point()+
   geom_errorbar(aes(ymin=PIlb, ymax=PIub))+
   #scale_y_continuous(trans = "pseudo_log")+
   coord_flip()
-BFs.per.q.general %>% ggplotly()
 
 ###PMPs ----------------
 PMPs.per.q.general<-PMPic.general.perf %>%
