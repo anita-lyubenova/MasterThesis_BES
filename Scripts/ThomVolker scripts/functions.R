@@ -17,9 +17,7 @@ library(writexl)
 library(devtools)
 library(SSDbain)
 library(jtools)
-library(ggplot2)
 library(ggrepel)
-library(plotly)
 #
 cormat <- function(partial_cor, diag_length) {
   r <- diag(diag_length)    # fill correlation matrix with partial correlation

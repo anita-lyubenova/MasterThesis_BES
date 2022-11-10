@@ -1,6 +1,9 @@
 library(tidyverse)
+library(bain)
+library(magrittr)
+library(MASS)
+library(ggplot2)
 
- 
 # Simulated dist of the fit -------------------------------------------------
 load("Outputs/exploration/q.general.perf.RData")
 q<-q.general.perf
@@ -141,6 +144,65 @@ for(s in 1:length(ratio1)){
 }
 
 save(sim3.f1, file="Outputs/variation of fit/sim3.f1.RData")
+
+##(NOT DONE) sim4.f1 modelling complexity -------------------------
+
+q<-q.general.perf
+q<-q[1:21]
+r2=.16
+pcor<-0.3
+n<-632 #(this n has 80% power to support Hi for R2=.02 and q=.11)
+ratio1<-seq(1, 3, by=0.1)+1
+ratio3<-seq(0, 2, by=0.1) %>% rev()
+iter<-10000
+
+H1<-"V1>V2>V3"
+
+ratios<-paste0(ratio1,":", 2,":",ratio3)
+ratio.and.q
+
+### the R2 is different in sim3 so it is necessary to compute the corresponding q-s
+ratio.and.q.3pred<-data.frame(ratio=ratios,
+                              q.V1V2=NA,
+                              q.V2V3=NA,
+                              q.V1V3=NA
+)
+
+for(s in 1:length(ratio1)){
+  
+  print(paste0("Iteration:",s))
+  ratio_beta<-c(ratio1[s],2,ratio3[s])
+  
+  m<-gen_dat(r2=r2,
+             betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
+             rho=cormat(pcor, length(ratio_beta)),
+             n=1000000,
+             "normal")%$%
+    lm(Y ~ V1 + V2 + V3) %>%
+    summ(part.corr=TRUE)
+  
+  part.cor1<-m$coeftable[2,5]
+  part.cor2<-m$coeftable[3,5]
+  part.cor3<-m$coeftable[4,5]
+  
+  z1<-log((1+part.cor1)/(1-part.cor1))
+  z2<-log((1+part.cor2)/(1-part.cor2))
+  z3<-log((1+part.cor3)/(1-part.cor3))
+  
+  ratio.and.q.3pred[s,2] =z1-z2
+  ratio.and.q.3pred[s,3]=z2-z3
+  ratio.and.q.3pred[s,4]=z1-z3
+  
+  
+}
+#there is no asymmetry between the effect sizes below and above 2
+plot(ratio.and.q.3pred$q.V1V2, ratio.and.q.3pred$q.V2V3)
+
+
+colnames(sim3.f1)<-paste0("q = ", round(ratio.and.q.3pred$q.V1V2,3))
+
+
+
 
 
 # Analysis --------------------------
@@ -355,6 +417,7 @@ compare.densities.n<-function(a,b, #alpha and beta parameters of the beta densit
   x<-seq(from=0.01, to=0.99, by=0.01)
   
   s<-ifelse(hyp=="i",1,2)
+  
   gg.df<-sim2.f1[,,1] %>% 
     as.data.frame() %>% 
     pivot_longer(cols = everything(),
@@ -374,13 +437,13 @@ compare.densities.n<-function(a,b, #alpha and beta parameters of the beta densit
   #modify the a and b input strings such that they specify [i] (needed in the for-loop below)
   a.mod<-str_replace_all(a, "n", "n[i]")
   b.mod<-str_replace_all(b,"n", "n[i]")
+  
   for(i in 1:ncol(dens.df)){
     alpha[i]=eval(parse(text=a.mod))
     beta[i]=eval(parse(text=b.mod))
     dens.df[,i]<-dbeta(x, alpha[i], beta[i])
   }
 
-  
   gg.dens.df<-dens.df %>% 
     as.data.frame() %>%
     tibble::rownames_to_column(var="x") %>% 
@@ -418,25 +481,30 @@ compare.densities.n(a="1+q*n/100",
                     b="1/(1+n^(0.715)*q^(2.2+q*1.76))",
                     filter.n="n<=1100", #a subset of q (ES) to show plots for
                     hyp="i")
+### Beta parameters
+a="1+q*n/100"
+b="1/(1+n^(0.715)*q^(2.2+q*1.76))"
 
 ## Interim validation -----------------------------
 #validate the specified Beta density with alpha and beta parameters as functions of ES and n on a 
 #simulation in which both n and ES are varied
+# q<-q.general.perf
+# q<-q[1:71]
 q<-q.general.perf
-q<-q[1:71]
+q<-q[1:15]
 r2=.09
 pcor<-0.3
 n<-seq(50,1000, by=50)
-ratio1<-seq(1, 10, by=0.1)[1:71]
-iter<-1000
+ratio1<-seq(1, 10, by=0.1)[1:15]
+iter<-10000
 
 models <- c("normal")
-complement<-TRUE
 
 H1<-"V1>V2"
 
 
 
+### sim12.f1: cross-vary q x n -------------------------
 sim12.f1<-array(NA,
                dim=c(iter, length(q), length(n)),
                dimnames = list(c(1:iter),
@@ -471,78 +539,253 @@ for(s in 1:length(n)){
 #sim12.f1.i10000<-sim12.f1
 #save(sim12.f1.i10000, file="Outputs/variation of fit/sim12.f1.i10000.RData")
 
-#save(sim12.f1, file="Outputs/variation of fit/sim12.f1.RData")
-sim12.f1[,,1]
+save(sim12.f1, file="Outputs/variation of fit/sim12.f1.RData")
+# sim12.f1.i1000<-sim12.f1
+# save(sim12.f1.i1000, file="Outputs/variation of fit/sim12.f1.i1000.RData")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## sim3.f1 modelling complexity -------------------------
+### df.rBeta  ---------------------------------
+#obtain the predicted distribution of fit for each pair (q,n)
 q<-q.general.perf
-q<-q[1:21]
-r2=.16
+q<-q[2:15]
+r2=.09
 pcor<-0.3
-n<-632 #(this n has 80% power to support Hi for R2=.02 and q=.11)
-ratio1<-seq(1, 3, by=0.1)+1
-ratio3<-seq(0, 2, by=0.1) %>% rev()
+n<-seq(50,1000, by=50)
+ratio1<-seq(1, 10, by=0.1)[1:15]
 iter<-10000
 
-H1<-"V1>V2>V3"
+# a="1+q*n/100"
+# b="1/(1+n^(0.715)*q^(2.2+q*1.76))"
+set.seed(123)
+#an array with predicted fit for varyign q and n
+df.rBeta<-array(NA,
+                dim=c(iter, length(q), length(n)),
+                dimnames = list(c(1:iter),
+                                paste0("q = ",round(q,3)),
+                                paste0("n = ",n)
+                ))
+for(s in 1:length(n)){
+  for(j in 1:length(q)){
+    df.rBeta[,j,s]<-rbeta(n=iter,
+                          shape1 = 1+q[j]*n[s]/100,
+                          shape2 = 1/(1+n[s]^(0.715)*q[j]^(2.2+q[j]*1.76))
+    )
+  }
+}
 
-ratios<-paste0(ratio1,":", 2,":",ratio3)
-ratio.and.q
 
-### the R2 is different in sim3 so it is necessary to compute the corresponding q-s
-ratio.and.q.3pred<-data.frame(ratio=ratios,
-                              q.V1V2=NA,
-                              q.V2V3=NA,
-                              q.V1V3=NA
-                              )
+
+### evaluate performance of Beta(alpha, beta) -----------------------
+
+
+#### manually -----
+# #simulation conditions
+# hist(sim12.f1[,20,2])
+# hist(sim12.f1.i10000[,20,2])
+# 
+a="1+q*n/100"
+b="1/(1+n^(0.715)*q^(2.2+q*1.76))"
+x<-seq(from=0.01, to=0.99, by=0.01)
+
+j<-5
+q<-q.general.perf
+q<-q[j]
+gg.df<-sim12.f1[,j,] %>%
+  as.data.frame() %>%
+  pivot_longer(cols = everything(),
+               names_to = "sample.size",
+               values_to = "fit"
+  ) %>%
+  mutate(n=rep(n, times=nrow(sim12.f1)),
+         sample.size=as.factor(sample.size),
+         q=q[j]
+  ) %>%
+  filter(eval(parse(text=filter.n)))
+
+dens.df<-matrix(NA, nrow=length(x), ncol = length(n), dimnames = list(x,n))
+
+alpha<-c()
+beta<-c()
+#modify the a and b input strings such that they specify [i] (needed in the for-loop below)
+a.mod<-str_replace_all(a, "n", "n[i]")
+b.mod<-str_replace_all(b,"n", "n[i]")
+
+for(i in 1:ncol(dens.df)){
+  alpha[i]=eval(parse(text=a.mod))
+  beta[i]=eval(parse(text=b.mod))
+  dens.df[,i]<-dbeta(x, alpha[i], beta[i])
+}
+
+gg.dens.df<-dens.df %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column(var="x") %>%
+  pivot_longer(cols = !contains("x"),
+               names_to = "n",
+               values_to = "likelihood"
+  )  %>%
+  mutate(q=q,
+         n=as.numeric(n),
+         alpha=eval(parse(text=a)),
+         beta=eval(parse(text=b)))#%>%
+#filter(eval(parse(text=filter.n)))
+
+#overlay observed density with beta density
+ggplot()+
+  geom_histogram(data=gg.df,bins=50,colour="grey",size=0.2, fill="lightgray",
+                 aes(x=fit,y=..density..))+
+  geom_density(data=gg.df,mapping=aes(x=fit))+
+  facet_wrap(~sample.size)+
+  theme_minimal()+
+  geom_line(data=gg.dens.df,
+            mapping=aes(x=as.numeric(x),
+                        y=likelihood,
+                        group=as.factor(n),
+                        colour="red"))+
+  geom_text(data=gg.dens.df,
+            mapping=aes(label=paste("a=",round(alpha,2), "\nb=",round(beta,2)), x=0.3, y=13),
+            size=3)+
+  scale_y_continuous(limits = c(0,15))+
+  facet_wrap(~as.factor(n))
+
+
+#### Diff freq obs - rbeta -------------------------------
+#for each n and each q compute
+# 1) the counts of values in 5 categories (0, 0.2, 0.4, 0.6, 0.8, 1) for the observed(sim12.f1) and predicted (rBeta.df) values
+# 2) their difference
+
+#Then plot a 3d histogram of df.rBeta and indicate in red which areas have larger differences to the observed values
+
+q<-q.general.perf
+q<-q[2:15]
+# MSE= mean((observed-predicted)^2)
+#obs.densities<-sim12.f1
+sim12.pos<-sim12.f1[,-1,]
+
+sim12.f1[,5,5] %>% 
+  cut(breaks=c(0, 0.2, 0.4, 0.6, 0.8, 1)) %>% 
+  table()-
+df.rBeta[,5,5]%>% 
+  cut(breaks=c(0, 0.2, 0.4, 0.6, 0.8, 1)) %>% 
+  table()
+
+#calculated the difference in counts of
+Diff<-array(NA, dim=c(5,length(q), length(n)),
+                      dimnames=list(c("(0,0.2]", "(0.2,0.4]", "(0.4,0.6]", "(0.6,0.8]" ,  "(0.8,1]"),
+                                     paste0("q = ",round(q,3)),
+                                     paste0("n = ",n)
+                                     ))
+
+MSE<-matrix(NA, nrow = length(q), ncol = length(n),
+            dimnames = list(q,n)
+            )
+
+for(s in 1:length(n)){
+  for(j in 1:length(q)){ #q ()q=-0.001 was removed because it dies not belong to Hi=TRUE
+    
+    Diff[,j,s]<-sim12.f1[,j,s] %>% 
+                  cut(breaks=5) %>% 
+                  table()-
+                df.rBeta[,j,s]%>% 
+                  cut(breaks=5) %>% 
+                  table()
+          
+    MSE[j,s]<-mean(Diff[,j,s]^2)
+   
+  }
+}
+
+#a 3D surface plot with q on the x-axis, n on the y=axis and MSE on the y-Axis
+plot_ly(data=as.data.frame(MSE)) %>% 
+  add_surface(x=rownames(MSE), y=colnames(MSE),z=~MSE)
+
+
+
+
+##### 3D histogram -----------------
+remotes::install_github("tylermorganwall/rayshader")
+library(rayshader)
+library(ggplot2)
+
+colnames(df.rBeta)<-round(q,4)
+
+df.rBeta.long<-data.frame()
+for(s in 1:length(n)){
   
-for(s in 1:length(ratio1)){
+  df.rBeta.long<-rbind(df.rBeta.long,
+                       df.rBeta[1:200,,s] %>% 
+                         as.data.frame() %>% 
+                         pivot_longer(cols = everything(),
+                                      names_to = "q",
+                                      values_to = "fit"
+                         ) %>% 
+                         mutate(n=n[s],
+                                q=as.numeric(q)
+                                
+                         )
+  )
   
-  print(paste0("Iteration:",s))
-  ratio_beta<-c(ratio1[s],2,ratio3[s])
+  for(j in length(q)){
+      dens<-density(df.rBeta[1:200,j,s], from=0, to=1)[c("x", "y")] %>%
+              as.data.frame()
+      Af<-approxfun(dens$x,dens$y)
+      
+      df.rBeta.long<-df.rBeta.long %>% 
+        group_by(q) %>% 
+        mutate(density= Af(fit))
+  }
   
-  m<-gen_dat(r2=r2,
-             betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
-             rho=cormat(pcor, length(ratio_beta)),
-             n=1000000,
-             "normal")%$%
-    lm(Y ~ V1 + V2 + V3) %>%
-    summ(part.corr=TRUE)
+
   
-  part.cor1<-m$coeftable[2,5]
-  part.cor2<-m$coeftable[3,5]
-  part.cor3<-m$coeftable[4,5]
-  
-  z1<-log((1+part.cor1)/(1-part.cor1))
-  z2<-log((1+part.cor2)/(1-part.cor2))
-  z3<-log((1+part.cor3)/(1-part.cor3))
-  
-  ratio.and.q.3pred[s,2] =z1-z2
-  ratio.and.q.3pred[s,3]=z2-z3
-  ratio.and.q.3pred[s,4]=z1-z3
+}
+
+
+
+
+library(reshape2)
+library(rgl)
+
+dimnames(sim12.pos)[[2]]<-q
+dimnames(sim12.pos)[[3]]<-as.numeric(n)
+
+points3d(M$Var2,M$Var3,M$value)
+
+points3d(M$Var1,M$Var2,M$Var3,size=10,color=rainbow(10)[M$value*10])
+
+M <- array(runif(64),dim=c(4,4,4))
+M=melt(M)
+points3d(M$Var1,M$Var2,M$Var3,size=10,color=rainbow(10)[M$value*10])
+options(rgl.printRglwidget = TRUE)
+
+library(plotly)
+df.rBeta.long
+
+plot_ly(df, x = q, y = X, z = Z, group = X, type = "scatter3d", mode = "lines")
+
+
+volcano
+dim(volcano)
+
+plot_ly(df.rBeta.long, x = q, y = n, z = density, type = "scatter3d")
+
+dim(df.rBeta[1:200,,5])
+
+plot_ly(z = ~volcano) %>%  add_surface()
+
+plot_ly(z~df.rBeta[1:200,,5]) %>% 
+  add_surface()
+
+
+
+#density data
+dens.df.rBeta<-df.rBeta[1:100,,5]
+s<-5 #which sample size
+for(j in 1:ncol(df.rBeta[1:100,,s])){
+  dens.df.rBeta<-dbeta(df.rBeta[1:100,,s], shape1 = 1+q[j]*n[s]/100, shape2 = 1/(1+n[s]^(0.715)*q[j]^(2.2+q[j]*1.76)))         
   
   
 }
-#there is no asymmetry between the effect sizes below and above 2
-plot(ratio.and.q.3pred$q.V1V2, ratio.and.q.3pred$q.V2V3)
 
-
-colnames(sim3.f1)<-paste0("q = ", round(ratio.and.q.3pred$q.V1V2,3))
-
+volcano
+plot_ly(data=as.data.frame(MSE)) %>% 
+   add_surface(x=rownames(MSE), y=colnames(MSE),z=~MSE)
 
 
