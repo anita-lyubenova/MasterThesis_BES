@@ -577,17 +577,81 @@ for(s in 1:length(n)){
 ### evaluate performance of Beta(alpha, beta) -----------------------
 
 
+#### Diff freq obs - rbeta -------------------------------
+#for each n and each q compute
+# 1) the counts of values in 5 categories (0, 0.2, 0.4, 0.6, 0.8, 1) for the observed(sim12.f1) and predicted (rBeta.df) values
+# 2) their difference
+
+#Then plot a 3d histogram of df.rBeta and indicate in red which areas have larger differences to the observed values
+
+q<-q.general.perf
+q<-q[2:15]
+# MSE= mean((observed-predicted)^2)
+#obs.densities<-sim12.f1
+sim12.pos<-sim12.f1[,-1,]
+
+sim12.f1[,5,5] %>% 
+  cut(breaks=seq(0,1, by=0.1)) %>% 
+  table()-
+df.rBeta[,5,5]%>% 
+  cut(breaks=seq(0,1, by=0.1)) %>% 
+  table()
+
+bin.names<-df.rBeta[,5,5]%>% 
+  cut(breaks=seq(0,1, by=0.05)) %>% 
+  table() %>% names()
+length(bin.names)
+
+#calculated the difference in counts of
+Diff<-array(NA, dim=c(length(bin.names),length(q), length(n)),
+                      dimnames=list(bin.names,
+                                     paste0("q = ",round(q,3)),
+                                     paste0("n = ",n)
+                                     ))
+
+MSE<-matrix(NA, nrow = length(q), ncol = length(n),
+            dimnames = list(q,n)
+            )
+
+for(s in 1:length(n)){
+  for(j in 1:length(q)){ #q ()q=-0.001 was removed because it dies not belong to Hi=TRUE
+    
+    Diff[,j,s]<-sim12.f1[,j,s] %>% 
+                  cut(breaks=seq(0,1, by=0.05)) %>% 
+                  table()-
+                df.rBeta[,j,s]%>% 
+                  cut(breaks=seq(0,1, by=0.05)) %>% 
+                  table()
+          
+    MSE[j,s]<-mean(Diff[,j,s]^2)
+   
+  }
+}
+
+#a 3D surface plot with q on the x-axis, n on the y=axis and MSE on the y-Axis
+m1<-plot_ly(data=as.data.frame(MSE)) %>% 
+  add_surface(x=rownames(MSE), y=colnames(MSE),z=~MSE)
+  
+m1
+
+#Based on the 3D plot m1 the current model with alpha = "1+q*n/100" and beta = "1/(1+n^(0.715)*q^(2.2+q*1.76))"
+# performs poorly when:
+#     -q is large and n is small (worst performance)
+#     -when both q and n are large
+#     - when q is small and n is large
+
+
 #### manually -----
-# #simulation conditions
-# hist(sim12.f1[,20,2])
-# hist(sim12.f1.i10000[,20,2])
-# 
+#check where the prediced density deviates from teh observed histograms on the conditional distributions
+# (i.e. either fix q or fix n)
 a="1+q*n/100"
 b="1/(1+n^(0.715)*q^(2.2+q*1.76))"
+filter.n="n<=1100"
 x<-seq(from=0.01, to=0.99, by=0.01)
+q<-q.general.perf[2:15]
 
-j<-5
-q<-q.general.perf
+#small q
+j<-1
 q<-q[j]
 gg.df<-sim12.f1[,j,] %>%
   as.data.frame() %>%
@@ -641,63 +705,10 @@ ggplot()+
                         group=as.factor(n),
                         colour="red"))+
   geom_text(data=gg.dens.df,
-            mapping=aes(label=paste("a=",round(alpha,2), "\nb=",round(beta,2)), x=0.3, y=13),
+            mapping=aes(label=paste("q=",round(q,3),"a=",round(alpha,2), "\nb=",round(beta,2)), x=0.3, y=13),
             size=3)+
   scale_y_continuous(limits = c(0,15))+
   facet_wrap(~as.factor(n))
-
-
-#### Diff freq obs - rbeta -------------------------------
-#for each n and each q compute
-# 1) the counts of values in 5 categories (0, 0.2, 0.4, 0.6, 0.8, 1) for the observed(sim12.f1) and predicted (rBeta.df) values
-# 2) their difference
-
-#Then plot a 3d histogram of df.rBeta and indicate in red which areas have larger differences to the observed values
-
-q<-q.general.perf
-q<-q[2:15]
-# MSE= mean((observed-predicted)^2)
-#obs.densities<-sim12.f1
-sim12.pos<-sim12.f1[,-1,]
-
-sim12.f1[,5,5] %>% 
-  cut(breaks=c(0, 0.2, 0.4, 0.6, 0.8, 1)) %>% 
-  table()-
-df.rBeta[,5,5]%>% 
-  cut(breaks=c(0, 0.2, 0.4, 0.6, 0.8, 1)) %>% 
-  table()
-
-#calculated the difference in counts of
-Diff<-array(NA, dim=c(5,length(q), length(n)),
-                      dimnames=list(c("(0,0.2]", "(0.2,0.4]", "(0.4,0.6]", "(0.6,0.8]" ,  "(0.8,1]"),
-                                     paste0("q = ",round(q,3)),
-                                     paste0("n = ",n)
-                                     ))
-
-MSE<-matrix(NA, nrow = length(q), ncol = length(n),
-            dimnames = list(q,n)
-            )
-
-for(s in 1:length(n)){
-  for(j in 1:length(q)){ #q ()q=-0.001 was removed because it dies not belong to Hi=TRUE
-    
-    Diff[,j,s]<-sim12.f1[,j,s] %>% 
-                  cut(breaks=5) %>% 
-                  table()-
-                df.rBeta[,j,s]%>% 
-                  cut(breaks=5) %>% 
-                  table()
-          
-    MSE[j,s]<-mean(Diff[,j,s]^2)
-   
-  }
-}
-
-#a 3D surface plot with q on the x-axis, n on the y=axis and MSE on the y-Axis
-plot_ly(data=as.data.frame(MSE)) %>% 
-  add_surface(x=rownames(MSE), y=colnames(MSE),z=~MSE)
-
-
 
 
 
