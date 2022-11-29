@@ -6,6 +6,7 @@ library(Rcpp)
 library(RcppArmadillo)
 library(MASS)
 library(mvtnorm)
+library(bain)
 
 # library(ggplot2)
 # library(ggstatsplot)
