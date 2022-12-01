@@ -322,8 +322,8 @@ BF.RQ2.2<-array(data = NA,
 
 
 BF.RQ2.2[,,4,]<-1
-# loop to fill in BFiucu
 
+# loop to fill in BFiucu
 for(i in 1:iter){
   for(s in 1:length(n)){
     
