@@ -36,8 +36,10 @@
 #   -how often is the aggregate PMP_u the highest?
 #______________________________________________________________________________________________________________
 
-
 ## Data simulation 1: ES_Hi = ES_Hc -----------
+#Conditions: 
+# results in BF[studies, hypotheses, ratio H1:Hc, iter, sample size n]
+
 r2=.13
 pcor<-0.3
 n<-c(100,1200)
@@ -50,15 +52,15 @@ complement<-TRUE
 ratio_beta.Hi<-c(3,2,1)
 ratio_beta.Hc<-c(1,2,3)
 
-#determines whetheer Hi:Hc = 1:1 or 3:1, respectively
+#determines whether Hi:Hc = 1:1 or 3:1, respectively
 ratio_HiHc<-c(2,4)
 
 BF<-array(data = NA,
                 dim=c(studies, 
                       4, # hypotheses
-                      2, #ratio Hi:Hc=1:1 or 3:1
+                      2, #1:1 or 3:1 ratio of studies coming from Hi and H
                       iter,
-                      length(n) # #1:1 or 3:1 ratio of studies coming from Hi and Hc
+                      length(n) #different sample sizes
                       ),
                 dimnames = list(c(1:studies),
                                 c("BF0u", "BFiu", "BFcu", "BFu"),
@@ -89,10 +91,10 @@ for(i in 1:iter){
         #have ratio_beta conform with Hc or with Hi
         #Hi:Hc study ratio will be either 1:1 (every 2nd study comes from Hc)
         #or 1:3, every fourth study comes from Hc)
-        if(t %% ratio_HiHc[r] == 0){ 
+        if(t %% ratio_HiHc[r] == 0){ #2nd or 4th study => Hc
           ratio_beta<-ratio_beta.Hc
-        }else{                       
-          ratio_beta<-ratio_beta.Hi
+        }else{                       #else Hi
+          ratio_beta<-ratio_beta.Hi 
         }
         
         #obtain BFiu
@@ -128,30 +130,55 @@ power.table<-array(NA,dim=c(studies,2,n.hyp,length(n)),
                             )
                    )
 
-power.table<-array(NA,dim=c(studies,n.hyp,length(n)),
+power.table.reject<-array(NA,dim=c(studies,n.hyp,length(n)),
                    dimnames=list(1:studies,
-                                 c("BF0u", "BFiu", "BFcu"),
+                                 c("BFiu.reject", "BFcu.reject"),
                                  paste0("n = ", n)
                                  
                    )
 )
 
+power.table.accept<-array(NA,dim=c(studies,n.hyp,length(n)),
+                          dimnames=list(1:studies,
+                                        c("BFiu.accept", "BFcu.accept"),
+                                        paste0("n = ", n)
+                                        
+                          )
+)
+
 for(s in 1:length(n)){
   for(t in 1:studies){
-    for(h in 1:3){
+    for(h in 1:2){
       #r=1 (H1:Hc=1:1)
-     power.table[t,h,s]<- sum(BF[t,h,r,,s]<1)/iter
+     power.table.reject[t,h,s]<- sum(BF[t,h+1,r,,s]<1)/iter
+     power.table.accept[t,h,s]<- sum(BF[t,h+1,r,,s]>1)/iter
     }
   }
 }
 
-Hc<-power.table[seq(2,40, by=2),,1]
-colMeans(Hc)
-Hi<-power.table[seq(1,39, by=2),,1]
-colMeans(Hi)
-## Data Simulation 2: ES_Hi > ES_Hc----------------------------
+#Studies for which Hc is true
+Hc.true.accept<-power.table.accept[seq(2,40, by=2),,]
+Hc.true.reject<-power.table.reject[seq(2,40, by=2),,]
+colMeans(Hc.true.accept)
+colMeans(Hc.true.reject)
 
+#Studies for which Hi is true
+Hi.true.accept<-power.table.accept[-seq(2,40, by=2),,]
+Hi.true.reject<-power.table.reject[-seq(2,40, by=2),,]
+Hi.true.power<-rbind(colMeans(Hi.true.accept),colMeans(Hi.true.reject))[,]
 
+#power for Hc:
+# accept Hc when Hc = TRUE: 
+# AND
+# reject Hc when Hi=TRUE
+Hc.power<-rbind(colMeans(Hc.true.accept)[2,], colMeans(Hi.true.reject)[2,])
+rownames(Hc.power)<-c("BFcu.accept", "BFcu.reject")
+Hc.power
+
+#power for Hi: accept Hi when Hi = TRUE and reject Hi when Hc=TRUE
+Hi.power<-rbind(colMeans(Hi.true.accept)[1,], colMeans(Hc.true.reject)[1,])
+rownames(Hi.power)<-c("BFiu.accept", "BFiu.reject")
+Hi.power
 
 #aggregate PMPs---------------------
 
@@ -561,7 +588,7 @@ Fig2<-ggarrange(median.PMP2.noHu.plot+ rremove("xlab"),
 
 
 
-## Support Hu------------------------------------------
+## Support Hu ------------------------------------------
 support.Hu2<-array(NA,
                   dim=c(iter,
                         studies,
