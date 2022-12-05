@@ -36,13 +36,72 @@
 #   -how often is the aggregate PMP_u the highest?
 #______________________________________________________________________________________________________________
 
+
+#Dertermines ample sizes n ------------------------------------------------
+
+r2=.13
+pcor<-0.3
+n<-c(100,200,300,550)
+iter<-1000
+studies<-40
+hypothesis<-"V1>V2>V3"
+models <- c("normal")
+complement<-TRUE
+
+i<-1
+ratio_beta.Hi<-c(3,2,1)
+ratio_beta.Hc<-c(1,2,3)
+
+BF.Hi.power.accept<-matrix(NA, nrow = iter, ncol = length(n))
+BF.Hi.power.reject<-matrix(NA, nrow = iter, ncol = length(n))
+for(i in 1:iter){
+  for(s in 1:length(n)){
+    print(paste("Iteration i:",i, "Sample size s:", s))
+    BF.Hi.power.accept[i,s]<-gen_dat(r2=r2,
+                            betas=coefs(r2, ratio_beta.Hi, cormat(pcor, length(ratio_beta.Hi)), "normal"),
+                            rho=cormat(pcor, length(ratio_beta.Hi)),
+                            n=n[s],
+                            "normal")%$%
+      lm(Y ~ V1 + V2 + V3) %>%
+      bain(hypothesis = hypothesis)%$%fit$BF.u[1]
+    
+    BF.Hi.power.reject[i,s]<-gen_dat(r2=r2,
+                            betas=coefs(r2, ratio_beta.Hc, cormat(pcor, length(ratio_beta.Hc)), "normal"),
+                            rho=cormat(pcor, length(ratio_beta.Hc)),
+                            n=n[s],
+                            "normal")%$%
+      lm(Y ~ V1 + V2 + V3) %>%
+      bain(hypothesis = hypothesis)%$%fit$BF.u[1]
+    
+  }# end sample size loop
+  
+} #end iterations i loop
+
+#save(BF.Hi.power.accept, BF.Hi.power.reject, file="Outputs/Research Report/BF.Hi.power.RData")
+colnames(BF.Hi.power.accept)<-n
+colnames(BF.Hi.power.reject)<-n
+
+apply(BF.Hi.power.accept, 2, function(x){
+  sum(x>1)/iter
+})
+apply(BF.Hi.power.reject, 2, function(x){
+  sum(x<1)/iter
+})
+Hi.power<-rbind(apply(BF.Hi.power.accept, 2, function(x){
+                        sum(x>1)/iter
+                      }),
+                apply(BF.Hi.power.reject, 2, function(x){
+                        sum(x<1)/iter
+}))
+rownames(Hi.power)<-c("accept Hi when TRUE", "reject Hi when FALSE")#
+Hi.power
 ## Data simulation 1: ES_Hi = ES_Hc -----------
 #Conditions: 
 # results in BF[studies, hypotheses, ratio H1:Hc, iter, sample size n]
 
 r2=.13
 pcor<-0.3
-n<-c(100,1200)
+n<-c(100,300,550)
 iter<-1000
 studies<-40
 hypothesis<-"V1=V2=V3; V1>V2>V3"
@@ -76,6 +135,7 @@ s<-2
 r<-1
 t<-1
 
+set.seed(123)
 # loop to fill in BFiucu
 for(i in 1:iter){
   
@@ -111,24 +171,17 @@ for(i in 1:iter){
     }#end H1:Hc ratio loop r
   }# end sample size loop s
 } #end iterations loop i
-
+BF.v3<-BF
+save(BF.v3,file="Outputs/Research Report/BF.v3.RData")
 #save.image(file="Outputs/Research Report/workspace.RData")
 
 ### Individual study power ---------------------
-n.hyp<-3
+n.hyp<-2
 r<-1
 
 h<-2
 s<-1
 
-power.table<-array(NA,dim=c(studies,2,n.hyp,length(n)),
-                      dimnames=list(1:studies,
-                                    c("supportH", "rejectH"),
-                                    c("BF0u", "BFiu", "BFcu"),
-                                    paste0("n = ", n)
-                                    
-                            )
-                   )
 
 power.table.reject<-array(NA,dim=c(studies,n.hyp,length(n)),
                    dimnames=list(1:studies,
@@ -176,9 +229,9 @@ rownames(Hc.power)<-c("BFcu.accept", "BFcu.reject")
 Hc.power
 
 #power for Hi: accept Hi when Hi = TRUE and reject Hi when Hc=TRUE
-Hi.power<-rbind(colMeans(Hi.true.accept)[1,], colMeans(Hc.true.reject)[1,])
-rownames(Hi.power)<-c("BFiu.accept", "BFiu.reject")
-Hi.power
+Hi.power.obs<-rbind(colMeans(Hi.true.accept)[1,], colMeans(Hc.true.reject)[1,])
+rownames(Hi.power.obs)<-c("BFiu.accept", "BFiu.reject")
+Hi.power.obs
 
 #aggregate PMPs---------------------
 
