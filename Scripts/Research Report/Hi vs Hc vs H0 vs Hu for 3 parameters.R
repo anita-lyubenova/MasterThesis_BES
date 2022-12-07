@@ -42,7 +42,8 @@
 r2=.13
 pcor<-0.3
 n<-c(100,200,300,550)
-iter<-1000
+n<-600
+iter<-10000
 studies<-40
 hypothesis<-"V1>V2>V3"
 models <- c("normal")
@@ -237,7 +238,7 @@ Hi.power.obs
 #aggregate PMPs---------------------
 #for now continue with BF.v2
 BF<-BF.v2
-
+dimnames(BF)
 ## with Hu -------------------------
 #BF[studies, hypotheses, ratioHi:Hc, iter, n]
 #ratio Hi:Hc = 1:1
@@ -315,8 +316,10 @@ aggrPMP2.noHu<-aggrPMP.noHu[,,2,,]
 ## Median PMP plot: with Hu, N=600 ----------------------
 #aggrPMP1[studies, hypothesis, iter, n]
 dimnames(aggrPMP1)
+# set desired dodge width
+pd <- position_dodge(width = 0.4)
 
-s<-3 #N=600
+s<-2 #N=350
 #the median aggregate value
 medians<-apply(aggrPMP1[,,,s],c(1,2),median)%>% 
   as.data.frame() %>% 
@@ -360,20 +363,25 @@ col.Hc<-"#fdc086"
 col.Hu<-"#beaed4"
 median.PMP1.plot<-median.PMP1.df%>% 
   ggplot(aes(x=t, y=median_aggrPMP, group=factor(Hypothesis, levels = c("PMP_i","PMP_c","PMP_u")), color=factor(Hypothesis, levels = c("PMP_i","PMP_c","PMP_u"))))+
-  geom_point()+
-  geom_line()+
-  geom_errorbar(aes(ymin = lb_aggrPMP, ymax = ub_aggrPMP))+
+  geom_point(position = pd)+
+  geom_line(position = pd)+
+  geom_errorbar(aes(ymin = lb_aggrPMP, ymax = ub_aggrPMP), position = pd)+
   theme_minimal()+
   labs(#title = "",
-       #subtitle = "",
-       x="Size of the study set T",
+       subtitle = "H1 vs. Hc vs. Hu",
+       x="Number of aggregated studies",
        y="Aggregate PMP")+
   theme(text = element_text(size = 9),
         axis.text.x = element_text(size = 5, colour = rep(c(col.H1,col.Hc), times=20)),
-        legend.title = element_text(size = 7)
-        # plot.subtitle = element_text(size = 12),
+        legend.title = element_text(size = 7),
+        legend.title.align=0.5,
+         plot.subtitle = element_text(hjust = 0.5),
+        plot.margin = unit(c(0.5,1.1,0,0.2), "cm")
         # legend.text = element_text(size = 10),
         )+
+  guides(colour = guide_legend(nrow = 1))+
+  annotate("text", x = 43, y = 0.5, label = "H1:Hc = 1:1",angle = 270)+
+  coord_cartesian(xlim = c(0, 40), clip = "off")+
   scale_colour_manual(values = c(col.H1,col.Hc,col.Hu ),labels=c("H1", "H1c", "Hu"),name = "Hypothesis")
   
  # scale_colour_viridis_d()
@@ -383,9 +391,9 @@ median.PMP1.plot
 ggplotly(median.PMP1.plot)
 
 
-## Median PMP plot: no Hu, N=600 -------------------------
+## Median PMP plot: no Hu, N=350 -------------------------
 
-s<-3 #N=600
+s<-2 #N=350, power = 0.91
 
 #the median aggregate value
 medians<-apply(aggrPMP1.noHu[,,,s],c(1,2),median)%>% 
@@ -426,18 +434,19 @@ median.PMP1.noHu.df<-left_join(medians, lbs, by=c("t", "Hypothesis")) %>%
 library(plotly)
 median.PMP1.noHu.plot<-median.PMP1.noHu.df%>% 
   ggplot(aes(x=t, y=median_aggrPMP, group=factor(Hypothesis, levels = c("PMP_i","PMP_c")), color=factor(Hypothesis, levels = c("PMP_i","PMP_c"))))+
-  geom_point()+
-  geom_line()+
-  geom_errorbar(aes(ymin = lb_aggrPMP, ymax = ub_aggrPMP))+
+  geom_point(position = pd)+
+  geom_line(position = pd)+
+  geom_errorbar(aes(ymin = lb_aggrPMP, ymax = ub_aggrPMP),position = pd)+
   theme_minimal()+
   labs(#title = "Aggregate PMPs for each hypothesis with increasing number of studies",
-       #subtitle = "Points represent median PMPs, errorbars indicate the 2.5th and 97.5th percentile of the PMPs",
-       x="Size of the study set T",
+       subtitle = "Hi vs. Hc",
+       x="Number of aggregated studies",
        y="Aggregate PMP")+
   theme(text = element_text(size = 9),
         axis.text.x = element_text(size = 5, colour = rep(c(col.H1,col.Hc), times=20)),
-        legend.title = element_text(size = 7)
-        # plot.subtitle = element_text(size = 12),
+        legend.title = element_text(size = 7),
+         plot.subtitle = element_text(hjust = 0.5),
+        plot.margin = unit(c(0.5,1.1,0,0.2), "cm")
         # legend.text = element_text(size = 10),
   )+
   scale_colour_manual(values = c(col.H1,col.Hc,col.Hu ),labels=c("H1", "H1c", "Hu"),name = "Hypothesis")
@@ -501,7 +510,7 @@ median.PMP1.n100.plot<-median.PMP1.n100.df%>%
   theme_minimal()+
   labs(#title = "",
     #subtitle = "",
-    x="Size of the study set T",
+    x="Number of aggregated studies",
     y="Aggregate PMP")+
   theme(text = element_text(size = 9),
         axis.text.x = element_text(size = 5, colour = rep(c(col.H1,col.Hc), times=20)),
@@ -567,7 +576,7 @@ median.PMP1.n100.noHu.plot<-median.PMP1.n100.noHu.df%>%
   theme_minimal()+
   labs(#title = "Aggregate PMPs for each hypothesis with increasing number of studies",
     #subtitle = "Points represent median PMPs, errorbars indicate the 2.5th and 97.5th percentile of the PMPs",
-    x="Size of the study set T",
+    x="Number of aggregated studies",
     y="Aggregate PMP")+
   theme(text = element_text(size = 9),
         axis.text.x = element_text(size = 5, colour = rep(c(col.H1,col.Hc), times=20)),
@@ -676,7 +685,7 @@ Fig2a.df %>%
 ## Median PMP plot (with Hu) ----------------------
 #aggrPMP2[studies, hypothesis, iter, n]
 
-s<-3 #N=600
+s<-2 #N=600
 #the median aggregate value
 medians<-apply(aggrPMP2[,,,s],c(1,2),median)%>% 
   as.data.frame() %>% 
@@ -717,22 +726,25 @@ library(plotly)
 
 median.PMP2.plot<-median.PMP2.df%>% 
   ggplot(aes(x=t, y=median_aggrPMP, group=factor(Hypothesis, levels = c("PMP_i","PMP_c","PMP_u")), color=factor(Hypothesis, levels = c("PMP_i","PMP_c","PMP_u"))))+
-  geom_point()+
-  geom_line()+
-  geom_errorbar(aes(ymin = lb_aggrPMP, ymax = ub_aggrPMP))+
+  geom_point(position = pd)+
+  geom_line(position = pd)+
+  geom_errorbar(aes(ymin = lb_aggrPMP, ymax = ub_aggrPMP),position = pd)+
   theme_minimal()+
   labs(#title = "",
     #subtitle = "",
-    x="Size of the study set T",
+    x="Number of aggregated studies",
     y="Aggregate PMP")+
   scale_color_discrete(labels=c("H1c", "H1", "Hu"))+
   theme(text = element_text(size = 9),
-        axis.text.x = element_text(size = 5),
-        legend.title = element_text(size = 7)
+        axis.text.x = element_text(size = 5, colour = rep(c(col.H1,col.H1,col.H1,col.Hc), times=10)),
+        legend.title = element_text(size = 7),
+        plot.margin = unit(c(0.5,1.1,0,0.2), "cm")
         # plot.subtitle = element_text(size = 12),
         # legend.text = element_text(size = 10),
   )+
-  scale_colour_manual(values = c("#21908CFF", "#FDE725FF", "#440154FF" ),labels=c("H1", "H1c", "Hu"),name = "Hypothesis")
+  annotate("text", x = 43, y = 0.5, label = "H1:Hc = 1:1",angle = 270)+
+  coord_cartesian(xlim = c(0, 40), clip = "off")+
+  scale_colour_manual(values = c(col.H1,col.Hc,col.Hu ),labels=c("H1", "H1c", "Hu"),name = "Hypothesis")
 
 median.PMP2.plot
 
@@ -741,7 +753,7 @@ ggplotly(median.PMP1.plot)
 
 ## Median PMP plot(no Hu) -------------------------
 
-s<-3 #N=1200
+s<-2 #N=350
 
 #the median aggregate value
 medians<-apply(aggrPMP2.noHu[,,,s],c(1,2),median)%>% 
@@ -779,25 +791,27 @@ ubs<-apply(aggrPMP2.noHu[,,,s],c(1,2),function(x) quantile(x,probs=c(0.975))) %>
 median.PMP2.noHu.df<-left_join(medians, lbs, by=c("t", "Hypothesis")) %>%
   left_join(., ubs, by=c("t", "Hypothesis"))
 
+
 library(plotly)
 median.PMP2.noHu.plot<-median.PMP2.noHu.df%>% 
   ggplot(aes(x=t, y=median_aggrPMP, group=factor(Hypothesis, levels = c("PMP_i","PMP_c")), color=factor(Hypothesis, levels = c("PMP_i","PMP_c"))))+
-  geom_point()+
-  geom_line()+
-  geom_errorbar(aes(ymin = lb_aggrPMP, ymax = ub_aggrPMP))+
+  geom_point(position = pd)+
+  geom_line(position = pd)+
+  geom_errorbar(aes(ymin = lb_aggrPMP, ymax = ub_aggrPMP),position = pd)+
   theme_minimal()+
   labs(#title = "Aggregate PMPs for each hypothesis with increasing number of studies",
     #subtitle = "Points represent median PMPs, errorbars indicate the 2.5th and 97.5th percentile of the PMPs",
-    x="Size of the study set T",
+    x="Number of aggregated studies",
     y="Aggregate PMP")+
   scale_color_discrete(labels=c("H1c", "H1"))+
   theme(text = element_text(size = 9),
-        axis.text.x = element_text(size = 5),
-        legend.title = element_text(size = 7)
+        axis.text.x = element_text(size = 5, colour = rep(c(col.H1,col.H1,col.H1,col.Hc), times=10)),
+        legend.title = element_text(size = 7),
+        plot.margin = unit(c(0.5,1.1,0,0.2), "cm")
         # plot.subtitle = element_text(size = 6),
         # legend.text = element_text(size = 10),
   )+
-  scale_colour_manual(values = c("#21908CFF", "#FDE725FF" ),labels=c("H1", "H1c"),name = "Hypothesis")
+  scale_colour_manual(values = c(col.H1,col.Hc,col.Hu ),labels=c("H1", "H1c", "Hu"),name = "Hypothesis")
 
 median.PMP2.noHu.plot
 
@@ -813,7 +827,19 @@ b<-ggarrange(median.PMP2.noHu.plot+ rremove("xlab"),
              nrow=2
 ) 
 b
-#ggsave("Outputs/Research Report/Fig2.png", plot = Fig2, width = 5, height = 3, units = "in", dpi = 300, bg="white")
+
+b<-ggarrange(median.PMP1.noHu.plot+ rremove("xlab"),
+             median.PMP1.plot+ rremove("xylab"),
+             median.PMP2.noHu.plot,
+             median.PMP2.plot+ rremove("ylab"),
+             legend="bottom",
+             nrow=2,
+             ncol = 2,
+             legend.grob = get_legend(median.PMP1.plot)
+) 
+b
+
+ggsave("Outputs/Research Report/Fig1_v2.png", plot = b, width = 9, height = 4.6, units = "in", dpi = 300, bg="white")
 
 # %>% 
 #   annotate_figure(top = text_grob("Change of the aggregate PMPs for each hypothesis with increasing number of aggregared studies
