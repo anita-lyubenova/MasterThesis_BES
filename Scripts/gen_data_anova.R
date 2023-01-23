@@ -74,9 +74,6 @@ mod <- lm(y~X[,-1])
 mod$coefficients
 
 
-
-
-install.packages("alr4")
 library(alr4)
 gala<-galapagos
 mgala<-as.matrix(gala[,1:4])
@@ -122,7 +119,7 @@ coefs <- function(r2, ratio, rho, model = c("normal", "logit", "probit")) {
 
 set.seed(123)
 # Simulation including all variables
-n<- 10000
+n<- 1000
 X <- t(rmultinom(n = n, size = 1, prob = rep(0.2,4)))
 ones<-matrix(1,ncol = nrow(X), nrow = 1)
 
@@ -130,9 +127,10 @@ beta <- c(1,2,3,4)
 e <- rnorm(n, 0, 0.25)
 y <- X%*%beta + e
 
-pcor<-0.3
+lm(y~0+X)
 
 #instead
+pcor<-0.3
 dat<-mvrnorm(n=n/4, mu=beta, Sigma = cormat(pcor, length(beta))) %>% 
   as.data.frame() %>% 
   pivot_longer(everything(), names_to = "group", values_to = "y") %>% 
