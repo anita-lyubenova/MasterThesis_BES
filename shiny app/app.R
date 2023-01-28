@@ -1,5 +1,6 @@
 library(shiny)
 library(bslib)
+library(shinyWidgets)
 
 
 custom_minty<- bs_theme(
@@ -15,13 +16,13 @@ ui<-navbarPage(title = "Bayesian Evidence Synthesis",
                  # Note the wrapping of the string in HTML()
                  tags$style(HTML("
                     .navbar.navbar-default {
-                        background-color: #8ed1be !important;
+                        background-color: #78C1A9 !important;
                         color: white !important;
                     }
                     
                     .navbar-default .navbar-brand {
                          color: white !important;
-                         font-weight: bold !important;
+                        
                     }
                      
                     .navbar-default .navbar-nav > li > a {color:white !important;}  
@@ -30,8 +31,9 @@ ui<-navbarPage(title = "Bayesian Evidence Synthesis",
                                 "))
                ),
                tabPanel("Home"),
-               tabPanel("Median Plots"),
-               tabPanel("BES-power plots")
+               tabPanel("PMPs distributions"),
+               tabPanel("BES-power plots"),
+               
                )
 
 server<-function(input, output, session){}
@@ -40,7 +42,7 @@ shinyApp(ui = ui, server = server)
 #run_with_themer(shinyApp(ui = ui, server = server))
 
 
-
+#seecolor::print_color(c("#8ed1be", "#6ECCAE", "#73BAA4"), type = "r")
 
 
 
