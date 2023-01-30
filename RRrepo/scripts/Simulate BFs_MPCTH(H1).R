@@ -94,3 +94,54 @@ for(i in 1:iter){
 
 save.image(file="workspaces/Simulate BFs_MPCTH(H1).RData")
 
+# Aggregate PMPs--------------------------------------
+load("RRrepo/workspaces/Simulate BFs_MPCTH(H1).RData")
+
+source("RRrepo/scripts/Aggregate PMPs.R")
+
+aggrPMPic_H1TRUE<-
+  aggregatePMP(BF=BF, #the simulated BFs from the simulate_BF_.R scripts
+               hyp=c("i", "c"), #which hypotheses are of interest
+               iter=iter,
+               studies=studies
+  )
+aggrPMPicu_H1TRUE<-
+  aggregatePMP(BF=BF, #the simulated BFs from the simulate_BF_.R scripts
+               hyp=c("i", "c", "u"), #which hypotheses are of interest
+               iter=iter,
+               studies=studies
+  )
+
+aggrPMP0iu_H1TRUE<-
+  aggregatePMP(BF=BF, #the simulated BFs from the simulate_BF_.R scripts
+               hyp=c("0","i", "u"), #which hypotheses are of interest
+               iter=iter,
+               studies=studies
+  )
+
+aggrPMP0icu_H1TRUE<-
+  aggregatePMP(BF=BF, #the simulated BFs from the simulate_BF_.R scripts
+               hyp=c("0","i", "c", "u"), #which hypotheses are of interest
+               iter=iter,
+               studies=studies
+  )
+
+#Save ------------------------------------------
+
+PMP_H1TRUE<-list(ic=aggrPMPic_H1TRUE,
+                           icu=aggrPMPicu_H1TRUE,
+                           iu0=aggrPMP0iu_H1TRUE,
+                           icu0=aggrPMP0icu_H1TRUE,
+                           iter=iter,
+                           n_studies=studies,
+                           n=n,
+                           ratio_beta.Hi=ratio_beta.Hi,
+                           ratio_beta.Hc=NA,
+                           r2=r2,
+                           pcor=pcor,
+                           models=models
+)
+
+save(PMP_H1TRUE,file="RRrepo/workspaces/PMPs/PMP_H1TRUE.RData")
+
+

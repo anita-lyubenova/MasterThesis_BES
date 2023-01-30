@@ -13,7 +13,7 @@ aggregatePMP<-function(BF, #the simulated BFs from the simulate_BF_.R scripts
   n.hyp<-length(hyp)
   n<-dimnames(BF)[[5]]
   #subset only hypotheses Hi vs. Hc vs. Hu (exlude H0)
-  BF.temp<-BF[,substr(dimnames(BF)[[2]],3,3) %in% hyp,,,]  
+  BF.temp<-BF[,substr(dimnames(BF)[[2]],3,3) %in% hyp,,,,drop=FALSE]  
   
   #placeholder for the aggregate PMPs
   aggrPMP<-BF.temp
