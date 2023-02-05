@@ -6,6 +6,8 @@ library(RColorBrewer)
 library(shades)
 library(tidyverse)
 library(highcharter)
+library(htmltools)
+library(htmlwidgets)
 
 setwd("C:/Anita's Documents/MSc Utrecht/Master Thesis/01_MasterThesis_BES")
 load("RRrepo/workspaces/PMPs/PMP_H1TRUE.RData")
@@ -14,7 +16,7 @@ load("RRrepo/workspaces/PMPs/PMP_HuTRUE_eqES.RData")
 # load("RRrepo/workspaces/PMPs/PMP_HuTRUE_largerESi.RData")
 
 datafiles<-c("PMP_H1TRUE", "PMP_HcTRUE", "PMP_HuTRUE_eqES")
-names(datafiles)<-c("1", "c", "u")
+names(datafiles)<-c("i", "c", "u")
 
 source("shiny app/modules.R")
 source("shiny app/app functions.R")

@@ -37,7 +37,7 @@ create_plot_data<-function(aggrPMP){
     mutate(color=case_when(Hypothesis=="PMP_i" ~ "#7fc97f",
                            Hypothesis=="PMP_c" ~ "#fdc086",
                            Hypothesis=="PMP_u" ~ "black",
-                           Hypothesis=="PMP_0" ~ "#6B2B74",
+                           Hypothesis=="PMP_0" ~ "#aa69b5",#6B2B74
                            ),
            name=case_when(Hypothesis=="PMP_i" ~ "Hi",
                           Hypothesis=="PMP_c" ~ "Hc",
@@ -51,7 +51,7 @@ create_plot_data<-function(aggrPMP){
 }
 # ###### temp ######
 # load("RRrepo/workspaces/PMPs/PMP_H1TRUE.RData")
-# PMP=PMP_H1TRUE
+# PMP=PMP_H1TRUE_eqES
 # 
 # hyp_input<-c("i", "c", "u")
 # N_input<-2
@@ -66,46 +66,13 @@ create_plot_data<-function(aggrPMP){
 # data<-PMP[[paste0(hyp_input, collapse = "")]][,,,,N_input]
 # 
 # ###### temp #########
+ PMP=PMP_H1TRUE
+ hyp_input<-c("i", "c", "u", "0")
+ N_input<-2
+ data<-PMP[[paste0(hyp_input, collapse = "")]][,,1,,N_input]
 
-# median_plot<-function(data){
-#   #common parameters for all plots
-#   pd <- position_dodge(width = 0.4) # set desired dodge width
-#   col.H1<-"#7fc97f"
-#   col.Hc<-"#fdc086"
-#   col.Hu<-"black"
-#   col.H0<-"#6B2B74"
-#  # lightness(col.H1, scalefac(0.50))
-# 
-#   create_plot_data(data)%>%
-#     ggplot(aes(x=t, y=median_aggrPMP, group=factor(Hypothesis, levels = dimnames(data)[[2]]), color=factor(Hypothesis, levels = dimnames(data)[[2]])))+
-#     geom_point(position = pd)+
-#     geom_line(position = pd)+
-#     geom_errorbar(aes(ymin = lb_aggrPMP, ymax = ub_aggrPMP),position = pd)+
-#     theme_minimal()+
-#     labs(#title = "Aggregate PMPs for each hypothesis with increasing number of studies",
-#       subtitle = paste(paste0("H",hyp_input), collapse = " vs. "), #paste0("H",hyp_input[1], " vs H", hyp_input[2]),     #"H1 vs. Hc",
-#       #x="Number of aggregated studies",
-#       x=" ",
-#       y="Aggregate PMP")+
-#     theme(text = element_text(size = 9),
-#          # axis.text.x = element_text(size = 8, colour = rep(c(lightness(col.H1, scalefac(0.70)),lightness(col.Hc, scalefac(0.70))), times=20)),
-#           legend.title = element_text(size = 7),
-#           plot.subtitle = element_text(hjust = 0.5),
-#           plot.margin = unit(c(0.5,1.1,0,0.2), "cm")
-#           # legend.text = element_text(size = 10),
-#     )+
-#     guides(color="none")+
-#     scale_colour_manual(values = c(col.H1,col.Hc,col.Hu, col.H0 ),labels=c("H1", "Hc", "Hu", "H0"),name = "Hypothesis")
-# 
-# }
 
-# hyp_input<-c("i", "c", "u", "0")
-# data<-PMP[[paste0(hyp_input, collapse = "")]][,,,,N_input]
- #unique(plot_data$name)
 median_plot<-function(data, hyp_input){
-  
-  # colors<-c("#7fc97f", "#fdc086", "black", "#6B2B74")
-  # names(colors)<-c("i", "c", "u", "0")
   
   plot_data<-create_plot_data(data)
   
@@ -118,8 +85,9 @@ median_plot<-function(data, hyp_input){
            name=plot_data$name[1:length(hyp_input)],
            id=letters[1:length(dimnames(data)[[2]])]
            )%>%
-    hc_tooltip(enabled=FALSE)%>%
-    hc_yAxis(labels=list(enabled=FALSE),
+    hc_tooltip(enabled=TRUE,
+               valueDecimals=2)%>%
+    hc_yAxis(labels=list(enabled=TRUE),
              #reversed=TRUE,
              title=list(text="Aggregated PMPs"),
              gridLineWidth=0)%>%
@@ -131,9 +99,8 @@ median_plot<-function(data, hyp_input){
               verticalAlign = "bottom",
               align="left",
               title=list(text="Hypotheses"
-                         
                          )) %>% 
-    hc_title(text="Aggregate PMPs for each hypothesis with increasing number of studies",
+    hc_title(text="Variation of aggregate PMPs for each hypothesis across iterations",
              align="left") %>% 
     hc_subtitle(text=paste(paste0("H",hyp_input), collapse = " vs. "),
                 align="left") %>% 
