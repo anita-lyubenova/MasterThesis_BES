@@ -63,37 +63,12 @@ gen_plot_server <- function(id,PMP) { #later on PMP shoudl be reactive
       })
       
       output$median_plot<-renderHighchart({
-          median_plot(PMP_react())
+          median_plot(PMP_react(), hyp_input=input$hyp_input)
       })
       
     })
       
-      
-      
-      # output$median_plot<-renderPlot({
-      #   median.PMP.df %>%
-      #     ggplot(aes(x=t, y=median_aggrPMP, group=factor(Hypothesis, levels = dimnames(aggrPMP)[[2]]), color=factor(Hypothesis, levels = dimnames(aggrPMP)[[2]])))+
-      #     geom_point(position = pd)+
-      #     geom_line(position = pd)+
-      #     geom_errorbar(aes(ymin = lb_aggrPMP, ymax = ub_aggrPMP), position = pd)+
-      #     theme_minimal()+
-      #     labs(
-      #       x="Number of aggregated studies",
-      #       y="Aggregate PMP")+
-      #     theme(text = element_text(size = 9),
-      #           axis.text.x = element_text(size = 8), #, colour = rep(c(lightness(col.H1, scalefac(0.70)),lightness(col.Hc, scalefac(0.70))), times=20)
-      #           legend.title = element_text(size = 7),
-      #           legend.title.align=0.5,
-      #           plot.subtitle = element_text(hjust = 0.5),
-      #           plot.margin = unit(c(0.5,1.1,0,0.2), "cm")
-      #           # legend.text = element_text(size = 10),
-      #     )+
-      #     # guides(colour = guide_legend(nrow = 1))+
-      #     # annotate("text", x = 43, y = 0.5, label = "H1:Hc = 1:1",angle = 270)+
-      #     coord_cartesian(xlim = c(0, 40), clip = "off") %>% 
-      #     scale_colour_manual(values = c(col.H1,col.Hc,col.Hu ),labels=c("H1", "Hc", "Hu"),name = "Hypothesis")
-      #   
-      # })
+    
       
   })
 

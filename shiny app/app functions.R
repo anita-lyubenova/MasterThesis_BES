@@ -99,16 +99,22 @@ create_plot_data<-function(aggrPMP){
 # 
 # }
 
-median_plot<-function(data){
+# hyp_input<-c("i", "c", "u", "0")
+# data<-PMP[[paste0(hyp_input, collapse = "")]][,,,,N_input]
+ #unique(plot_data$name)
+median_plot<-function(data, hyp_input){
+  
+  # colors<-c("#7fc97f", "#fdc086", "black", "#6B2B74")
+  # names(colors)<-c("i", "c", "u", "0")
+  
   plot_data<-create_plot_data(data)
   plot_data%>%
     hchart("scatter",
            hcaes(x=t, y=median_aggrPMP,
-                 group=factor(Hypothesis,levels = dimnames(data)[[2]])#,
-              #   color=as.factor(color),
+                 group=factor(Hypothesis,levels = dimnames(data)[[2]])
                  ),
-           color=unique(plot_data$color),
-           name=unique(plot_data$name),
+           color=plot_data$color[1:length(hyp_input)],
+           name=plot_data$name[1:length(hyp_input)],
            id=letters[1:length(dimnames(data)[[2]])]
            )%>%
     # hc_plotOptions(scatter=list(dataLabels=list(enabled=TRUE,
@@ -138,7 +144,7 @@ median_plot<-function(data){
       hcaes(y = median_aggrPMP, x = t, low = lb_aggrPMP, high = ub_aggrPMP,
             group = factor(Hypothesis, levels = dimnames(data)[[2]])
             ),
-      color=unique(plot_data$color),
+      color=plot_data$color[1:length(hyp_input)],
       linkedTo = letters[1:length(dimnames(data)[[2]])],
       enableMouseTracking = TRUE,
       showInLegend = FALSE,
