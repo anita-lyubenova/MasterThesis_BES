@@ -9,9 +9,12 @@ library(highcharter)
 
 setwd("C:/Anita's Documents/MSc Utrecht/Master Thesis/01_MasterThesis_BES")
 load("RRrepo/workspaces/PMPs/PMP_H1TRUE.RData")
-# load("RRrepo/workspaces/PMPs/PMP_HcTRUE.RData")
-# load("RRrepo/workspaces/PMPs/PMP_HuTRUE_eqES.RData")
+load("RRrepo/workspaces/PMPs/PMP_HcTRUE.RData")
+load("RRrepo/workspaces/PMPs/PMP_HuTRUE_eqES.RData")
 # load("RRrepo/workspaces/PMPs/PMP_HuTRUE_largerESi.RData")
+
+datafiles<-c("PMP_H1TRUE", "PMP_HcTRUE", "PMP_HuTRUE_eqES")
+names(datafiles)<-c("1", "c", "u")
 
 source("shiny app/modules.R")
 source("shiny app/app functions.R")
@@ -54,8 +57,8 @@ ui<-navbarPage(title = "Bayesian Evidence Synthesis",
 
 server<-function(input, output){
   
-  gen_plot_server("plot_conditions1", PMP=PMP_H1TRUE)
-  gen_plot_server("plot_conditions2", PMP=PMP_H1TRUE)
+  gen_plot_server("plot_conditions1")
+  gen_plot_server("plot_conditions2")
   
 }
 
