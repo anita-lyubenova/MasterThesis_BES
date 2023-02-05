@@ -7,7 +7,8 @@ gen_plot_UI <- function(id) {
   tagList(
     checkboxGroupInput(ns("hyp_input"),
                        label = "Hypotheses of interest",
-                       choices = c("H0","H1", "Hc", "Hu"),
+                       choiceNames = c("H1", "Hc", "Hu","H0"),
+                       choiceValues = c("i", "c", "u","0"),
                        inline = TRUE),
     radioButtons(inputId = ns("N_input"),
                  label = "Sample size of individual studies",
@@ -15,11 +16,29 @@ gen_plot_UI <- function(id) {
                  choiceValues = c(1,2),
                  inline = TRUE),
     actionButton(inputId = ns("go"), "Plot"),
-   # plotOutput(outputId = ns("median_plot")),
-    verbatimTextOutput(ns("test"))
+    highchartOutput(outputId = ns("median_plot")),
+    verbatimTextOutput(ns("test")),
+   verbatimTextOutput(ns("test2"))
     
   )
 }
+
+
+###############   TROUBLESHOOTING   #########################
+# PMP=PMP_H1TRUE
+# all_hyp<-c("0", "i", "c", "u")
+# hyp_input<-c("i", "c")
+# N_input<-1
+# 
+# names(PMP)[1:4]
+# 
+# PMP[[paste0(hyp_input, collapse = "")]][,,,,N_input]
+# 
+# grepl(pattern=hyp_input[1], x=names(PMP)[1:4]) & grepl(pattern=hyp_input[2], x=names(PMP)[1:4])
+
+#PMP[["ic"]][,,,,5]
+###############   TROUBLESHOOTING   #########################
+
 
 gen_plot_server <- function(id,PMP) { #later on PMP shoudl be reactive
   
@@ -31,12 +50,24 @@ gen_plot_server <- function(id,PMP) { #later on PMP shoudl be reactive
       #   need(lenght(input$hyp_input)<2, "Please, choose at least 2 hypotheses to test against each other")
       #   )
     
-      PMP<-reactive(PMP[[paste0(input$hyp_input, collapse = "")]][,,,,input$N_input])
+    # output$test<-renderPrint({
+    #   as.numeric(input$N_input)
+    # })
+    
+    
+    observeEvent(input$go, {
+      PMP_react<-reactive(PMP[[paste0(input$hyp_input, collapse = "")]][,,,,as.numeric(input$N_input)])
       
-      
-      output$test<-renderPrint({
-        create_plot_data(PMP())
+      output$test2<-renderPrint({
+        create_plot_data(PMP_react())
       })
+      
+      output$median_plot<-renderHighchart({
+          median_plot(PMP_react())
+      })
+      
+    })
+      
       
       
       # output$median_plot<-renderPlot({
