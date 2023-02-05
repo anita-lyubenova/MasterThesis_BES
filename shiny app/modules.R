@@ -17,8 +17,7 @@ gen_plot_UI <- function(id) {
                  inline = TRUE),
     actionButton(inputId = ns("go"), "Plot"),
     highchartOutput(outputId = ns("median_plot")),
-    verbatimTextOutput(ns("test")),
-   verbatimTextOutput(ns("test2"))
+    verbatimTextOutput(ns("test"))
     
   )
 }
@@ -50,17 +49,10 @@ gen_plot_server <- function(id,PMP) { #later on PMP shoudl be reactive
       #   need(lenght(input$hyp_input)<2, "Please, choose at least 2 hypotheses to test against each other")
       #   )
     
-    # output$test<-renderPrint({
-    #   as.numeric(input$N_input)
-    # })
-    
     
     observeEvent(input$go, {
       PMP_react<-reactive(PMP[[paste0(input$hyp_input, collapse = "")]][,,,,as.numeric(input$N_input)])
       
-      output$test2<-renderPrint({
-        create_plot_data(PMP_react())
-      })
       
       output$median_plot<-renderHighchart({
           median_plot(PMP_react(), hyp_input=input$hyp_input)

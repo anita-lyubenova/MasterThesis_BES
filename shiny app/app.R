@@ -44,15 +44,18 @@ ui<-navbarPage(title = "Bayesian Evidence Synthesis",
                                 "))),
                tabPanel("Home"),
                tabPanel("PMP distributions",
-                        gen_plot_UI("plot_conditions")
-                        ),
+                        fluidRow(
+                        column(width = 6, gen_plot_UI("plot_conditions1")),
+                        column(width = 6, gen_plot_UI("plot_conditions2"))
+                        )),
                tabPanel("BES-power plots")
                
                )
 
 server<-function(input, output){
   
-  gen_plot_server("plot_conditions", PMP=PMP_H1TRUE)
+  gen_plot_server("plot_conditions1", PMP=PMP_H1TRUE)
+  gen_plot_server("plot_conditions2", PMP=PMP_H1TRUE)
   
 }
 

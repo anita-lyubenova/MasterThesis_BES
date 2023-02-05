@@ -108,6 +108,7 @@ median_plot<-function(data, hyp_input){
   # names(colors)<-c("i", "c", "u", "0")
   
   plot_data<-create_plot_data(data)
+  
   plot_data%>%
     hchart("scatter",
            hcaes(x=t, y=median_aggrPMP,
@@ -117,10 +118,6 @@ median_plot<-function(data, hyp_input){
            name=plot_data$name[1:length(hyp_input)],
            id=letters[1:length(dimnames(data)[[2]])]
            )%>%
-    # hc_plotOptions(scatter=list(dataLabels=list(enabled=TRUE,
-    #                                             format="{point.key}"),
-    #                             animation=list(duration=0),
-    #                             allowPointSelect=TRUE))%>%
     hc_tooltip(enabled=FALSE)%>%
     hc_yAxis(labels=list(enabled=FALSE),
              #reversed=TRUE,
@@ -136,8 +133,10 @@ median_plot<-function(data, hyp_input){
               title=list(text="Hypotheses"
                          
                          )) %>% 
-    hc_title(text="Aggregate PMPs for each hypothesis with increasing number of studies") %>% 
-    hc_subtitle(text=paste(paste0("H",hyp_input), collapse = " vs. ")) %>% 
+    hc_title(text="Aggregate PMPs for each hypothesis with increasing number of studies",
+             align="left") %>% 
+    hc_subtitle(text=paste(paste0("H",hyp_input), collapse = " vs. "),
+                align="left") %>% 
     hc_add_series(
       plot_data,
       "errorbar", 
