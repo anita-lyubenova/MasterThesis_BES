@@ -1,6 +1,3 @@
-library(doParallel)
-library(plyr)
-
 #H0 is the most parsimonious common true hypothesis (MPCTH)
 
 source("RRrepo/scripts/functions.R")
@@ -12,16 +9,15 @@ source("RRrepo/scripts/functions.R")
 #Simulation conditions --------------------------------------------------------
 r2=.13 #effect size r-squared
 pcor<-0.3 #correlation between the predictor variables
-n<-c(100,350,500,900) #sample sizes
+n<-c(100,350,600,1000) #sample sizes
 studies<-40 #number of studies
 hypothesis<-"V1=V2=V3; V1>V2>V3" #tested hypotheses
 models <- c("normal") #linear, logistic or probit regression
 
 
 #specify number of iterations only if there is no object "iter" in the environment
-if(!exists("iter")){
-  iter<-1000 
-}
+iter<-1000 
+
 
 #ratio between the regression coefficients b1:b2:b3>; larger number corresponds to larger coefficient
 ratio_beta.H0<-c(1,1,1)
@@ -65,7 +61,7 @@ for(i in 1:iter){
       
       for(t in 1:studies){
         
-        print(paste("MPCTH(H1):: Iteration i:",i, "Sample size s:", s, "Study t:", t, "Ratio r:",r))
+        print(paste("MPCTH(H0):: Iteration i:",i, "Sample size s:", s, "Study t:", t, "Ratio r:",r))
         
   
         ratio_beta<-ratio_beta.H0
@@ -86,95 +82,6 @@ for(i in 1:iter){
 } #end iterations loop i
 
 
-#Attempt to parallelize code---------------------------------------------------------------------------------------
-#i.e. have the sample size conditions run on separate cores
-
-##Placeholder for the results-----
-#remove n
-
-
-simH0_n<-function(n){
-  r2=.13 #effect size r-squared
-  pcor<-0.3 #correlation between the predictor variables
- # n<-c(100,350,500,900) #sample sizes
-  studies<-40 #number of studies
-  hypothesis<-"V1=V2=V3; V1>V2>V3" #tested hypotheses
-  models <- c("normal") #linear, logistic or probit regression
-
-  iter<-3
-  #ratio between the regression coefficients b1:b2:b3>; larger number corresponds to larger coefficient
-  ratio_beta.H0<-c(1,1,1)
-  ratio_HiHc<-0
-  
-  BF<-array(data = NA,
-            dim=c(studies, 
-                  4, # hypotheses
-                  length(ratio_HiHc), #1:1 or 3:1 ratio of studies coming from Hi and H
-                  iter
-            ),
-            dimnames = list(c(1:studies),
-                            c("BF0u", "BFiu", "BFcu", "BFu"),
-                            c("Hi:Hc=0:0"),
-                            c(1:iter)
-            ))
-  
-  #The BF of Hu is always 1
-  BF[,4,,]<-1
-  
-  for(i in 1:iter){
-    
-      for(r in 1:1){ #length(ratio_HiHc)
-        
-        for(t in 1:studies){
-          
-          print(paste("MPCTH(H1):: Iteration i:",i, "Study t:", t, "Ratio r:",r))
-          
-          
-          ratio_beta<-ratio_beta.H0
-          
-          #obtain BF_u for Hi, Hc and H0
-          BF[t,1:3,r,i]<-gen_dat(r2=r2,
-                                   betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"),
-                                   rho=cormat(pcor, length(ratio_beta)),
-                                   n=n,
-                                   "normal")%$%
-            lm(Y ~ V1 + V2 +V3) %>%
-            bain(hypothesis = hypothesis)%$%fit$BF.u[c(1,2,4)]
-          
-          
-        } #end studies loop t
-      }#end H1:Hc ratio loop r
-  } #end iterations loop i
-  
-  return(BF)
-}
-
-
-a<-simH0_n(n=10)
-dimnames(a)
-library(magrittr)
-n<-c(100, 350)
-
-cores <- detectCores()
-cores
-cl <- makePSOCKcluster(2)
-registerDoParallel(cl, cores=2)
-
-clusterEvalQ(cl, { library(magrittr); library(bain); })
-#clusterEvalQ(cl,  library(magrittr))
-#b<-llply(n, simH0_n, .parallel = TRUE) #
-b<-parLapply(cl=cl, X=n, simH0_n)
-
-stopCluster(cl)
-stopImplicitCluster()
-getDoParWorkers()
-
-b[[1]]
-b[[2]]
-bb<-abind::abind(b[[1]],b[[2]],along=5)
-
-
-dim(bb)
 save.image(file="RRrepo/workspaces/Simulate BFs_MPCTH(H0).RData")
 
 # Aggregate PMPs--------------------------------------
