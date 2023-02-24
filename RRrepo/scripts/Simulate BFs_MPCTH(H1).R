@@ -1,7 +1,7 @@
 #THe script is the same as Simulate_BFs_ES(H1)=ES(Hc).R apart from that all studies come from H1 and thus
 #H1 is the most parsimonious common true hypothesis (MPCTH)
 
-source("scripts/functions.R")
+source("scripts/ThomVolker scripts/functions.R")
 
 ## Data simulation 1: ES_Hi = ES_Hc 
 #Conditions: 
