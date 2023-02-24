@@ -1,0 +1,13 @@
+name: BES_RR_results
+title: BES_RR_results
+username:
+account: anita-lyubenova
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 8243172
+bundleId: 6818780
+url: https://anita-lyubenova.shinyapps.io/BES_RR_results/
+when: 1675763978.90012
+lastSyncTime: 1675763978.90015
+asMultiple: FALSE
+asStatic: FALSE

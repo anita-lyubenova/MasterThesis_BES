@@ -13,7 +13,11 @@ setwd("C:/Anita's Documents/MSc Utrecht/Master Thesis/01_MasterThesis_BES")
 load("RRrepo/workspaces/PMPs/PMP_H1TRUE.RData")
 load("RRrepo/workspaces/PMPs/PMP_HcTRUE.RData")
 load("RRrepo/workspaces/PMPs/PMP_HuTRUE_eqES.RData")
-# load("RRrepo/workspaces/PMPs/PMP_HuTRUE_largerESi.RData")
+#load("RRrepo/workspaces/PMPs/PMP_HuTRUE_largerESi.RData")
+
+# load("PMP_H1TRUE.RData")
+# load("PMP_HcTRUE.RData")
+# load("PMP_HuTRUE_eqES.RData")
 
 datafiles<-c("PMP_H1TRUE", "PMP_HcTRUE", "PMP_HuTRUE_eqES")
 names(datafiles)<-c("i", "c", "u")
