@@ -69,42 +69,8 @@ hypotheses="V1=V2=V3; V1>V2>V3"
 n<-seq(100,1000, by=100)
 
 power_linear<-list()
-for(s in 1:length(n)){
-  power_linear[[s]] <-bain_power_sim(n=n[s],
-                  hypotheses="V1=V2=V3; V1>V2>V3",
-                  ratio_beta=list(H1=c(1,1,1),
-                                  H2=c(3,2,1),
-                                  Hc=c(1,2,3)),
-                  iter=1000,
-                  model="linear"
-  )
-}
 
-power_logistic<-list()
-for(s in 1:length(n)){
-  power_logistic[[s]] <-bain_power_sim(n=n[s],
-                                 hypotheses="V1=V2=V3; V1>V2>V3",
-                                 ratio_beta=list(H1=c(1,1,1),
-                                                 H2=c(3,2,1),
-                                                 Hc=c(1,2,3)),
-                                 iter=1000,
-                                 model="logistic"
-  )
-}
-
-power_probit<-list()
-for(s in 1:length(n)){
-  power_probit[[s]] <-bain_power_sim(n=n[s],
-                                   hypotheses="V1=V2=V3; V1>V2>V3",
-                                   ratio_beta=list(H1=c(1,1,1),
-                                                   H2=c(3,2,1),
-                                                   Hc=c(1,2,3)),
-                                   iter=1000,
-                                   model="probit"
-  )
-}
-
-save.image(file="Outputs/workspace_Confusion matrix.RData")
+save.image(file="Outputs/workspace_Confusion matrix_v2.RData")
 
 # Data processing ----------------------------------------------
 load("Outputs/workspace_Confusion matrix.RData")
@@ -208,7 +174,7 @@ names(test)
 BF<-test$BF
 test$BF %>% dimnames()
 
-power_matrix(test, hyp = c(2,3))
+power_matrix( hyp = c(2,3))
 
 
 
