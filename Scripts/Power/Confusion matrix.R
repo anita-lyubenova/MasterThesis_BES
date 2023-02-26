@@ -66,11 +66,24 @@ bain_power_sim<-function(
 
 # Data simulation ------------------
 hypotheses="V1=V2=V3; V1>V2>V3"
-n<-seq(100,1000, by=100)
+n<-c(50,100,150,200,300,500,800,1200)
 
 power_linear<-list()
 
-save.image(file="Outputs/workspace_Confusion matrix_v2.RData")
+for(s in 1:length(n)){
+  power_linear[[s]]<-bain_power_sim(
+    r2=0.13,#effect size r-squared
+    pcor=0.3,#correlation between the predictor variables
+    n=n[s], #sample size
+    hypotheses="V1=V2=V3; V1>V2>V3", #tested hypotheses;
+    ratio_beta=list(H0=c(1,1,1), #population H0 = TRUE
+                    H1=c(3,2,1), #population H1 = TRUE
+                    Hc=c(1,2,3)), #population Hc = TRUE
+    iter=2000
+  )
+}
+
+save.image(file="Outputs/workspace_confusion matrix_v2.RData")
 
 # Data processing ----------------------------------------------
 load("Outputs/workspace_Confusion matrix.RData")
