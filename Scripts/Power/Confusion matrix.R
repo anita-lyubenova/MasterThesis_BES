@@ -68,7 +68,7 @@ bain_power_sim<-function(
 
 #a function to transform the BFs to PMPs, create a confusion matrix, and compute power and alpha
 power_matrix<-function(x, # a list with BFs created with bain_power_sim()
-                       hyp, # a numeric vector with column indices of the BF array indicating the tested hypotheses; for them PMPs will be computed
+                       hyp # a numeric vector with column indices of the BF array indicating the tested hypotheses; for them PMPs will be computed
                       # hyp_names = dimnames(BF)[[2]], #a character vector indicating the names of the testerd hypotheses
                       # pop_names=substr(dimnames(BF)[[3]],6,7)
                        ){
@@ -150,12 +150,12 @@ power_plot<-function(x, # a list of lists with BFs created with bain_power_sim()
                      n){
   plot_data<-data.frame()
   for(s in 1:length(n)){
-    plot_data<-rbind(plot_data,power_matrix(x[[s]], hyp = hyp)$plot_data_single)
+    plot_data<-rbind(plot_data,power_matrix(power_linear[[s]], hyp = hyp)$plot_data_single)
   }
   
   plot<-plot_data %>% 
     ggplot(aes(x=n, y=prop, color=hyp))+
-    geom_point()+
+    geom_point(aes(shape=performance))+
     geom_line(aes(linetype=performance))+
     labs(title="Power and alpha for each tested hypothesis")+
     scale_x_continuous(breaks = n)+
@@ -168,53 +168,6 @@ power_plot<-function(x, # a list of lists with BFs created with bain_power_sim()
          sim_conditions=x[[1]][c("r2", "pcor", "hypotheses","populations", "model","iter")]
          ))
 }
-
-power_plot(x=power_linear, # a list of lists with BFs created with bain_power_sim() across different n,
-                     hyp=c(2,3), # a numeric vector with column indices of the BF array indicating the tested hypotheses; for them PMPs will be computed
-                     n=n)
-# x<-power_linear[[1]]
-# power_matrix(x, hyp = c(1,2,3))
-# a<-power_matrix(x, hyp = c(2,3))$power_alpha
-# names(x)
-# 
-# #put power and alpha for each hypothesis across all n in the same data frame
-# H1Hc<-data.frame()
-# for(s in 1:length(n)){
-#   H1Hc<-rbind(H1Hc,power_matrix(power_linear[[s]], hyp = c(2,3))$power_alpha)
-# }
-# 
-# H1Hc %>% 
-#   pivot_longer(cols = c("power", "alpha"),
-#                names_to = "performance",
-#                values_to = "prop") %>% 
-#   ggplot(aes(x=n, y=prop, color=hyp))+
-#   geom_point()+
-#   geom_line(aes(linetype=performance))+
-#   # labs(title="Power")+
-#   scale_x_continuous(breaks = n)+
-#   scale_y_continuous(breaks = seq(0,1, 0.1))+
-#   theme(axis.text.x = element_text(angle = 45))+
-#   theme_minimal()
-# 
-# 
-# 
-# # Testing H0 vs H1 vs Hc
-# H0H1Hc<-data.frame()
-# for(s in 1:length(n)){
-#   H0H1Hc<-rbind(H0H1Hc,power_matrix(power_linear[[s]], hyp = c(1,2,3))$power_alpha)
-# }
-# 
-# H0H1Hc %>% 
-#   pivot_longer(cols = c("power", "alpha"),
-#                names_to = "performance",
-#                values_to = "prop") %>% 
-#   ggplot(aes(x=n, y=prop, color=hyp))+
-#   geom_point()+
-#   geom_line(aes(linetype=performance))+
-#  # labs(title="Power")+
-#   scale_x_continuous(breaks = n)+
-#   theme(axis.text.x = element_text(angle = 45))+
-#   theme_minimal()
 
 
 
@@ -240,3 +193,9 @@ for(s in 1:length(n)){
 save.image(file="Outputs/workspace_confusion matrix_v2.RData")
 
 load("Outputs/workspace_Confusion matrix_v2.RData")
+
+
+#Plot data
+power_plot(x=power_linear, # a list of lists with BFs created with bain_power_sim() across different n,
+           hyp=c(1,2,3), # a numeric vector with column indices of the BF array indicating the tested hypotheses; for them PMPs will be computed
+           n=n)
