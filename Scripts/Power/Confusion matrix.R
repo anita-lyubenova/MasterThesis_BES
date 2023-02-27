@@ -91,9 +91,9 @@ load("Outputs/workspace_Confusion matrix.RData")
 
 dim(power_linear)
 dim(power_linear[[1]])
-dimnames(power_linear[[1]])
+dimnames(power_linear[[1]]$BF)
 
-x<-test
+#a function to transform the BFs to PMPs, create a confusion matrix, and compute power and alpha
 power_matrix<-function(x, # a list with BFs created with bain_power_sim()
                        hyp=1:dim(BF)[[2]] # a numeric vector with column indices of the BF array indicating the tested hypotheses; for them PMPs will be computed
                       # hyp_names = dimnames(BF)[[2]], #a character vector indicating the names of the testerd hypotheses
@@ -101,6 +101,9 @@ power_matrix<-function(x, # a list with BFs created with bain_power_sim()
                        ){
   #subset the array such that it only includes BFiu of hypotheses of interest
   BF<-x$BF[,hyp,]
+  iter<-x$iter
+  n<-x$n
+  
   hyp_index = substr(dimnames(BF)[[2]],3,3)
   pop_names = names(x$populations)
   
@@ -115,6 +118,7 @@ power_matrix<-function(x, # a list with BFs created with bain_power_sim()
       }  
     }
   }
+  
   dimnames(PMP)[[2]]<-paste0("PMP_", hyp_index)
   dimnames(PMP)[[3]]<-paste0("TRUE_", pop_names)
   
@@ -136,19 +140,21 @@ power_matrix<-function(x, # a list with BFs created with bain_power_sim()
   
   power_alpha<-matrix(NA,
                       nrow=nrow(conf_matrix),
-                      ncol = 2,
+                      ncol = 3,
                       dimnames = list(rownames(conf_matrix),
-                                      c("power", "alpha")
+                                      c("n","power", "alpha")
                                       )
                       ) %>% data.frame()
   
 
    ro<-rownames(conf_matrix)
    co<-colnames(conf_matrix)
-
+   
+   power_alpha$n<-n
+   
   for(h in 1:length(hyp_index)){
     power_alpha$power[h]<-conf_matrix[substr(ro,nchar(ro), nchar(ro)) %in% hyp_index[h], substr(co,nchar(co), nchar(co)) %in% hyp_index[h]]
-    power_alpha$alpha[h]<-sum(conf_matrix[substr(ro,nchar(ro), nchar(ro)) %in% hyp_index[h],!substr(co,nchar(co), nchar(co)) %in% hyp_index[h]])
+    power_alpha$alpha[h]<-sum(conf_matrix[substr(ro,nchar(ro), nchar(ro)) %in% hyp_index[h],!substr(co,nchar(co), nchar(co)) %in% hyp_index[h]])/2 #divided by 2 because there are two populations under which alpha is accessed
   }
   
   
@@ -159,36 +165,14 @@ power_matrix<-function(x, # a list with BFs created with bain_power_sim()
 
 }
 
-BF<-power_linear[[2]]
-BF<-power_logistic[[2]]
-BF<-power_probit[[2]]
 
-power_matrix(BF, 
-             hyp = c(2,3),
-             hyp_names = c("i", "c")
-             )
-power_matrix(power_linear[[10]])
+x<-power_linear[[1]]
+power_matrix(x, hyp = c(2,3))
 
-
-test<-bain_power_sim(
-  r2=0.13,#effect size r-squared
-  pcor=0.3,#correlation between the predictor variables
-  n=100, #sample size
-  hypotheses="V1=V2=V3; V1>V2>V3", #tested hypotheses;
-  ratio_beta=list(H0=c(1,1,1), #population H0 = TRUE
-                  H1=c(3,2,1), #population H1 = TRUE
-                  Hc=c(1,2,3)), #population Hc = TRUE
-  iter=10
-)
-
-
-names(test)
-
-BF<-test$BF
-test$BF %>% dimnames()
-
-power_matrix( hyp = c(2,3))
-
+#put power and alpha for each hypothesis across all n in the same data frame
+for(s in 1:length(n)){
+  power_matrix(x, hyp = c(2,3))$power_alpha
+}
 
 
 
