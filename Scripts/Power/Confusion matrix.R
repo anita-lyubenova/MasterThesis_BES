@@ -156,10 +156,12 @@ power_matrix<-function(x, # a list with BFs created with bain_power_sim()
     power_alpha$power[h]<-conf_matrix[substr(ro,nchar(ro), nchar(ro)) %in% hyp_index[h], substr(co,nchar(co), nchar(co)) %in% hyp_index[h]]
     power_alpha$alpha[h]<-sum(conf_matrix[substr(ro,nchar(ro), nchar(ro)) %in% hyp_index[h],!substr(co,nchar(co), nchar(co)) %in% hyp_index[h]])/2 #divided by 2 because there are two populations under which alpha is accessed
   }
-  
+   
+   power_alpha<-rownames_to_column(power_alpha, var="hyp")
   
   return(list(matrix=conf_matrix,
-              power_alpha=power_alpha
+              power_alpha=power_alpha,
+              sim_conditions=x[c("r2", "pcor", "hypotheses","populations", "model","iter")]
               )
          )
 
@@ -167,12 +169,60 @@ power_matrix<-function(x, # a list with BFs created with bain_power_sim()
 
 
 x<-power_linear[[1]]
-power_matrix(x, hyp = c(2,3))
-
+a<-power_matrix(x, hyp = c(2,3))$power_alpha
+names(x)
 #put power and alpha for each hypothesis across all n in the same data frame
+H1Hc<-data.frame()
 for(s in 1:length(n)){
-  power_matrix(x, hyp = c(2,3))$power_alpha
+  H1Hc<-rbind(H1Hc,power_matrix(power_linear[[s]], hyp = c(2,3))$power_alpha)
 }
 
+library(patchwork)
+H1Hc %>% 
+ggplot(aes(x=n, y=power, color=hyp))+
+  geom_point()+
+  geom_line()+
+  labs(title="Power")+
+  scale_x_continuous(breaks = n)+
+  theme(axis.text.x = element_text(angle = 45))+
+H1Hc %>% 
+  ggplot(aes(x=n, y=alpha, color=hyp))+
+  geom_point()+
+  geom_line()+
+  labs(title="alpha")+
+  scale_x_continuous(breaks = n)+
+  theme(axis.text.x = element_text(angle = 45))
 
 
+H1Hc %>% 
+  pivot_longer(cols = c("power", "alpha"),
+               names_to = "performance",
+               values_to = "prop") %>% 
+  ggplot(aes(x=n, y=prop, color=hyp))+
+  geom_point()+
+  geom_line(aes(linetype=performance))+
+  # labs(title="Power")+
+  scale_x_continuous(breaks = n)+
+  scale_y_continuous(breaks = seq(0,1, 0.1))+
+  theme(axis.text.x = element_text(angle = 45))+
+  theme_minimal()
+
+
+
+# Testing H0 vs H1 vs Hc
+H0H1Hc<-data.frame()
+for(s in 1:length(n)){
+  H0H1Hc<-rbind(H0H1Hc,power_matrix(power_linear[[s]], hyp = c(1,2,3))$power_alpha)
+}
+
+H0H1Hc %>% 
+  pivot_longer(cols = c("power", "alpha"),
+               names_to = "performance",
+               values_to = "prop") %>% 
+  ggplot(aes(x=n, y=prop, color=hyp))+
+  geom_point()+
+  geom_line(aes(linetype=performance))+
+ # labs(title="Power")+
+  scale_x_continuous(breaks = n)+
+  theme(axis.text.x = element_text(angle = 45))+
+  theme_minimal()
