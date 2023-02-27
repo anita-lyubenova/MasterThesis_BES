@@ -171,28 +171,12 @@ power_matrix<-function(x, # a list with BFs created with bain_power_sim()
 x<-power_linear[[1]]
 a<-power_matrix(x, hyp = c(2,3))$power_alpha
 names(x)
+
 #put power and alpha for each hypothesis across all n in the same data frame
 H1Hc<-data.frame()
 for(s in 1:length(n)){
   H1Hc<-rbind(H1Hc,power_matrix(power_linear[[s]], hyp = c(2,3))$power_alpha)
 }
-
-library(patchwork)
-H1Hc %>% 
-ggplot(aes(x=n, y=power, color=hyp))+
-  geom_point()+
-  geom_line()+
-  labs(title="Power")+
-  scale_x_continuous(breaks = n)+
-  theme(axis.text.x = element_text(angle = 45))+
-H1Hc %>% 
-  ggplot(aes(x=n, y=alpha, color=hyp))+
-  geom_point()+
-  geom_line()+
-  labs(title="alpha")+
-  scale_x_continuous(breaks = n)+
-  theme(axis.text.x = element_text(angle = 45))
-
 
 H1Hc %>% 
   pivot_longer(cols = c("power", "alpha"),
