@@ -157,10 +157,25 @@ power_matrix<-function(x, # a list with BFs created with bain_power_sim()
     power_alpha$alpha[h]<-sum(conf_matrix[substr(ro,nchar(ro), nchar(ro)) %in% hyp_index[h],!substr(co,nchar(co), nchar(co)) %in% hyp_index[h]])/2 #divided by 2 because there are two populations under which alpha is accessed
   }
    
-   power_alpha<-rownames_to_column(power_alpha, var="hyp")
+   power_alpha<-power_alpha %>% 
+     rownames_to_column(var="hyp") %>% 
+     pivot_longer(cols = c("power", "alpha"),
+                  names_to = "performance",
+                  values_to = "prop")
+   
+   power_alpha_plot <-
+     power_alpha %>% 
+     ggplot(aes(x=n, y=prop, color=hyp))+
+     geom_point()+
+     geom_line(aes(linetype=performance))+
+     # labs(title="Power")+
+     scale_x_continuous(breaks = n)+
+     scale_y_continuous(breaks = seq(0,1, 0.1))+
+     theme(axis.text.x = element_text(angle = 45))+
+     theme_minimal()
   
   return(list(matrix=conf_matrix,
-              power_alpha=power_alpha,
+              plot_data=power_alpha,
               sim_conditions=x[c("r2", "pcor", "hypotheses","populations", "model","iter")]
               )
          )
@@ -169,6 +184,7 @@ power_matrix<-function(x, # a list with BFs created with bain_power_sim()
 
 
 x<-power_linear[[1]]
+power_matrix(x, hyp = c(2,3))
 a<-power_matrix(x, hyp = c(2,3))$power_alpha
 names(x)
 
