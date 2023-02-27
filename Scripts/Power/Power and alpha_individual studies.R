@@ -5,7 +5,7 @@ source("scripts/ThomVolker scripts/functions.R")
 # a function that 
 # (1) simulates data based on specified populations in line with hypohteses of interest
 # (2) Computes BFs for each hypohteses of interest in each population
-bain_power_sim<-function(
+sim_individual<-function(
          r2=0.13,#effect size r-squared
          pcor=0.3,#correlation between the predictor variables
          n, #sample size
@@ -67,7 +67,7 @@ bain_power_sim<-function(
 
 
 #a function to transform the BFs to PMPs, create a confusion matrix, and compute power and alpha
-power_matrix<-function(x, # a list with BFs created with bain_power_sim()
+power_matrix<-function(x, # a list with BFs created with sim_individual()
                        hyp # a numeric vector with column indices of the BF array indicating the tested hypotheses; for them PMPs will be computed
                       # hyp_names = dimnames(BF)[[2]], #a character vector indicating the names of the testerd hypotheses
                       # pop_names=substr(dimnames(BF)[[3]],6,7)
@@ -145,7 +145,7 @@ power_matrix<-function(x, # a list with BFs created with bain_power_sim()
 }
 
 #a function to plot the power and alpha of hypotheses across different n
-power_plot<-function(x, # a list of lists with BFs created with bain_power_sim() across different n,
+power_plot<-function(x, # a list of lists with BFs created with sim_individual() across different n,
                      hyp, # a numeric vector with column indices of the BF array indicating the tested hypotheses; for them PMPs will be computed
                      n){
   plot_data<-data.frame()
@@ -171,14 +171,14 @@ power_plot<-function(x, # a list of lists with BFs created with bain_power_sim()
 
 
 
-# Data simulation ------------------
+# Data simulation ------------------------------------------------------------
 hypotheses="V1=V2=V3; V1>V2>V3"
 n<-c(50,100,150,200,300,500,800,1200)
 
 power_linear<-list()
 
 for(s in 1:length(n)){
-  power_linear[[s]]<-bain_power_sim(
+  power_linear[[s]]<-sim_individual(
     r2=0.13,#effect size r-squared
     pcor=0.3,#correlation between the predictor variables
     n=n[s], #sample size
@@ -195,7 +195,7 @@ save.image(file="Outputs/workspace_confusion matrix_v2.RData")
 load("Outputs/workspace_Confusion matrix_v2.RData")
 
 
-#Plot data
-power_plot(x=power_linear, # a list of lists with BFs created with bain_power_sim() across different n,
+#Plot data-------------------------------------------------------------------------
+power_plot(x=power_linear, # a list of lists with BFs created with sim_individual() across different n,
            hyp=c(1,2,3), # a numeric vector with column indices of the BF array indicating the tested hypotheses; for them PMPs will be computed
            n=n)
