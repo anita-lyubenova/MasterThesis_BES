@@ -3,7 +3,7 @@ source("scripts/ThomVolker scripts/functions.R")
 
 r2=0.13
 pcor=0.3
-hypotheses="V1=V2=V3; V1>V2>V3"
+hypothesis="V1=V2=V3; V1>V2>V3"
 n<-c(50,100,150,200,300,500,800,1200)
 # ratio_beta=list(H0=c(1,1,1), #population H0 = TRUE
 #                 H1=c(3,2,1), #population H1 = TRUE
@@ -26,7 +26,7 @@ sim_BES<-function(
     r2=0.13,#effect size r-squared
     pcor=0.3,#correlation between the predictor variables
     n, #sample size
-    hypotheses, #tested hypotheses;
+    hypothesis, #tested hypotheses;
     ratio_beta=list(H0=c(1,1,1), #population H0 = TRUE
                    H1=c(3,2,1), #population H1 = TRUE
                    Hc=c(1,2,3),
@@ -39,7 +39,7 @@ sim_BES<-function(
     ratio_HiHc=4 # every 2nd study comes from a different population
 ){
   
- 
+
   # a list to store the population level coefficients for each hypothesis-population
   betas<-list()
   #a placeholder for the BFs
@@ -79,9 +79,9 @@ sim_BES<-function(
                             n=n,
                             "normal")%$%
           lm(Y ~ V1 + V2 +V3) %>%
-          bain(hypothesis = hypotheses)%$%
+          bain(hypothesis = hypothesis)%$%
           fit %>%
-          extract(c(1:length(unlist(strsplit(hypotheses, ";"))),nrow(.)),"BF.u")#subset only BFiu for the specified hypotheses and the complement
+          extract(c(1:length(unlist(strsplit(hypothesis, ";"))),nrow(.)),"BF.u")#subset only BFiu for the specified hypothesis and the complement
         
     }
    }
@@ -92,21 +92,21 @@ sim_BES<-function(
               r2=r2,
               pcor=pcor,
               n=n,
-              hypotheses=hypotheses,
+              hypothesis=hypothesis,
               populations=ratio_beta,
               model=model,
               iter=iter
   ))
 }
 
-x<-sim_BES(studies = 10,n=100, hypotheses = "V1=V2=V3; V1>V2>V3")
+x<-sim_BES(studies = 10,n=100, hypothesis = "V1=V2=V3; V1>V2>V3")
 dimnames(a$BF)
 x<-a
 
 
 #function to aggregate the PMPs for 
 aggregatePMP<-function(x, #a list created with sim_BES()
-                       hyp=c("1", "c", "u") #which hypotheses are to be tested interest
+                       hyp=c("1", "c", "u") #which hypothesis are to be tested interest
                       # iter=1000,
                       # studies=40
                        
