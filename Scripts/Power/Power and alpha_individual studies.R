@@ -199,3 +199,31 @@ load("Outputs/workspace_Confusion matrix_v2.RData")
 power_plot(x=power_linear, # a list of lists with BFs created with sim_individual() across different n,
            hyp=c(1,2,3), # a numeric vector with column indices of the BF array indicating the tested hypotheses; for them PMPs will be computed
            n=n)
+
+str(power_linear)
+
+
+power_linear[[1]]$BF
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

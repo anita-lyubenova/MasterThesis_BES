@@ -154,11 +154,25 @@ pmp_x
 # for a range of sample sizes
 n<-c(50,100,150,200,300,500,800,1200)
 
-
+power_BES<-list()
 for (s in 1:length(n)){
-  
+  power_BES[[s]]<-sim_BES(r2=0.13,#effect size r-squared
+                          pcor=0.3,#correlation between the predictor variables
+                          n=n[s], #sample size
+                          hypothesis = "V1=V2=V3; V1>V2>V3", #tested hypotheses;
+                          ratio_beta=list(H0=c(1,1,1), #population H0 = TRUE
+                                          H1=c(3,2,1), #population H1 = TRUE
+                                          Hc=c(1,2,3),
+                                          Hu= c(1,1,1) #the values do not matter - it will be either Hi or Hc
+                          ), # definition of the populations, as determined by the ratio between the regression coefficients b1:b2:b3; should be a named list of numeric vectors, where each vector corresponds to the ratio of betas in hte respective hypothesis (note the order of hypotheses!); the names should only contain the subscript of the hypothesis (e.g "1" or "i" or"0")
+                          model="linear", #linear, logistic or probit regression
+                          iter=1000,
+                          #BES arguments
+                          studies=40,
+                          ratio_HiHc=2 # every 2nd study comes from Hc, the others from Hi
+  )
 }
 
-
+save(power_BES, file = "Outputs/power_BES.RData")
 
 
