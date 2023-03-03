@@ -100,6 +100,7 @@ sim_BES<-function(
 
 
 #function to aggregate the PMPs for a set of specified hypotheses
+#reteruns the aggregate PMPs and sim conditions in a list
 aggregatePMP<-function(x, #a list created with sim_BES()
                        hyp=c("1", "c", "u") #which hypothesis are to be tested interest, note only the index
                       # iter=1000,
@@ -143,14 +144,14 @@ aggregatePMP<-function(x, #a list created with sim_BES()
               ))
 }
 
-#single sample size, 
+#single sample size n=100 
 x<-sim_BES(studies = 10, n=100, hypothesis = "V1=V2=V3; V1>V2>V3")
 dimnames(x$BF)
 
-pmp_x<-aggregatePMP(x=x, hyp = c("1","c", "u"))
-pmp_x
+# pmp_x<-aggregatePMP(x=x, hyp = c("1","c", "u"))
+# pmp_x
 
-
+# Simulate --------------------------------------------------------------------------------
 # for a range of sample sizes
 n<-c(50,100,150,200,300,500,800,1200)
 
@@ -174,5 +175,99 @@ for (s in 1:length(n)){
 }
 
 save(power_BES, file = "Outputs/power_BES.RData")
+
+# Aggregate --------------------------------------------------------------------------------
+
+load("Outputs/power_BES.RData")
+
+power_BES[[1]]
+
+PMP<-list()
+for(s in 1:length(n)){
+  PMP[[s]]<-aggregatePMP(power_BES[[s]])
+}
+
+
+#Confusion matrix: aggregated -------------------------------------------
+#PMP[[1]]$aggrPMP[studies, hyp, pop, iter]
+s<-1 #sample size
+t<-5 #number of aggregated studies
+
+a<-PMP[[s]]$aggrPMP
+dimnames(PMP[[1]]$aggrPMP)
+
+a[5,,,]
+
+a[t,,,] %>% dimnames()
+#reorder the dimentsions of the PMPS, such that [iter, hyp, pop]
+PMPtrans <- aperm(a[t,,,], c(3,1,2))
+
+
+#create an array with the same dimensions as PMP but that will indicate only the highest PMPs
+max.PMP<-PMPtrans
+#produce power matrix
+for(i in 1:dim(PMPtrans)[[1]]){ #for each iteration
+  for(z in 1:dim(PMPtrans)[[3]]){ # for each population
+    
+    #get the column index of the hypothesis with the highest PMPs
+    max.index<-which(PMPtrans[i,,z]==max(PMPtrans[i,,z]))
+    # replace the max PMPs with 1 and the remaining PMPs with 0 for iteration i and population z
+    max.PMP[i,max.index,z]<-1
+    max.PMP[i,-max.index,z]<-0
+  }  
+}
+
+conf_matrix<-apply(max.PMP, c(2,3), sum)/dim(max.PMP)[1]
+
+
+power_alpha<-matrix(NA,
+                    nrow=nrow(conf_matrix),
+                    ncol = 4,
+                    dimnames = list(rownames(conf_matrix),
+                                    c("n","t","power", "alpha")
+                    )
+) %>% data.frame()
+
+power_alpha$n<-n[s]
+power_alpha$t<-t
+
+ro<-rownames(conf_matrix)
+co<-colnames(conf_matrix)
+
+
+hyp_index<-c("1","c", "u")
+h<-1
+for(h in 1:length(hyp_index)){
+  power_alpha$power[h]<-conf_matrix[substr(ro,nchar(ro), nchar(ro)) %in% hyp_index[h], substr(co,nchar(co), nchar(co)) %in% hyp_index[h]]
+  power_alpha$alpha[h]<-sum(conf_matrix[substr(ro,nchar(ro), nchar(ro)) %in% hyp_index[h],!substr(co,nchar(co), nchar(co)) %in% hyp_index[h]])/(ncol(conf_matrix)-1) #divided by 2 because there are two populations under which alpha is assessed
+}
+
+#Confusion matrix: indiviudual ------------------------------------------
+s<-1 #sample size
+
+power_BES[[s]]$BF %>% dimnames()
+power_BES[[s]]$BF %>% dim()
+
+#transform the array such that studies and iterations are in a single dimension 40x1000 = 40 000
+BF_ind<-apply(power_BES[[s]]$BF, c(2,3), abind::abind)
+
+dim(bapply)
+
+
+#compute PMPi = BFi/sum(BF of all hypotheses of interest)
+PMP_ind<-BF_ind
+for(i in 1:dim(BF_ind)[[1]]){ #for each iteration
+  for(j in 1:dim(BF_ind)[[2]]){ #for each tested hypothesis
+    for(z in 1:dim(BF_ind)[[3]]){ # for each population
+      
+      PMP_ind[i,j,z] <- BF_ind[i,j,z]/sum(BF_ind[i,,z])
+      
+    }  
+  }
+}
+
+dimnames(PMP_ind)[[2]]<-paste0("PMP_", substr(dimnames(BF_ind)[[2]],3,3))
+
+
 
 
