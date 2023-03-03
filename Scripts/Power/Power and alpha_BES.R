@@ -102,16 +102,19 @@ sim_BES<-function(
 #function to aggregate the PMPs for a set of specified hypotheses
 #reteruns the aggregate PMPs and sim conditions in a list
 aggregatePMP<-function(x, #a list created with sim_BES()
-                       hyp=c("1", "c", "u") #which hypothesis are to be tested interest, note only the index
+                       hyp=c("1", "c", "u"), #which hypothesis are to be tested interest, note only the index
                       # iter=1000,
-                      # studies=40
+                       studies=NULL
                        
 ){
   BF<-x$BF
   iter<-x$iter
   n.hyp<-length(hyp)
   n<-x$n
-  studies<-x$studies
+  
+  if(is.null(studies)){
+    studies<-x$studies
+  }
   #subset only tested hypotheses, eg Hi vs. Hc vs. Hu (exlude H0)
   BF.temp<-BF[,substr(dimnames(BF)[[2]],3,3) %in% hyp,,,drop=FALSE]  
   
@@ -180,7 +183,7 @@ save(power_BES, file = "Outputs/power_BES.RData")
 
 load("Outputs/power_BES.RData")
 
-power_BES[[1]]
+power_BES[[1]]$BF %>% dimnames()
 
 PMP<-list()
 for(s in 1:length(n)){
@@ -269,5 +272,51 @@ for(i in 1:dim(BF_ind)[[1]]){ #for each iteration
 dimnames(PMP_ind)[[2]]<-paste0("PMP_", substr(dimnames(BF_ind)[[2]],3,3))
 
 
+#_____________________________________________________________________________________
+# Q1 --------------------------
+# THEORETICAL PROPOSITION 1 
+# IF 
+# -for all studies exactly 1 of the tested hypotheses is true 
+# -and this hypothesisis the same for all studies
+# ...whatever... I don't know how to specify the antecedent so that they make universal sense
 
+# THEN
+# - BES increases the power of any test 
+# - BES reduces the alpha of any test
 
+#_____________________________________________________________________________________
+
+#In this case we exclude Hu=TRUE because we want all studies to come from the same pop
+
+##INPUTS 
+#choose hypotheses
+hyp_index<-c("0","1", "c")
+hyp=paste0("BF",hyp_index, "u")
+
+n<-c(50,100,150,200,300,500,800,1200)
+
+## Individual-------------------------------------
+BF_ind<-power_BES
+#transform the array such that studies and iterations are in a single dimension 40x1000 = 40 000
+for(s in 1:length(n)){
+  BF_ind[[s]]$BF<-apply(power_BES[[s]]$BF[,,c("TRUE_H0","TRUE_H1", "TRUE_Hc"),], c(2,3), abind::abind)
+  BF_ind[[s]]$iter<-nrow(BF_ind[[s]]$BF)
+  BF_ind[[s]]$studies<-"not applicable"
+  BF_ind[[s]]$populations<-BF_ind[[s]]$populations[-4] # remove the population Hu
+}
+
+BF_ind[[1]]$BF %>% dimnames()
+
+CM_ind<-power_matrix(BF_ind[[2]], hyp = hyp)
+CM_ind
+
+power_plot(BF_ind,hyp = hyp, n=n, BES=FALSE)
+
+## BES --------------------------------------------
+#aggregate over 5 studies
+t<-5
+
+power_matrix_BES(x=power_BES[[1]], hyp=hyp, t=t)
+
+b<-power_plot(power_BES,hyp = hyp, n=n, BES=TRUE)
+b$plot
