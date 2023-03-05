@@ -336,9 +336,12 @@ t<-10
 #hyp=paste0("BF",hyp_index, "u")
 hyp<-c("H1", "Hc", "H0")
 
-conf_matrix<-power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1", Hc="Hc") , t=7)$matrix
+conf_matrix<-power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1") , t=7)$matrix
 
 power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1", Hc="Hc") , t=7)
+power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1") , t=7)
+
+
 
 b5<-power_plot(power_BES,hyp = hyp, n=n, BES=TRUE,t=5)
 b5$plot
@@ -346,6 +349,28 @@ b5$plot
 b10<-power_plot(power_BES,hyp = hyp, n=n, BES=TRUE,t=10)
 b10$plot
 
+BES_iu5<-power_plot(x.n=power_BES, # a list of lists with BFs created with sim_individual() across different n,
+           hyp=c(H0="Hu",H1= "H1"), 
+           n=c(50,100,150,200,300,500,800,1200),
+           BES = TRUE, #aggregate?
+           t=5)
+BES_iu5$plot
+
+
+BES_iu10<-power_plot(x.n=power_BES, # a list of lists with BFs created with sim_individual() across different n,
+                    hyp=c(H0="Hu",H1= "H1"), 
+                    n=c(50,100,150,200,300,500,800,1200),
+                    BES = TRUE, #aggregate?
+                    t=10)
+BES_iu10$plot
+
+
+BES_icu5<-power_plot(x.n=power_BES, # a list of lists with BFs created with sim_individual() across different n,
+                    hyp=c(H0="Hu",H1= "H1", Hc="Hc"), 
+                    n=c(50,100,150,200,300,500,800,1200),
+                    BES = TRUE, #aggregate?
+                    t=10)
+BES_icu5
 
 
 
