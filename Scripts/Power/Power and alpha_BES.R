@@ -246,7 +246,7 @@ a$plot
 
 #a function to transform the BFs to PMPs, create a confusion matrix, and compute power and alpha
 power_matrix_BES<-function(x, # a list with BFs created with sim_individual()
-                           hyp=c(H0="H0",H1= "H1",Hc= "Hc"), # a numeric vector with column indices of the BF array indicating the tested hypotheses; for them PMPs will be computed
+                           hyp=c(H0="H0",H1= "H1",Hc= "Hc"), # a named vector with elements indicating the tested hypotheses, and the names indicating the true populaiton for this hypothesis
                            t=5 #number of studies
                            # hyp_names = dimnames(BF)[[2]], #a character vector indicating the names of the testerd hypotheses
                            # pop_names=substr(dimnames(BF)[[3]],6,7)
@@ -273,8 +273,7 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_individual()
                  c(3,1,2)
                  )
   # reorder dimension names such that in the confusion matrix power is always on the diagonal
-  PMP_BES<- PMP_BES[,paste0("PMP_",hyp_index),paste0("TRUE_", names(hyp))] %>% dimnames()
-  
+  PMP_BES<- PMP_BES[,paste0("PMP_",hyp_index),paste0("TRUE_", names(hyp))]
   #pop_names = names(PMP_BES_list$populations)
   
   #create an array with the same dimensions as PMP but that will be indicate only the highest PMPs
@@ -307,14 +306,16 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_individual()
   
   power_alpha$n<-n
   power_alpha$t<-t
+  power_alpha$power<-diag(conf_matrix)
+
   
   for(h in 1:length(hyp_index)){
-    power_alpha$power[h]<-conf_matrix[substr(ro,nchar(ro), nchar(ro)) %in% hyp_index[h], substr(co,nchar(co), nchar(co)) %in% hyp_index[h]]
-    power_alpha$alpha[h]<-sum(conf_matrix[substr(ro,nchar(ro), nchar(ro)) %in% hyp_index[h],!substr(co,nchar(co), nchar(co)) %in% hyp_index[h]])/2 #divided by 2 because there are two populations under which alpha is accessed
+    power_alpha$alpha[h]<- mean(conf_matrix[row(conf_matrix)==h & col(conf_matrix)!= h ])
   }
   
-  power_alpha<-power_alpha %>% 
-    rownames_to_column(var="hyp") %>% 
+
+  power_alpha<-power_alpha %>%
+    rownames_to_column(var="hyp") %>%
     pivot_longer(cols = c("power", "alpha"),
                  names_to = "performance",
                  values_to = "prop")
@@ -335,7 +336,9 @@ t<-10
 #hyp=paste0("BF",hyp_index, "u")
 hyp<-c("H1", "Hc", "H0")
 
-power_matrix_BES(x=power_BES[[1]],hyp=c("H0", "H1", "Hc") , t=3)
+conf_matrix<-power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1", Hc="Hc") , t=7)$matrix
+
+power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1", Hc="Hc") , t=7)
 
 b5<-power_plot(power_BES,hyp = hyp, n=n, BES=TRUE,t=5)
 b5$plot
