@@ -7,8 +7,11 @@ gen_plot_UI <- function(id) {
   tagList(
     radioButtons(ns("true_hyp"), 
                  label="True hypothesis in the population",
-                 choiceNames = c("Hi: b1:b2:b3 = 1:2:3", "Hc: b1:b2:b3 =  3:2:1", "Hu: for 50% of the studies Hi is true, for the remaining Hc is true"),
-                 choiceValues = c("i", "c", "u"),
+                 choiceNames = c("Hi: b1:b2:b3 = 1:2:3",
+                                 "Hc: b1:b2:b3 =  3:2:1",
+                                 "Hu: for 50% of the studies Hi is true, for the remaining Hc is true",
+                                 "H0"),
+                 choiceValues = c("i", "c", "u", "0"),
                  inline = TRUE
                  ),
     checkboxGroupInput(ns("hyp_input"),
@@ -53,14 +56,11 @@ gen_plot_server <- function(id) { #later on PMP shoudl be reactive
   
   moduleServer(id, function(input, output, session) {
   
-      # #check if there is selection for all inputs and show a message if not
-      # validate(
-      #   need(!is.null(input$N_input), "Please, choose sample size N"),
-      #   need(lenght(input$hyp_input)<2, "Please, choose at least 2 hypotheses to test against each other")
-      #   )
+    #get the list of PMPs belonging to the user-specified population
     PMP<-reactive(get(datafiles[names(datafiles)==input$true_hyp]))
     
     observeEvent(input$go, {
+      #from the PMPs list, select the array that tests the user-specified hypotheses withe the user-specified sample size N
       PMP_sub<-reactive(PMP()[[paste0(input$hyp_input, collapse = "")]][,,1,,as.numeric(input$N_input)])
       
       output$test<-renderPrint({
