@@ -93,49 +93,30 @@ for(i in 1:iter){
 save.image(file="workspaces/Simulate BFs_ES(H1)=ES(Hc).RData")
 
 # Aggregate PMPs--------------------------------------------------------------------
+load("RRrepo/workspaces/Simulate BFs_ES(H1)=ES(Hc).RData")
 source("RRrepo/scripts/Aggregate PMPs.R")
 
-aggrPMPicu_HuTRUE_equalES<-
-  aggregatePMP(BF=BF, #the simulated BFs from the simulate_BF_.R scripts
-             hyp=c("i", "c", "u"), #which hypotheses are of interest
-             iter=iter,
-             studies=studies
-)
+hyp_index<-c("i", "c", "u","0")
+two.way<-combn(hyp_index, 2) %>% t() %>% apply(1, function(x) paste0(x, collapse = ""))
+three.way<-combn(hyp_index, 3) %>% t() %>% apply(1, function(x) paste0(x, collapse = ""))
+four.way<-combn(hyp_index, 4) %>% t() %>% apply(1, function(x) paste0(x, collapse = ""))
+all.hyps<-c(two.way, three.way, four.way)
 
-aggrPMPic_HuTRUE_equalES<-
-  aggregatePMP(BF=BF, #the simulated BFs from the simulate_BF_.R scripts
-               hyp=c("i", "c"), #which hypotheses are of interest
-               iter=iter,
-               studies=studies
+PMP_HuTRUE_eqES<-list()
+for(i in 1:length(all.hyps)){
+  PMP_HuTRUE_eqES[[all.hyps[i]]] <- aggregatePMP(BF=BF, #the simulated BFs from the simulate_BF_.R scripts
+                                            hyp=unlist(strsplit(all.hyps[i],split = "")), #which hypotheses are of interest
+                                            iter=iter,
+                                            studies=studies
   )
-aggrPMP00iu_HuTRUE_equalES<-
-  aggregatePMP(BF=BF, #the simulated BFs from the simulate_BF_.R scripts
-               hyp=c("0","i", "u"), #which hypotheses are of interest
-               iter=iter,
-               studies=studies
-  )
-
-aggrPMP0icu_HuTRUE_equalES<-
-  aggregatePMP(BF=BF, #the simulated BFs from the simulate_BF_.R scripts
-               hyp=c("0","i", "c", "u"), #which hypotheses are of interest
-               iter=iter,
-               studies=studies
-  )
+  
+}
 
 #Save ------------------------------------------
 
-PMP_HuTRUE_eqES<-list(ic=aggrPMPic_HuTRUE_equalES,
-                      icu=aggrPMPicu_HuTRUE_equalES,
-                      iu0=aggrPMP00iu_HuTRUE_equalES,
-                      icu0=aggrPMP0icu_HuTRUE_equalES,
-                      iter=iter,
-                      n_studies=studies,
-                      n=n,
-                      ratio_beta.Hi=ratio_beta.Hi,
-                      ratio_beta.Hc=ratio_beta.Hc,
-                      r2=r2,
-                      pcor=pcor,
-                      models=models
-                      )
+#save the simulation conditions
+PMP_HuTRUE_eqES[c("iter", "n_studies", "n", "ratio_beta.Hi","ratio_beta.Hc", "r2", "pcor", "models")]<-list(iter, studies, n, ratio_beta.Hi, ratio_beta.Hc, r2, pcor, models)
+
+
 
 save(PMP_HuTRUE_eqES,file="RRrepo/workspaces/PMP_HuTRUE_eqES.RData")
