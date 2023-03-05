@@ -148,7 +148,7 @@ power_matrix<-function(x, # a list with BFs created with sim_individual()
 
 #a function to plot the power and alpha of hypotheses across different n
 power_plot<-function(x.n, # a list of lists with BFs created with sim_individual() across different n,
-                     hyp, # a numeric vector with column indices of the BF array indicating the tested hypotheses; for them PMPs will be computed
+                     hyp, 
                      n,
                      BES = FALSE, #aggregate?
                      t=1
@@ -183,7 +183,7 @@ power_plot<-function(x.n, # a list of lists with BFs created with sim_individual
   
   return(list(plot=plot,
          plot_data=plot_data,
-         sim_conditions=x[[1]][c("r2", "pcor", "hypotheses","populations", "model","iter")]
+         sim_conditions=x.n[[1]][c("r2", "pcor", "hypotheses","populations", "model","iter")]
          ))
 }
 
