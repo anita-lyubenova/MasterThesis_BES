@@ -222,7 +222,8 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_individual()
 power_plot<-function(x.n, # a list of lists with BFs created with sim_individual() across different n,
                      hyp, # a numeric vector with column indices of the BF array indicating the tested hypotheses; for them PMPs will be computed
                      n,
-                     BES = FALSE #aggregate?
+                     BES = FALSE, #aggregate?
+                     t=1
                      ){
   
   plot_data<-data.frame()
@@ -244,7 +245,9 @@ power_plot<-function(x.n, # a list of lists with BFs created with sim_individual
     ggplot(aes(x=n, y=prop, color=hyp))+
     geom_point(aes(shape=performance))+
     geom_line(aes(linetype=performance))+
-    labs(title="Power and alpha for each tested hypothesis")+
+    labs(title="Power and alpha for each tested hypothesis",
+         subtitle = paste("Aggregated studies:" ,t)
+         )+
     scale_x_continuous(breaks = n)+
     scale_y_continuous(breaks = seq(0,1, 0.1))+
     theme(axis.text.x = element_text(angle = 45))+

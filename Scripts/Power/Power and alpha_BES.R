@@ -102,7 +102,7 @@ sim_BES<-function(
 #function to aggregate the PMPs for a set of specified hypotheses
 #reteruns the aggregate PMPs and sim conditions in a list
 aggregatePMP<-function(x, #a list created with sim_BES()
-                       hyp=c("1", "c", "u"), #which hypothesis are to be tested interest, note only the index
+                       hyp=c("H1", "Hc", "Hu"), #which hypothesis are to be tested interest, note only the index
                       # iter=1000,
                        studies=NULL
                        
@@ -110,13 +110,15 @@ aggregatePMP<-function(x, #a list created with sim_BES()
   BF<-x$BF
   iter<-x$iter
   n.hyp<-length(hyp)
+  hyp_index<-substr(hyp,2,2)
   n<-x$n
   
+  #if none specified, all studies will be aggregated over - this may take longer time
   if(is.null(studies)){
     studies<-x$studies
   }
   #subset only tested hypotheses, eg Hi vs. Hc vs. Hu (exlude H0)
-  BF.temp<-BF[,substr(dimnames(BF)[[2]],3,3) %in% hyp,,,drop=FALSE]  
+  BF.temp<-BF[,substr(dimnames(BF)[[2]],3,3) %in% hyp_index,,,drop=FALSE]  
   
   #placeholder for the aggregate PMPs
   aggrPMP<-BF.temp
@@ -133,13 +135,13 @@ aggregatePMP<-function(x, #a list created with sim_BES()
       }
     }
   
-  dimnames(aggrPMP)[[2]]<-paste0("PMP_", hyp)
+  dimnames(aggrPMP)[[2]]<-paste0("PMP_", hyp_index)
   
   return(list(aggrPMP=aggrPMP,
               r2=x$r2,
               pcor=x$pcor,
               n=n,
-              hypotheses=paste0("H",hyp),
+              hypotheses=hyp,
               populations=x$populations,
               model=x$model,
               iter=iter,
@@ -293,6 +295,9 @@ dimnames(PMP_ind)[[2]]<-paste0("PMP_", substr(dimnames(BF_ind)[[2]],3,3))
 hyp_index<-c("0","1", "c")
 hyp=paste0("BF",hyp_index, "u")
 
+hyp_index<-c("1", "u")
+hyp=paste0("BF",hyp_index, "u")
+
 n<-c(50,100,150,200,300,500,800,1200)
 
 ## Individual-------------------------------------
@@ -304,19 +309,80 @@ for(s in 1:length(n)){
   BF_ind[[s]]$studies<-"not applicable"
   BF_ind[[s]]$populations<-BF_ind[[s]]$populations[-4] # remove the population Hu
 }
-
-BF_ind[[1]]$BF %>% dimnames()
-
-CM_ind<-power_matrix(BF_ind[[2]], hyp = hyp)
-CM_ind
-
-power_plot(BF_ind,hyp = hyp, n=n, BES=FALSE)
-
+s
+a<-power_plot(BF_ind,hyp = hyp, n=n, BES=FALSE)
+a$plot
 ## BES --------------------------------------------
 #aggregate over 5 studies
-t<-5
+t<-10
 
 power_matrix_BES(x=power_BES[[1]], hyp=hyp, t=t)
 
-b<-power_plot(power_BES,hyp = hyp, n=n, BES=TRUE)
-b$plot
+b5<-power_plot(power_BES,hyp = hyp, n=n, BES=TRUE,t=5)
+b5$plot
+
+b10<-power_plot(power_BES,hyp = hyp, n=n, BES=TRUE,t=10)
+b10$plot
+
+###################################################################################
+x<-power_BES[[1]]
+PMP_BES_list<-aggregatePMP(x, hyp = hyp_index, studies = t)
+PMP_BES_list$populations<-PMP_BES_list$populations[-4]
+
+iter<-x$iter
+n<-x$n
+
+PMP_BES<-aperm(PMP_BES_list$aggrPMP[t,,c("TRUE_H0" ,"TRUE_H1", "TRUE_Hc"),], c(3,1,2))
+
+hyp_index = substr(dimnames(PMP_BES)[[2]],5,5)
+pop_names = names(PMP_BES_list$populations)
+
+#create an array with the same dimensions as PMP but that will be indicate only the highest PMPs
+max.PMP<-PMP_BES
+#produce power matrix
+for(i in 1:dim(PMP_BES)[[1]]){ #for each iteration
+  for(z in 1:dim(PMP_BES)[[3]]){ # for each population
+    
+    #get the column index of the hypothesis with the highest PMPs
+    max.index<-which(PMP_BES[i,,z]==max(PMP_BES[i,,z]))
+    # replace the max PMPs with 1 and the remaining PMPs with 0 for iteration i and population z
+    max.PMP[i,max.index,z]<-1
+    max.PMP[i,-max.index,z]<-0
+  }  
+}
+
+conf_matrix<-apply(max.PMP, c(2,3), sum)/dim(max.PMP)[1]
+
+power_alpha<-matrix(NA,
+                    nrow=nrow(conf_matrix),
+                    ncol = 4,
+                    dimnames = list(rownames(conf_matrix),
+                                    c("n","t","power", "alpha")
+                    )
+) %>% data.frame()
+
+power_alpha$n<-n
+power_alpha$t<-t
+
+ro<-rownames(conf_matrix)
+co<-colnames(conf_matrix)
+
+
+
+for(h in 1:length(hyp_index)){
+  power_alpha$power[h]<-conf_matrix[substr(ro,nchar(ro), nchar(ro)) %in% hyp_index[h], substr(co,nchar(co), nchar(co)) %in% hyp_index[h]]
+  power_alpha$alpha[h]<-sum(conf_matrix[substr(ro,nchar(ro), nchar(ro)) %in% hyp_index[h],!substr(co,nchar(co), nchar(co)) %in% hyp_index[h]])/2 #divided by 2 because there are two populations under which alpha is accessed
+}
+
+power_alpha<-power_alpha %>% 
+  rownames_to_column(var="hyp") %>% 
+  pivot_longer(cols = c("power", "alpha"),
+               names_to = "performance",
+               values_to = "prop")
+
+return(list(matrix=conf_matrix,
+            plot_data_single=power_alpha,
+            sim_conditions=x[c("r2", "pcor", "hypotheses","populations", "model","iter")]
+)
+)
+#################################################################################
