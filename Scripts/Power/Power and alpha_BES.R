@@ -135,7 +135,7 @@ aggregatePMP2<-function(x, #a list created with sim_BES()
       }
     }
   
-  dimnames(aggrPMP)[[2]]<-paste0("PMP_", hyp_index)
+  dimnames(aggrPMP)[[2]]<-paste0("PMP_", substr(dimnames(BF.temp)[[2]],3,3))
   
   return(list(aggrPMP=aggrPMP,
               r2=x$r2,
@@ -246,8 +246,8 @@ a$plot
 
 #a function to transform the BFs to PMPs, create a confusion matrix, and compute power and alpha
 power_matrix_BES<-function(x, # a list with BFs created with sim_individual()
-                           hyp, # a numeric vector with column indices of the BF array indicating the tested hypotheses; for them PMPs will be computed
-                           t #number of studies
+                           hyp=c(H0="H0",H1= "H1",Hc= "Hc"), # a numeric vector with column indices of the BF array indicating the tested hypotheses; for them PMPs will be computed
+                           t=5 #number of studies
                            # hyp_names = dimnames(BF)[[2]], #a character vector indicating the names of the testerd hypotheses
                            # pop_names=substr(dimnames(BF)[[3]],6,7)
 ){
@@ -257,16 +257,25 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_individual()
   #   PMP_BES[[s]]$populations<-PMP_BES[[s]]$populations[-4]
   # }
   # 
-  PMP_BES_list<-aggregatePMP2(x, hyp = hyp_index, studies = t)
+
+  
+  hyp_index = substr(hyp,2,2)
+  
+  PMP_BES_list<-aggregatePMP2(x, hyp = hyp, studies = t)
+  #remove the population Hu=TRUE
   PMP_BES_list$populations<-PMP_BES_list$populations[-4]
   
   iter<-x$iter
   n<-x$n
   
-  PMP_BES<-aperm(PMP_BES_list$aggrPMP[t,,c("TRUE_H0" ,"TRUE_H1", "TRUE_Hc"),], c(3,1,2))
+  #reorder the dimensions such that PMP_BES[iter, PMP_hyp, pop] for t aggregated studies only
+  PMP_BES<-aperm(PMP_BES_list$aggrPMP[t,,c("TRUE_H0" ,"TRUE_H1", "TRUE_Hc"),],#subset only the row with t number of aggregated studies studies
+                 c(3,1,2)
+                 )
+  # reorder dimension names such that in the confusion matrix power is always on the diagonal
+  PMP_BES<- PMP_BES[,paste0("PMP_",hyp_index),paste0("TRUE_", names(hyp))] %>% dimnames()
   
-  hyp_index = substr(dimnames(PMP_BES)[[2]],5,5)
-  pop_names = names(PMP_BES_list$populations)
+  #pop_names = names(PMP_BES_list$populations)
   
   #create an array with the same dimensions as PMP but that will be indicate only the highest PMPs
   max.PMP<-PMP_BES
@@ -318,10 +327,15 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_individual()
   
 }#  end power_matrix_BES()
 
-#aggregate over 5 studies
+### aggregate over 5 studies------------------------
 t<-10
 
-power_matrix_BES(x=power_BES[[1]], hyp=hyp, t=t)
+#choose hypotheses
+#hyp_index<-c("0","1", "c")
+#hyp=paste0("BF",hyp_index, "u")
+hyp<-c("H1", "Hc", "H0")
+
+power_matrix_BES(x=power_BES[[1]],hyp=c("H0", "H1", "Hc") , t=3)
 
 b5<-power_plot(power_BES,hyp = hyp, n=n, BES=TRUE,t=5)
 b5$plot
