@@ -14,14 +14,14 @@ load("RRrepo/workspaces/PMPs/PMP_H0TRUE.RData")
 load("RRrepo/workspaces/PMPs/PMP_H1TRUE.RData")
 load("RRrepo/workspaces/PMPs/PMP_HcTRUE.RData")
 load("RRrepo/workspaces/PMPs/PMP_HuTRUE_eqES.RData")
-#load("RRrepo/workspaces/PMPs/PMP_HuTRUE_largerESi.RData")
+load("RRrepo/workspaces/PMPs/PMP_HuTRUE_largerESi.RData")
 
 # load("PMP_H1TRUE.RData")
 # load("PMP_HcTRUE.RData")
 # load("PMP_HuTRUE_eqES.RData")
 
-datafiles<-c("PMP_H1TRUE", "PMP_HcTRUE", "PMP_HuTRUE_eqES", "PMP_H0TRUE")
-names(datafiles)<-c("i", "c", "u", "0")
+datafiles<-c("PMP_H1TRUE", "PMP_HcTRUE", "PMP_HuTRUE_eqES", "PMP_HuTRUE_largerESi", "PMP_H0TRUE")
+names(datafiles)<-c("i", "c", "u_eq", "u_larger_i", "0")
 
 source("shiny app/modules.R")
 source("shiny app/app functions.R")

@@ -10,9 +10,10 @@ gen_plot_UI <- function(id) {
                  choiceNames = c("Hi: b1:b2:b3 = 1:2:3",
                                  "Hc: b1:b2:b3 =  3:2:1",
                                  "Hu: for 50% of the studies Hi is true, for the remaining Hc is true",
+                                 "Hu: for 75% of the studies Hi is true, for the remaining Hc is true",
                                  "H0"),
-                 choiceValues = c("i", "c", "u", "0"),
-                 inline = TRUE
+                 choiceValues = c("i", "c", "u_eq", "u_larger_i", "0"),
+                 inline = FALSE
                  ),
     checkboxGroupInput(ns("hyp_input"),
                        label = "Tested hypotheses",
@@ -56,10 +57,12 @@ gen_plot_server <- function(id) { #later on PMP shoudl be reactive
   
   moduleServer(id, function(input, output, session) {
   
-    #get the list of PMPs belonging to the user-specified population
-    PMP<-reactive(get(datafiles[names(datafiles)==input$true_hyp]))
+    
     
     observeEvent(input$go, {
+      #get the list of PMPs belonging to the user-specified population
+      PMP<-reactive(get(datafiles[names(datafiles)==input$true_hyp]))
+      
       #from the PMPs list, select the array that tests the user-specified hypotheses withe the user-specified sample size N
       PMP_sub<-reactive(PMP()[[paste0(input$hyp_input, collapse = "")]][,,1,,as.numeric(input$N_input)])
       
@@ -71,11 +74,6 @@ gen_plot_server <- function(id) { #later on PMP shoudl be reactive
       })
       
     })
-      
-    # return(list(
-    #   true_hyp = reactive({input$true_hyp})
-    # ))
-    
       
   })
 

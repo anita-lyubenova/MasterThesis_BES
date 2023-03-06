@@ -119,4 +119,4 @@ PMP_HuTRUE_eqES[c("iter", "n_studies", "n", "ratio_beta.Hi","ratio_beta.Hc", "r2
 
 
 
-save(PMP_HuTRUE_eqES,file="RRrepo/workspaces/PMP_HuTRUE_eqES.RData")
+save(PMP_HuTRUE_eqES,file="RRrepo/workspaces/PMPs/PMP_HuTRUE_eqES.RData")
