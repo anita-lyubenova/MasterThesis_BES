@@ -228,16 +228,24 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_BES()
   
   TPFP<-matrix(NA,
                       nrow=nrow(conf_matrix),
-                      ncol = 5,
+                      ncol = 9,
                       dimnames = list(rownames(conf_matrix),
-                                      c("n","t","TP", "FP", "PPV")
+                                      c("n","t","TP", "FP", "PPV", "TN", "FN", "NPV", "Acc")
                       )
   ) %>% data.frame()
   
-  
-  ro<-rownames(conf_matrix)
-  co<-colnames(conf_matrix)
-  
+  # TPFP_overall<-matrix(NA,
+  #              nrow=1,
+  #              ncol = 9,
+  #              dimnames = list(rownames(conf_matrix),
+  #                              c("n","t","TP", "FP", "PPV", "TN", "FN", "NPV", "Acc")
+  #              )
+  # ) %>% data.frame()
+  # 
+  # TPFP_overall$n<-n
+  # TPFP_overall$t<-t
+  # TPFP_overall$TP<-sum(diag(conf_matrix))/length(hyp_index)
+
   TPFP$n<-n
   TPFP$t<-t
   TPFP$TP<-diag(conf_matrix)
@@ -246,6 +254,15 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_BES()
   for(h in 1:length(hyp_index)){
     TPFP$FP[h]<- mean(conf_matrix[row(conf_matrix)==h & col(conf_matrix)!= h ])
     TPFP$PPV[h]<-TPFP$TP[h]/sum(conf_matrix[row(conf_matrix)==h])
+    
+    TPFP$FN[h]<- 1-TPFP$TP[h]
+    TPFP$TN[h]<- (length(hyp_index)-1)-TPFP$FP[h]
+    
+    TPFP$NPV[h]<-TPFP$TN[h]/(TPFP$FN[h]+TPFP$TN[h])
+    
+    TPFP$Acc[h]<- (TPFP$TP[h]+TPFP$TN[h])/(TPFP$TP[h]+TPFP$TN[h]+TPFP$FP[h]++TPFP$FN[h])
+    
+    
   }
   
   
@@ -278,18 +295,6 @@ power_plot<-function(x.n, # a list of lists with BFs created with sim_individual
   for(s in 1:length(n)){
     plot_data<-rbind(plot_data,power_matrix_BES(x=x.n[[s]], hyp=hyp, t=t)$plot_data)
   }
-  
-  # if(BES==TRUE){
-  #   for(s in 1:length(n)){
-  #     plot_data<-rbind(plot_data,power_matrix_BES(x=x.n[[s]], hyp=hyp, t=t)$plot_data_single)
-  #   }
-  #   
-  # }else{
-  #   for(s in 1:length(n)){
-  #     plot_data<-rbind(plot_data,power_matrix(x.n[[s]], hyp = hyp)$plot_data_single)
-  #   }
-  #   
-  # }
   
   
   plot<-plot_data %>% 
@@ -341,14 +346,6 @@ save(power_BES, file = "Outputs/power_BES.RData")
 #Load power_BES  -----------------------
 load("Outputs/power_BES.RData")
 
-# power_BES[[1]]$BF %>% dimnames()
-# 
-# PMP<-list()
-# for(s in 1:length(n)){
-#   PMP[[s]]<-aggregatePMP2(power_BES[[s]])
-# }
-
-
 
 #_____________________________________________________________________________________
 # Q1 --------------------------
@@ -371,38 +368,12 @@ load("Outputs/power_BES.RData")
 
 ##INPUTS 
 #choose hypotheses
-hyp_index<-c("0","1", "c")
-hyp=paste0("BF",hyp_index, "u")
-
-hyp_index<-c("1", "u")
-hyp=paste0("BF",hyp_index, "u")
-
+hyp=c(H0="Hu",H1= "H1", Hc="Hc")
 n<-c(50,100,150,200,300,500,800,1200)
-
-## Individual-------------------------------------
-BF_ind<-power_BES
-#transform the array such that studies and iterations are in a single dimension 40x1000 = 40 000
-for(s in 1:length(n)){
-  BF_ind[[s]]$BF<-apply(power_BES[[s]]$BF[,,c("TRUE_H0","TRUE_H1", "TRUE_Hc"),], c(2,3), abind::abind)
-  BF_ind[[s]]$iter<-nrow(BF_ind[[s]]$BF)
-  BF_ind[[s]]$studies<-"not applicable"
-  BF_ind[[s]]$populations<-BF_ind[[s]]$populations[-4] # remove the population Hu
-}
-s
-a<-power_plot(BF_ind,hyp = hyp, n=n, BES=FALSE)
-a$plot
-
 
 
 
 ## BES --------------------------------------------
-t<-10
-
-#choose hypotheses
-#hyp_index<-c("0","1", "c")
-#hyp=paste0("BF",hyp_index, "u")
-hyp=c(H0="Hu",H1= "H1", Hc="Hc")
-n<-c(50,100,150,200,300,500,800,1200)
 
 conf_matrix<-power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1") , t=7)$matrix
 
