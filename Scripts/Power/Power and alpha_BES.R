@@ -158,7 +158,7 @@ dimnames(x$BF)
 power_matrix_BES<-function(x, # a list with BFs created with sim_BES()
                            hyp=c(H0="H0",H1= "H1",Hc= "Hc"), # a named vector with elements indicating the tested hypotheses, and the names indicating the true populaiton for this hypothesis
                            n, #sample size of the studies. Either a number or a vector. 
-                           t.range #number of studies. Either a number or a vector 
+                           t.max #number of studies. Either a number or a vector 
                            # hyp_names = dimnames(BF)[[2]], #a character vector indicating the names of the testerd hypotheses
                            # pop_names=substr(dimnames(BF)[[3]],6,7)
 ){
@@ -166,8 +166,9 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_BES()
   hyp_index = substr(hyp,2,2)
   pop_names<-paste0("TRUE_", names(hyp))
   n<-x$n
-  t.max=max(t.range)
+  #t.max=max(t.range)
   
+
   #if no aggregation is needed you can see the 1000 across all 40 studies as independent => 40 000 iterations
   if(t.max==1){
     x$populations<-x$populations[-4] # remove the population Hu
@@ -189,11 +190,11 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_BES()
       }
     }
     
-    PMP <- abind::abind(PMP, array(NA,dim=dim(PMP)), along=4)
+    #add a silent 4th dimension with lenght 1, so that the shape of the array is the same as in the 
+    #else{} condition, where the 4th dim is t
+    dim(PMP)<- c(dim(PMP),1)
     
-  #dimnames(PMP)[[4]]<-"t=1"
-  
-  # If more than 1 studies should be aggregated over => BES 
+   #If more than 1 studies should be aggregated over => BES 
   }else{
     
     x$BF<-x$BF[,paste0("BF",hyp_index,"u"),pop_names,]
@@ -204,7 +205,7 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_BES()
     PMP<-aperm(PMP_BES_list$aggrPMP[1:t.max,,,,drop=FALSE],#subset only the row with t number of aggregated studies studies
                c(4,2,3,1)
     )
-    print(dimnames(PMP))
+    #print(dimnames(PMP))
 
   }
   
@@ -233,11 +234,11 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_BES()
                        )
 
   for(j in 1:dim(PMP)[[4]] ){
-    acc_data$acc[j] <- sum(diag(conf_matrix[,,j]))/sum(conf_matrix[,,j])
+    acc_data$acc[j] <- na.omit(sum(diag(conf_matrix[,,j]))/sum(conf_matrix[,,j]))
 
   }
   
-  return(list(matrix=conf_matrix,
+  return(list(#matrix=conf_matrix,
              # metrics=TPFP,
              # plot_data=plot_data,
               acc_data=acc_data,
@@ -247,82 +248,70 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_BES()
   
 }#  end power_matrix_BES()
 
-power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1") , t.range=1:3)
+power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1") , t.max=5)
 
 
 #a function to plot the power and alpha of hypotheses across different n
 power_plot<-function(x.n, # a list of lists with BFs created with sim_individual() across different n,
                      hyp,
                      n,
-                     t.range=1,
-                     x.axis=c("n", "t")
+                     t.range=1
 ){
+  
+  if(length(t.range)==1){
+    x.axis<-"n"
+  }else if(length(t.range)>1){
+    x.axis<-"t"
+  }
   
 #  plot_data<-data.frame()
   acc_data<-data.frame()
   for(s in 1:length(n)){
         # plot_data<-rbind(plot_data,power_matrix_BES(x=x.n[[s]], hyp=hyp, t.range=t.range)$plot_data)
-         acc_data<-rbind(acc_data,power_matrix_BES(x=x.n[[s]], hyp=hyp, t.range=t.range)$acc_data)
+         acc_data<-rbind(acc_data,power_matrix_BES(x=x.n[[s]], hyp=hyp, t.max=max(t.range))$acc_data)
       }
   
-  # if(length(n)!=1){
-  #   for(s in 1:length(n)){
-  #      plot_data<-rbind(plot_data,power_matrix_BES(x=x.n[[s]], hyp=hyp, t=t)$plot_data)
-  #   }
-  # }else if(length(t)!=1){
-  #   for(st in 1:length(t)){
-  #     plot_data<-rbind(plot_data,power_matrix_BES(x=x.n[[n]], hyp=hyp, t=t)$plot_data)
-  #   }
-  # }
-  
-  # plot_TF<-plot_data %>% 
-  #   filter(performance !="Acc") %>% 
-  #   ggplot(aes(x=n, y=prop, color=hyp))+
-  #   geom_point()+
-  #   geom_line()+
-  #   facet_wrap(~factor(performance, levels = c("TP", "FP", "PPV", "FN", "TN", "NPV")),
-  #              ncol=3)+
-  #   labs(title="Power and alpha for each tested hypothesis",
-  #        subtitle = paste("Aggregated studies:" ,t)
-  #   )+
-  #   scale_x_continuous(breaks = n)+
-  #   scale_y_continuous(breaks = seq(0,1, 0.1))+
-  #   theme(axis.text.x = element_text(angle = 45))+
-  #   theme_minimal()
-  
-  # plot_acc<-plot_data %>% 
-  #   filter(performance =="Acc") %>%  
-  #   ggplot(aes(x=n, y=prop, color=hyp))+
-  #   geom_point()+
-  #   geom_line()+
-  #   labs(title="Power and alpha for each tested hypothesis",
-  #        subtitle = paste("Aggregated studies:" ,t)
-  #   )+
-  #   scale_x_continuous(breaks = n)+
-  #   scale_y_continuous(breaks = seq(0,1, 0.1))+
-  #   theme(axis.text.x = element_text(angle = 45))+
-  #   theme_minimal()
   
   plot_acc<-acc_data %>% 
+    filter(case_when(x.axis=="n" ~ t == max(t),
+                     x.axis=="t" ~ t %in% t.range
+                     )) %>%  
+    mutate(n=as.factor(n),
+           t=as.factor(t)) %>% 
     ggplot(aes_string(x=x.axis, y="acc"))+
-    geom_point()+
-    geom_line()+
+    {if(x.axis == "t" & length(n)>1) geom_point(aes(color=n)) }+
+    {if(x.axis == "t" & length(n)>1)  geom_line(aes(color=n, group=n))}+
+    {if(x.axis != "t") geom_point() }+
+    {if(x.axis != "t")  geom_line(aes( group=1))}+
     labs(title="Accuracy of BES to detect the true hypothesis",
-         subtitle = paste("Aggregated studies:" ,t)
+         x=x.axis
     )+
-    scale_x_continuous(breaks = n)+
-    scale_y_continuous(breaks = seq(0,1, 0.1))+
+    # scale_x_continuous(breaks = t.range)+
+    scale_y_continuous(breaks = seq(0,1, 0.1),
+                       limits = c(0,1))+
     theme(axis.text.x = element_text(angle = 45))+
     theme_minimal()
-  
+
+  # plot_acc<- plot_acc +
+  #   if (x.axis == "t" & length(n)>1) {
+  #     # execute condition 1 and add to plot
+  #     #facet_wrap(~n, labeller = function(variable,value) paste(variable,"=", value))
+  #     # geom_point(aes(color=n, group=n))+
+  #     #   geom_line()
+  # } 
+  plot_acc<- plot_acc +
+    if(x.axis =="n"){
+      labs(subtitle = paste("Aggregated studies:", max(t.range)))
+    }
+
   return(list(#plot_TF=plot_TF,
               #plot_data=plot_data,
               plot_acc=plot_acc,
               acc_data=acc_data,
               sim_conditions=x.n[[1]][c("r2", "pcor", "hypotheses","populations", "model","iter")]
   ))
-}
-
+} # end power_plot
+power_plot(power_BES,hyp = c(H0="Hu",H1= "H1"), n=1:5,t.range=1)
 
 
 # Simulate --------------------------------------------------------------------------------
@@ -382,41 +371,18 @@ n<-c(50,100,150,200,300,500,800,1200)
 
 ## BES --------------------------------------------
 
-conf_matrix<-power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1") , t=7)$matrix
-
-power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1") , t.range=3)
-power_matrix_BES(x=power_BES[[5]],hyp=c(H0="Hu",H1= "H1") , t=1)
-
-power_matrix_BES(x=power_BES[[5]],hyp=c(H0="Hu",H1= "H1") , t=20)$acc_data
-
-
-power_plot(power_BES,hyp = c(H0="Hu",H1= "H1", Hc="Hc"), n=n,t=1)$plot_data %>% filter(performance=="Acc")
-power_plot(power_BES,hyp = c(H0="Hu",H1= "H1", Hc="Hc"), n=n,t=10)
-
-power_plot(power_BES,hyp = c(H0="Hu",H1= "H1"), n=n,t=10)
-
-BES_iu5<-power_plot(x.n=power_BES, # a list of lists with BFs created with sim_individual() across different n,
-           hyp=c(H0="Hu",H1= "H1"), 
+power_plot(power_BES,
+           hyp = c(H0="Hu",H1= "H1"),
            n=c(50,100,150,200,300,500,800,1200),
-           BES = TRUE, #aggregate?
-           t=5)
-BES_iu5$plot
+           t.range=1)
+power_plot(power_BES,hyp = c(H0="Hu",H1= "H1"), n=n<-c(50,100,150,200,300,500,800,1200),t.range=1:10)
 
+power_plot(power_BES,
+           hyp = c(H0="Hu",H1= "H1"),
+           n=c(50,100,150,200,300,500,800,1200),
+           t.range=5)
 
-BES_iu10<-power_plot(x.n=power_BES, # a list of lists with BFs created with sim_individual() across different n,
-                    hyp=c(H0="Hu",H1= "H1"), 
-                    n=c(50,100,150,200,300,500,800,1200),
-                    BES = TRUE, #aggregate?
-                    t=10)
-BES_iu10$plot
-
-
-BES_icu5<-power_plot(x.n=power_BES, # a list of lists with BFs created with sim_individual() across different n,
-                    hyp=c(H0="Hu",H1= "H1", Hc="Hc"), 
-                    n=c(50,100,150,200,300,500,800,1200),
-                    BES = TRUE, #aggregate?
-                    t=10)
-BES_icu5
-
-
-
+power_plot(power_BES,
+           hyp = c(H0="Hu",H1= "H1"),
+           n=2:5,
+           t.range=1:5)
