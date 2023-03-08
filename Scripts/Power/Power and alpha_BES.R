@@ -209,7 +209,6 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_BES()
   }
   
   
-  
   #create an array with the same dimensions as PMP but that will be indicate only the highest PMPs
   max.PMP<-PMP
   #produce power matrix
@@ -265,16 +264,22 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_BES()
     
   }
   
-  
+ 
   plot_data<-TPFP %>%
     rownames_to_column(var="hyp") %>%
     pivot_longer(cols = c("TP", "FP", "PPV", "FN", "TN", "NPV", "Acc"),
                  names_to = "performance",
                  values_to = "prop")
+  
+  acc_data<-data.frame(n=n,
+                       t=t,
+                       acc=sum(diag(conf_matrix))/sum(conf_matrix)
+                       )
 
   return(list(matrix=conf_matrix,
               metrics=TPFP,
               plot_data=plot_data,
+              acc_data=acc_data,
               sim_conditions=x[c("r2", "pcor", "hypotheses","populations", "model","iter")]
   )
   )
@@ -289,9 +294,10 @@ power_plot<-function(x.n, # a list of lists with BFs created with sim_individual
 ){
   
   plot_data<-data.frame()
-
+  acc_data<-data.frame()
   for(s in 1:length(n)){
          plot_data<-rbind(plot_data,power_matrix_BES(x=x.n[[s]], hyp=hyp, t=t)$plot_data)
+         acc_data<-rbind(acc_data,power_matrix_BES(x=x.n[[s]], hyp=hyp, t=t)$acc_data)
       }
   
   # if(length(n)!=1){
@@ -304,17 +310,39 @@ power_plot<-function(x.n, # a list of lists with BFs created with sim_individual
   #   }
   # }
   
+  # plot_TF<-plot_data %>% 
+  #   filter(performance !="Acc") %>% 
+  #   ggplot(aes(x=n, y=prop, color=hyp))+
+  #   geom_point()+
+  #   geom_line()+
+  #   facet_wrap(~factor(performance, levels = c("TP", "FP", "PPV", "FN", "TN", "NPV")),
+  #              ncol=3)+
+  #   labs(title="Power and alpha for each tested hypothesis",
+  #        subtitle = paste("Aggregated studies:" ,t)
+  #   )+
+  #   scale_x_continuous(breaks = n)+
+  #   scale_y_continuous(breaks = seq(0,1, 0.1))+
+  #   theme(axis.text.x = element_text(angle = 45))+
+  #   theme_minimal()
   
+  # plot_acc<-plot_data %>% 
+  #   filter(performance =="Acc") %>%  
+  #   ggplot(aes(x=n, y=prop, color=hyp))+
+  #   geom_point()+
+  #   geom_line()+
+  #   labs(title="Power and alpha for each tested hypothesis",
+  #        subtitle = paste("Aggregated studies:" ,t)
+  #   )+
+  #   scale_x_continuous(breaks = n)+
+  #   scale_y_continuous(breaks = seq(0,1, 0.1))+
+  #   theme(axis.text.x = element_text(angle = 45))+
+  #   theme_minimal()
   
-  
-  plot_TF<-plot_data %>% 
-    filter(performance !="Acc") %>% 
-    ggplot(aes(x=n, y=prop, color=hyp))+
+  plot_acc<-acc_data %>% 
+    ggplot(aes(x=n, y=acc))+
     geom_point()+
     geom_line()+
-    facet_wrap(~factor(performance, levels = c("TP", "FP", "PPV", "FN", "TN", "NPV")),
-               ncol=3)+
-    labs(title="Power and alpha for each tested hypothesis",
+    labs(title="Accuracy of BES to detect the true hypothesis",
          subtitle = paste("Aggregated studies:" ,t)
     )+
     scale_x_continuous(breaks = n)+
@@ -322,22 +350,10 @@ power_plot<-function(x.n, # a list of lists with BFs created with sim_individual
     theme(axis.text.x = element_text(angle = 45))+
     theme_minimal()
   
-  plot_acc<-plot_data %>% 
-    filter(performance =="Acc") %>% 
-    ggplot(aes(x=n, y=prop, color=hyp))+
-    geom_point()+
-    geom_line()+
-    labs(title="Power and alpha for each tested hypothesis",
-         subtitle = paste("Aggregated studies:" ,t)
-    )+
-    scale_x_continuous(breaks = n)+
-    scale_y_continuous(breaks = seq(0,1, 0.1))+
-    theme(axis.text.x = element_text(angle = 45))+
-    theme_minimal()
-  
-  return(list(plot_TF=plot_TF,
+  return(list(#plot_TF=plot_TF,
+              #plot_data=plot_data,
               plot_acc=plot_acc,
-              plot_data=plot_data,
+              acc_data=acc_data,
               sim_conditions=x.n[[1]][c("r2", "pcor", "hypotheses","populations", "model","iter")]
   ))
 }
@@ -409,7 +425,7 @@ power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1") , t=7)
 power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1") , t=1)
 power_matrix_BES(x=power_BES[[5]],hyp=c(H0="Hu",H1= "H1") , t=1)
 
-power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1") , t=5)
+power_matrix_BES(x=power_BES[[5]],hyp=c(H0="Hu",H1= "H1") , t=20)$acc_data
 
 
 power_plot(power_BES,hyp = c(H0="Hu",H1= "H1", Hc="Hc"), n=n,t=1)$plot_data %>% filter(performance=="Acc")
