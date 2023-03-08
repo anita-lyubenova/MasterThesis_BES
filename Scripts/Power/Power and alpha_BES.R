@@ -292,13 +292,6 @@ power_plot<-function(x.n, # a list of lists with BFs created with sim_individual
     theme(axis.text.x = element_text(angle = 45))+
     theme_minimal()
 
-  # plot_acc<- plot_acc +
-  #   if (x.axis == "t" & length(n)>1) {
-  #     # execute condition 1 and add to plot
-  #     #facet_wrap(~n, labeller = function(variable,value) paste(variable,"=", value))
-  #     # geom_point(aes(color=n, group=n))+
-  #     #   geom_line()
-  # } 
   plot_acc<- plot_acc +
     if(x.axis =="n"){
       labs(subtitle = paste("Aggregated studies:", max(t.range)))
