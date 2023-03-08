@@ -104,7 +104,7 @@ sim_BES<-function(
 aggregatePMP2<-function(x, #a list created with sim_BES()
                        hyp=c("H1", "Hc", "Hu"), #which hypothesis are to be tested interest, note only the index
                       # iter=1000,
-                       studies=NULL
+                       studies=NULL #number of studies to aggregate over
                        
 ){
   BF<-x$BF
@@ -157,24 +157,20 @@ dimnames(x$BF)
 #a function to transform the BFs to PMPs, create a confusion matrix, and compute power and alpha
 power_matrix_BES<-function(x, # a list with BFs created with sim_BES()
                            hyp=c(H0="H0",H1= "H1",Hc= "Hc"), # a named vector with elements indicating the tested hypotheses, and the names indicating the true populaiton for this hypothesis
-                           t=1 #number of studies
+                           n, #sample size of the studies. Either a number or a vector. 
+                           t.range #number of studies. Either a number or a vector 
                            # hyp_names = dimnames(BF)[[2]], #a character vector indicating the names of the testerd hypotheses
                            # pop_names=substr(dimnames(BF)[[3]],6,7)
 ){
-  # PMP_BES<-list()
-  # for(s in 1:length(n)){
-  #   PMP_BES[[s]]<-aggregatePMP(x[[s]], hyp = hyp_index)
-  #   PMP_BES[[s]]$populations<-PMP_BES[[s]]$populations[-4]
-  # }
-  # 
-  
+
   hyp_index = substr(hyp,2,2)
   pop_names<-paste0("TRUE_", names(hyp))
   n<-x$n
+  t.max=max(t.range)
   
-  x$populations<-x$populations[-4] # remove the population Hu
   #if no aggregation is needed you can see the 1000 across all 40 studies as independent => 40 000 iterations
-  if(t==1){
+  if(t.max==1){
+    x$populations<-x$populations[-4] # remove the population Hu
     x$BF<-apply(x$BF[,paste0("BF",hyp_index,"u"),pop_names,], c(2,3), abind::abind)
     x$iter<-nrow(x$BF)
     x$studies<-1
@@ -192,20 +188,24 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_BES()
         }  
       }
     }
-   
     
+    PMP <- abind::abind(PMP, array(NA,dim=dim(PMP)), along=4)
+    
+  #dimnames(PMP)[[4]]<-"t=1"
+  
+  # If more than 1 studies should be aggregated over => BES 
   }else{
+    
     x$BF<-x$BF[,paste0("BF",hyp_index,"u"),pop_names,]
     
-    PMP_BES_list<-aggregatePMP2(x, hyp = hyp, studies = t)
+    PMP_BES_list<-aggregatePMP2(x, hyp = hyp, studies = t.max)
     
     #reorder the dimensions such that PMP_BES[iter, PMP_hyp, pop] for t aggregated studies only
-    PMP<-aperm(PMP_BES_list$aggrPMP[t,,,],#subset only the row with t number of aggregated studies studies
-                   c(3,1,2)
+    PMP<-aperm(PMP_BES_list$aggrPMP[1:t.max,,,,drop=FALSE],#subset only the row with t number of aggregated studies studies
+               c(4,2,3,1)
     )
-    # # reorder dimension names such that in the confusion matrix power is always on the diagonal
-    # PMP<- PMP_BES[,paste0("PMP_",hyp_index),pop_names]
-    
+    print(dimnames(PMP))
+
   }
   
   
@@ -214,71 +214,32 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_BES()
   #produce power matrix
   for(i in 1:dim(PMP)[[1]]){ #for each iteration
     for(z in 1:dim(PMP)[[3]]){ # for each population
+      for(j in 1:dim(PMP)[[4]]){
       
-      #get the column index of the hypothesis with the highest PMPs
-      max.index<-which(PMP[i,,z]==max(PMP[i,,z]))
-      # replace the max PMPs with 1 and the remaining PMPs with 0 for iteration i and population z
-      max.PMP[i,max.index,z]<-1
-      max.PMP[i,-max.index,z]<-0
+        #get the column index of the hypothesis with the highest PMPs
+        max.index<-which(PMP[i,,z,j]==max(PMP[i,,z,j]))
+        # replace the max PMPs with 1 and the remaining PMPs with 0 for iteration i and population z
+        max.PMP[i,max.index,z,j]<-1
+        max.PMP[i,-max.index,z,j]<-0
+      }
     }  
   }
   
-  conf_matrix<-apply(max.PMP, c(2,3), sum)/dim(max.PMP)[1]
-  
-  TPFP<-matrix(NA,
-                      nrow=nrow(conf_matrix),
-                      ncol = 9,
-                      dimnames = list(rownames(conf_matrix),
-                                      c("n","t","TP", "FP", "PPV", "TN", "FN", "NPV", "Acc")
-                      )
-  ) %>% data.frame()
-  
-  # TPFP_overall<-matrix(NA,
-  #              nrow=1,
-  #              ncol = 9,
-  #              dimnames = list(rownames(conf_matrix),
-  #                              c("n","t","TP", "FP", "PPV", "TN", "FN", "NPV", "Acc")
-  #              )
-  # ) %>% data.frame()
-  # 
-  # TPFP_overall$n<-n
-  # TPFP_overall$t<-t
-  # TPFP_overall$TP<-sum(diag(conf_matrix))/length(hyp_index)
-
-  TPFP$n<-n
-  TPFP$t<-t
-  TPFP$TP<-diag(conf_matrix)
-  
-  h<-1
-  for(h in 1:length(hyp_index)){
-    TPFP$FP[h]<- mean(conf_matrix[row(conf_matrix)==h & col(conf_matrix)!= h ])
-    TPFP$PPV[h]<-TPFP$TP[h]/sum(conf_matrix[row(conf_matrix)==h])
-    
-    TPFP$FN[h]<- 1-TPFP$TP[h]
-    TPFP$TN[h]<- (length(hyp_index)-1)-TPFP$FP[h]
-    
-    TPFP$NPV[h]<-TPFP$TN[h]/(TPFP$FN[h]+TPFP$TN[h])
-    
-    TPFP$Acc[h]<- (TPFP$TP[h]+TPFP$TN[h])/(TPFP$TP[h]+TPFP$TN[h]+TPFP$FP[h]++TPFP$FN[h])
-    
-    
-  }
-  
- 
-  plot_data<-TPFP %>%
-    rownames_to_column(var="hyp") %>%
-    pivot_longer(cols = c("TP", "FP", "PPV", "FN", "TN", "NPV", "Acc"),
-                 names_to = "performance",
-                 values_to = "prop")
+  conf_matrix<-apply(max.PMP, c(2,3,4), sum)/dim(max.PMP)[1]
   
   acc_data<-data.frame(n=n,
-                       t=t,
-                       acc=sum(diag(conf_matrix))/sum(conf_matrix)
+                       t=1:t.max,
+                       acc=NA
                        )
 
+  for(j in 1:dim(PMP)[[4]] ){
+    acc_data$acc[j] <- sum(diag(conf_matrix[,,j]))/sum(conf_matrix[,,j])
+
+  }
+  
   return(list(matrix=conf_matrix,
-              metrics=TPFP,
-              plot_data=plot_data,
+             # metrics=TPFP,
+             # plot_data=plot_data,
               acc_data=acc_data,
               sim_conditions=x[c("r2", "pcor", "hypotheses","populations", "model","iter")]
   )
@@ -286,18 +247,22 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_BES()
   
 }#  end power_matrix_BES()
 
+power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1") , t.range=1:3)
+
+
 #a function to plot the power and alpha of hypotheses across different n
 power_plot<-function(x.n, # a list of lists with BFs created with sim_individual() across different n,
                      hyp,
                      n,
-                     t=1
+                     t.range=1,
+                     x.axis=c("n", "t")
 ){
   
-  plot_data<-data.frame()
+#  plot_data<-data.frame()
   acc_data<-data.frame()
   for(s in 1:length(n)){
-         plot_data<-rbind(plot_data,power_matrix_BES(x=x.n[[s]], hyp=hyp, t=t)$plot_data)
-         acc_data<-rbind(acc_data,power_matrix_BES(x=x.n[[s]], hyp=hyp, t=t)$acc_data)
+        # plot_data<-rbind(plot_data,power_matrix_BES(x=x.n[[s]], hyp=hyp, t.range=t.range)$plot_data)
+         acc_data<-rbind(acc_data,power_matrix_BES(x=x.n[[s]], hyp=hyp, t.range=t.range)$acc_data)
       }
   
   # if(length(n)!=1){
@@ -339,7 +304,7 @@ power_plot<-function(x.n, # a list of lists with BFs created with sim_individual
   #   theme_minimal()
   
   plot_acc<-acc_data %>% 
-    ggplot(aes(x=n, y=acc))+
+    ggplot(aes_string(x=x.axis, y="acc"))+
     geom_point()+
     geom_line()+
     labs(title="Accuracy of BES to detect the true hypothesis",
@@ -419,10 +384,7 @@ n<-c(50,100,150,200,300,500,800,1200)
 
 conf_matrix<-power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1") , t=7)$matrix
 
-power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1", Hc="Hc") , t=7)
-power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1") , t=7)
-
-power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1") , t=1)
+power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1") , t.range=3)
 power_matrix_BES(x=power_BES[[5]],hyp=c(H0="Hu",H1= "H1") , t=1)
 
 power_matrix_BES(x=power_BES[[5]],hyp=c(H0="Hu",H1= "H1") , t=20)$acc_data
