@@ -257,6 +257,9 @@ power_plot<-function(x.n, # a list of lists with BFs created with sim_individual
                      n,
                      t.range=1
 ){
+
+  all.n<-c(50,100,150,200,300,500,800,1200)
+  n.ind<-which( all.n%in%n )
   
   if(length(t.range)==1){
     x.axis<-"n"
@@ -266,7 +269,7 @@ power_plot<-function(x.n, # a list of lists with BFs created with sim_individual
   
 #  plot_data<-data.frame()
   acc_data<-data.frame()
-  for(s in 1:length(n)){
+  for(s in n.ind){
         # plot_data<-rbind(plot_data,power_matrix_BES(x=x.n[[s]], hyp=hyp, t.range=t.range)$plot_data)
          acc_data<-rbind(acc_data,power_matrix_BES(x=x.n[[s]], hyp=hyp, t.max=max(t.range))$acc_data)
       }
@@ -304,7 +307,7 @@ power_plot<-function(x.n, # a list of lists with BFs created with sim_individual
               sim_conditions=x.n[[1]][c("r2", "pcor", "hypotheses","populations", "model","iter")]
   ))
 } # end power_plot
-power_plot(power_BES,hyp = c(H0="Hu",H1= "H1"), n=1:5,t.range=1)
+power_plot(power_BES,hyp = c(H0="Hu",H1= "H1"), n=c(50,500),t.range=1:5)
 
 
 # Simulate --------------------------------------------------------------------------------
