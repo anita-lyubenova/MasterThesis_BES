@@ -1,4 +1,6 @@
+# Load packages -------------------------------------------------------------------
 source("scripts/load_packages.R")
+library(plotly)
 #source("scripts/ThomVolker scripts/functions.R")
 
 # r2=0.13
@@ -244,13 +246,6 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_BES()
   
 }#  end power_matrix_BES()
 
-################
-# x.n<-power_BES
-# hyp=c(H0="Hu",H1= "H1")
-# n<-c(50,300)
-# t.range<-1:4
-
-####################
 #a function to plot the power and alpha of hypotheses across different n
 power_plot<-function(x.n, # a list of lists with BFs created with sim_individual() across different n,
                      hyp,
@@ -371,34 +366,12 @@ power_plot<-function(x.n, # a list of lists with BFs created with sim_individual
 load("Outputs/power_BES.RData")
 
 
-#_____________________________________________________________________________________
-# Q1 --------------------------
-# THEORETICAL PROPOSITION 1 
-
-# IF
-# - all studies have the same most parsimonious true hypothesis
-# - (i.e. exclude cases when for some studies only Hu is true and for others both Hu and H1)
-
-# THEN
-# - BES increases the power of any test
-# - BES reduces the alpha of any test
-# -... independent of the set of hypotheses
-
-#Implication
-# - Try to reject it with underpoweed studies: How much do undepowered studies invalidate this proposition?
-#_____________________________________________________________________________________
-
-#In this case we exclude population Hu=TRUE because we want all studies to come from the same pop
-
-##INPUTS 
+## BES --------------------------------------------
 #choose hypotheses
 # hyp=c(H0="Hu",H1= "H1", Hc="Hc")
 # n<-c(50,100,150,200,300,500,800,1200)
 
 
-## BES --------------------------------------------
-
-library(plotly)
 power_plot(x.n=power_BES,
            hyp=c(H1="H1",Hu= "Hu"),
            n=c(50,100,150,200,300,500,800),
@@ -409,6 +382,7 @@ power_plot(x.n=power_BES,
            n=c(300,500,800,1200),
            t=1:10)$plot_acc
 
+#H0 --------------------------------
 power_plot(x.n=power_BES,
            hyp=c(H0="H0",H1= "H1", Hu="Hu"),
            n=c(300,500,800,1200),
