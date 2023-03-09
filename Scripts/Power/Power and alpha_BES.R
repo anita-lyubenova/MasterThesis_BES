@@ -1,5 +1,5 @@
 source("scripts/load_packages.R")
-source("scripts/ThomVolker scripts/functions.R")
+#source("scripts/ThomVolker scripts/functions.R")
 
 # r2=0.13
 # pcor=0.3
@@ -15,88 +15,88 @@ source("scripts/ThomVolker scripts/functions.R")
 
 
 
-# a function that 
-# (1) simulates data based on specified populations in line with hypohteses of interest
-# (2) Computes BFs for each hypohteses of interest in each population
-sim_BES<-function(
-    r2=0.13,#effect size r-squared
-    pcor=0.3,#correlation between the predictor variables
-    n, #sample size
-    hypothesis, #tested hypotheses;
-    ratio_beta=list(H0=c(1,1,1), #population H0 = TRUE
-                   H1=c(3,2,1), #population H1 = TRUE
-                   Hc=c(1,2,3),
-                   Hu= c(1,1,1)
-                   ), # definition of the populations, as determined by the ratio between the regression coefficients b1:b2:b3; should be a named list of numeric vectors, where each vector corresponds to the ratio of betas in hte respective hypothesis (note the order of hypotheses!); the names should only contain the subscript of the hypothesis (e.g "1" or "i" or"0")
-    model="linear", #linear, logistic or probit regression
-    iter=3,
-    #BES arguments
-    studies=40,
-    ratio_HiHc=4 # every 2nd study comes from a different population
-){
-  
-
-  # a list to store the population level coefficients for each hypothesis-population
-  betas<-list()
-  #a placeholder for the BFs
-  BF.u<-array(NA,
-              dim = c(studies,
-                      length(ratio_beta),
-                      length(ratio_beta),
-                      iter),
-              dimnames = list(1:studies,
-                              paste0("BF", substr(names(ratio_beta),2,2), "u"),
-                              paste0("TRUE_", names(ratio_beta)),
-                              1:iter
-                              ))
-  
-  for(t in 1:studies){
-    
-    #for each population deifned by ratio_beta
-    for(b in 1:length(ratio_beta)){
-      betas[[b]]<-coefs(r2, ratio_beta[[b]], cormat(pcor, length(ratio_beta[[b]])), "normal")
-    
-      
-      if(b==4){
-        #have the betas conform with Hc or with Hi
-        #e.g. Hi:Hc study ratio could be 1:1 (where ratio_HiHc = 2; i.e. every 2nd study comes from Hc)
-        #or 1:3, where ratio_HiHc = 4, i.e every fourth study comes from Hc)
-        if(t %% ratio_HiHc == 0){ #2nd or 4th study => Hc
-          betas[[4]]<-coefs(r2, ratio_beta[["Hc"]], cormat(pcor, length(ratio_beta[[4]])), "normal")
-        }else{                       #else Hi
-          betas[[4]]<-coefs(r2, ratio_beta[["H1"]], cormat(pcor, length(ratio_beta[[4]])), "normal")
-        }
-    }
-      
-      for(i in 1:iter){
-        print(paste0("Sample size: ", n ,"; Study: ",t ,"; Population: ", b ,"; Iteration: ", i))
-        #generate BFs
-        BF.u[t,c(1,2,3),b,i]<-gen_dat(r2=r2,
-                            betas=unlist(betas[[b]]),
-                            rho=cormat(pcor, length(ratio_beta[[b]])),
-                            n=n,
-                            "normal")%$%
-          lm(Y ~ V1 + V2 +V3) %>%
-          bain(hypothesis = hypothesis)%$%
-          fit %>%
-          extract(c(1:length(unlist(strsplit(hypothesis, ";"))),nrow(.)),"BF.u")#subset only BFiu for the specified hypothesis and the complement
-        
-    }
-   }
-  }
-  
-  BF.u[,"BFuu",,]<-1
-  return(list(BF=BF.u,
-              r2=r2,
-              pcor=pcor,
-              n=n,
-              hypothesis=hypothesis,
-              populations=ratio_beta,
-              model=model,
-              iter=iter,
-              studies=studies
-  ))
-}
+# # a function that 
+# # (1) simulates data based on specified populations in line with hypohteses of interest
+# # (2) Computes BFs for each hypohteses of interest in each population
+# sim_BES<-function(
+#     r2=0.13,#effect size r-squared
+#     pcor=0.3,#correlation between the predictor variables
+#     n, #sample size
+#     hypothesis, #tested hypotheses;
+#     ratio_beta=list(H0=c(1,1,1), #population H0 = TRUE
+#                    H1=c(3,2,1), #population H1 = TRUE
+#                    Hc=c(1,2,3),
+#                    Hu= c(1,1,1)
+#                    ), # definition of the populations, as determined by the ratio between the regression coefficients b1:b2:b3; should be a named list of numeric vectors, where each vector corresponds to the ratio of betas in hte respective hypothesis (note the order of hypotheses!); the names should only contain the subscript of the hypothesis (e.g "1" or "i" or"0")
+#     model="linear", #linear, logistic or probit regression
+#     iter=3,
+#     #BES arguments
+#     studies=40,
+#     ratio_HiHc=4 # every 2nd study comes from a different population
+# ){
+#   
+# 
+#   # a list to store the population level coefficients for each hypothesis-population
+#   betas<-list()
+#   #a placeholder for the BFs
+#   BF.u<-array(NA,
+#               dim = c(studies,
+#                       length(ratio_beta),
+#                       length(ratio_beta),
+#                       iter),
+#               dimnames = list(1:studies,
+#                               paste0("BF", substr(names(ratio_beta),2,2), "u"),
+#                               paste0("TRUE_", names(ratio_beta)),
+#                               1:iter
+#                               ))
+#   
+#   for(t in 1:studies){
+#     
+#     #for each population deifned by ratio_beta
+#     for(b in 1:length(ratio_beta)){
+#       betas[[b]]<-coefs(r2, ratio_beta[[b]], cormat(pcor, length(ratio_beta[[b]])), "normal")
+#     
+#       
+#       if(b==4){
+#         #have the betas conform with Hc or with Hi
+#         #e.g. Hi:Hc study ratio could be 1:1 (where ratio_HiHc = 2; i.e. every 2nd study comes from Hc)
+#         #or 1:3, where ratio_HiHc = 4, i.e every fourth study comes from Hc)
+#         if(t %% ratio_HiHc == 0){ #2nd or 4th study => Hc
+#           betas[[4]]<-coefs(r2, ratio_beta[["Hc"]], cormat(pcor, length(ratio_beta[[4]])), "normal")
+#         }else{                       #else Hi
+#           betas[[4]]<-coefs(r2, ratio_beta[["H1"]], cormat(pcor, length(ratio_beta[[4]])), "normal")
+#         }
+#     }
+#       
+#       for(i in 1:iter){
+#         print(paste0("Sample size: ", n ,"; Study: ",t ,"; Population: ", b ,"; Iteration: ", i))
+#         #generate BFs
+#         BF.u[t,c(1,2,3),b,i]<-gen_dat(r2=r2,
+#                             betas=unlist(betas[[b]]),
+#                             rho=cormat(pcor, length(ratio_beta[[b]])),
+#                             n=n,
+#                             "normal")%$%
+#           lm(Y ~ V1 + V2 +V3) %>%
+#           bain(hypothesis = hypothesis)%$%
+#           fit %>%
+#           extract(c(1:length(unlist(strsplit(hypothesis, ";"))),nrow(.)),"BF.u")#subset only BFiu for the specified hypothesis and the complement
+#         
+#     }
+#    }
+#   }
+#   
+#   BF.u[,"BFuu",,]<-1
+#   return(list(BF=BF.u,
+#               r2=r2,
+#               pcor=pcor,
+#               n=n,
+#               hypothesis=hypothesis,
+#               populations=ratio_beta,
+#               model=model,
+#               iter=iter,
+#               studies=studies
+#   ))
+# }
 
 
 #function to aggregate the PMPs for a set of specified hypotheses
@@ -148,10 +148,6 @@ aggregatePMP2<-function(x, #a list created with sim_BES()
               studies=studies
               ))
 }
-
-#single sample size n=100 
-x<-sim_BES(studies = 10, n=100, hypothesis = "V1=V2=V3; V1>V2>V3")
-dimnames(x$BF)
 
 
 #a function to transform the BFs to PMPs, create a confusion matrix, and compute power and alpha
@@ -248,9 +244,13 @@ power_matrix_BES<-function(x, # a list with BFs created with sim_BES()
   
 }#  end power_matrix_BES()
 
-power_matrix_BES(x=power_BES[[1]],hyp=c(H0="Hu",H1= "H1") , t.max=5)
+################
+# x.n<-power_BES
+# hyp=c(H0="Hu",H1= "H1")
+# n<-c(50,300)
+# t.range<-1:4
 
-
+####################
 #a function to plot the power and alpha of hypotheses across different n
 power_plot<-function(x.n, # a list of lists with BFs created with sim_individual() across different n,
                      hyp,
@@ -272,7 +272,25 @@ power_plot<-function(x.n, # a list of lists with BFs created with sim_individual
   for(s in n.ind){
         # plot_data<-rbind(plot_data,power_matrix_BES(x=x.n[[s]], hyp=hyp, t.range=t.range)$plot_data)
          acc_data<-rbind(acc_data,power_matrix_BES(x=x.n[[s]], hyp=hyp, t.max=max(t.range))$acc_data)
-      }
+  }
+  
+  
+  hyp_info<-paste("Hypothesis (Population):",
+                     paste(paste0(hyp, "(",names(hyp), ")"), collapse = " vs. "),
+                     collapse = " ")
+  plot_caption<-paste(paste0("R2 = ", x.n[[1]]$r2),
+                      paste0("pcor = ", x.n[[1]]$pcor),
+                      paste0("iterations:", x.n[[1]]$iter),
+                      collapse = ";")
+  
+  plot_title<- "Accuracy of BES (probability of the PMP of the true hypothesis to be the highest)"
+  
+  if(x.axis =="n"){
+    plot_caption<-paste(paste("Aggregated studies:", max(t.range)),
+                        plot_caption,
+                        collapse = "; "
+    )
+  }
   
   
   plot_acc<-acc_data %>% 
@@ -286,19 +304,33 @@ power_plot<-function(x.n, # a list of lists with BFs created with sim_individual
     {if(x.axis == "t" & length(n)>1)  geom_line(aes(color=n, group=n))}+
     {if(x.axis != "t") geom_point() }+
     {if(x.axis != "t")  geom_line(aes( group=1))}+
-    labs(title="Accuracy of BES to detect the true hypothesis",
-         x=x.axis
+    labs(title="Accuracy of BES (probability of the PMP of the true hypothesis to be the highest)",
+         x=x.axis,
+         subtitle = hyp_info,
+         caption = plot_caption
     )+
     # scale_x_continuous(breaks = t.range)+
     scale_y_continuous(breaks = seq(0,1, 0.1),
                        limits = c(0,1))+
     theme(axis.text.x = element_text(angle = 45))+
-    theme_minimal()
+    theme_minimal()+
+    geom_hline(yintercept = 1)+
+    geom_hline(yintercept = 0)
 
-  plot_acc<- plot_acc +
-    if(x.axis =="n"){
-      labs(subtitle = paste("Aggregated studies:", max(t.range)))
-    }
+
+  
+  plot_acc <- ggplotly(plot_acc) %>% 
+    layout(title = list(text = paste0(plot_title,
+                                      '<br>',
+                                      '<sup>',
+                                      hyp_info,
+                                      '</sup>')),
+           annotations = list(text = plot_caption,
+                              x=1, y=-0.08,
+                              showarrow = F, xref='paper', yref='paper', 
+                              xanchor='right', yanchor='auto', xshift=0, yshift=0,
+                              font=list(size=11))
+           )
 
   return(list(#plot_TF=plot_TF,
               #plot_data=plot_data,
@@ -307,33 +339,33 @@ power_plot<-function(x.n, # a list of lists with BFs created with sim_individual
               sim_conditions=x.n[[1]][c("r2", "pcor", "hypotheses","populations", "model","iter")]
   ))
 } # end power_plot
-power_plot(power_BES,hyp = c(H0="Hu",H1= "H1"), n=c(50,500),t.range=1:5)
+
 
 
 # Simulate --------------------------------------------------------------------------------
-# for a range of sample sizes
-n<-c(50,100,150,200,300,500,800,1200)
+# # for a range of sample sizes
+# n<-c(50,100,150,200,300,500,800,1200)
+# 
+# power_BES<-list()
+# for (s in 1:length(n)){
+#   power_BES[[s]]<-sim_BES(r2=0.13,#effect size r-squared
+#                           pcor=0.3,#correlation between the predictor variables
+#                           n=n[s], #sample size
+#                           hypothesis = "V1=V2=V3; V1>V2>V3", #tested hypotheses;
+#                           ratio_beta=list(H0=c(1,1,1), #population H0 = TRUE
+#                                           H1=c(3,2,1), #population H1 = TRUE
+#                                           Hc=c(1,2,3),
+#                                           Hu= c(1,1,1) #the values do not matter - it will be either Hi or Hc
+#                           ), # definition of the populations, as determined by the ratio between the regression coefficients b1:b2:b3; should be a named list of numeric vectors, where each vector corresponds to the ratio of betas in hte respective hypothesis (note the order of hypotheses!); the names should only contain the subscript of the hypothesis (e.g "1" or "i" or"0")
+#                           model="linear", #linear, logistic or probit regression
+#                           iter=1000,
+#                           #BES arguments
+#                           studies=40,
+#                           ratio_HiHc=2 # every 2nd study comes from Hc, the others from Hi
+#   )
+# }
 
-power_BES<-list()
-for (s in 1:length(n)){
-  power_BES[[s]]<-sim_BES(r2=0.13,#effect size r-squared
-                          pcor=0.3,#correlation between the predictor variables
-                          n=n[s], #sample size
-                          hypothesis = "V1=V2=V3; V1>V2>V3", #tested hypotheses;
-                          ratio_beta=list(H0=c(1,1,1), #population H0 = TRUE
-                                          H1=c(3,2,1), #population H1 = TRUE
-                                          Hc=c(1,2,3),
-                                          Hu= c(1,1,1) #the values do not matter - it will be either Hi or Hc
-                          ), # definition of the populations, as determined by the ratio between the regression coefficients b1:b2:b3; should be a named list of numeric vectors, where each vector corresponds to the ratio of betas in hte respective hypothesis (note the order of hypotheses!); the names should only contain the subscript of the hypothesis (e.g "1" or "i" or"0")
-                          model="linear", #linear, logistic or probit regression
-                          iter=1000,
-                          #BES arguments
-                          studies=40,
-                          ratio_HiHc=2 # every 2nd study comes from Hc, the others from Hi
-  )
-}
-
-save(power_BES, file = "Outputs/power_BES.RData")
+#save(power_BES, file = "Outputs/power_BES.RData")
 
 #Load power_BES  -----------------------
 load("Outputs/power_BES.RData")
@@ -360,25 +392,31 @@ load("Outputs/power_BES.RData")
 
 ##INPUTS 
 #choose hypotheses
-hyp=c(H0="Hu",H1= "H1", Hc="Hc")
-n<-c(50,100,150,200,300,500,800,1200)
-
+# hyp=c(H0="Hu",H1= "H1", Hc="Hc")
+# n<-c(50,100,150,200,300,500,800,1200)
 
 
 ## BES --------------------------------------------
 
-power_plot(power_BES,
-           hyp = c(H0="Hu",H1= "H1"),
-           n=c(50,100,150,200,300,500,800,1200),
-           t.range=1)
-power_plot(power_BES,hyp = c(H0="Hu",H1= "H1"), n=n<-c(50,100,150,200,300,500,800,1200),t.range=1:10)
+library(plotly)
+power_plot(x.n=power_BES,
+           hyp=c(H1="H1",Hu= "Hu"),
+           n=c(50,100,150,200,300,500,800),
+           t=1:5)$plot_acc
 
-power_plot(power_BES,
-           hyp = c(H0="Hu",H1= "H1"),
-           n=c(50,100,150,200,300,500,800,1200),
-           t.range=5)
+power_plot(x.n=power_BES,
+           hyp=c(H0="H0", H1="Hu"),
+           n=c(300,500,800,1200),
+           t=1:10)$plot_acc
 
-power_plot(power_BES,
-           hyp = c(H0="Hu",H1= "H1"),
-           n=2:5,
-           t.range=1:5)
+power_plot(x.n=power_BES,
+           hyp=c(H0="H0",H1= "H1", Hu="Hu"),
+           n=c(300,500,800,1200),
+           t=1:10)$plot_acc
+
+
+power_plot(x.n=power_BES,
+           hyp=c(H0="H0",H1= "H1", Hc="Hu"),
+           n=c(300,500,800,1200),
+           t=1:10)$plot_acc
+
