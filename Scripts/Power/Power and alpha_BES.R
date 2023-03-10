@@ -310,7 +310,8 @@ power_plot<-function(x.n, # a list of lists with BFs created with sim_individual
     theme(axis.text.x = element_text(angle = 45))+
     theme_minimal()+
     geom_hline(yintercept = 1)+
-    geom_hline(yintercept = 0)
+    geom_hline(yintercept = 0)+
+    geom_hline(yintercept = .87, color="gray", linetype="dashed")
 
 
   
@@ -407,6 +408,7 @@ power_plot(x.n=power_BES,
            n=c(50,100,150,200,300,500,800),
            t=1:10)$plot_acc
 
+#H1 -------------------------------
 power_plot(x.n=power_BES,
            hyp=c(H1= "H1", Hu="Hu"),
            n=c(50,100,150,200,300,500,800),
