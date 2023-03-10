@@ -377,20 +377,48 @@ power_plot(x.n=power_BES,
            n=c(50,100,150,200,300,500,800),
            t=1:5)$plot_acc
 
+
+
+#H0 --------------------------------
+
 power_plot(x.n=power_BES,
            hyp=c(H0="H0", H1="Hu"),
            n=c(300,500,800,1200),
            t=1:10)$plot_acc
 
-#H0 --------------------------------
+power_plot(x.n=power_BES,
+           hyp=c(H0="H0", H1="H1"),
+           n=c(300,500,800,1200),
+           t=1:10)$plot_acc
+
 power_plot(x.n=power_BES,
            hyp=c(H0="H0",H1= "H1", Hu="Hu"),
            n=c(300,500,800,1200),
            t=1:10)$plot_acc
-
 
 power_plot(x.n=power_BES,
            hyp=c(H0="H0",H1= "H1", Hc="Hu"),
            n=c(300,500,800,1200),
            t=1:10)$plot_acc
 
+
+power_plot(x.n=power_BES,
+           hyp=c(H1= "H1", Hc="Hc", Hu="Hu"),
+           n=c(50,100,150,200,300,500,800),
+           t=1:10)$plot_acc
+
+power_plot(x.n=power_BES,
+           hyp=c(H1= "H1", Hu="Hu"),
+           n=c(50,100,150,200,300,500,800),
+           t=1:10)$plot_acc
+
+power_plot(x.n=power_BES,
+           hyp=c(H1= "H1", H0="Hu"),
+           n=c(50,100,150,200,300,500,800),
+           t=1:10)$plot_acc
+
+# I don't understand...
+power_plot(x.n=power_BES,
+           hyp=c(Hc= "Hc", H0="Hu"),
+           n=c(50,100,150,200,300,500,800),
+           t=1:10)$plot_acc
