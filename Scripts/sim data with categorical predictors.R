@@ -11,7 +11,10 @@ X <- mvrnorm(1000, mu = rep(0, length(betas)), Sigma = rho)
 
 Y <- X %*% betas + rnorm(n = 1000, mean = 0, sd = sqrt(1 - r2))
 
-#categorical predictor --------------------------------------------------------
+
+
+# INPUT: ratio ------------------------------------------------------------
+
 
 ## 2 levels -----------------------------------
 r2<-0.13
@@ -38,7 +41,7 @@ dat %>%
   group_by(exp) %>% 
   summarise(mean=mean(DV))
 
-#3 levels -------------------------------------------
+## 3 levels -------------------------------------------
 r2<-0.09
 n<-150000
 ratio<-c(3,2,1)
@@ -61,7 +64,7 @@ dat<-X %>%
 lm(DV ~ 0 + G0 + G1+G2, data = dat) %>% summary()
 
 
-# 4 leves --------------------------------------------
+## 4 levels --------------------------------------------
 r2<-0.13
 n<-200000
 ratio<-c(4,3,2,1)
@@ -85,7 +88,7 @@ dat<-X %>%
 lm(DV ~ 0 + G0 + G1+G2+G3, data = dat) %>% summary()
 
 
-# 5 leves --------------------------------------------
+## 5 leves --------------------------------------------
 r2<-0.50
 n<-250000
 ratio<-c(5,4,3,2,1)
@@ -115,6 +118,71 @@ dat %>%
   mutate(group=group) %>% 
   group_by(group) %>% 
   summarise(var=var(DV))
+
+
+# INPUT: Cohen's d------------------------------------------------------------------
+
+## attempt 1 - failed -----------------
+r2<-0.13
+d<-0.3
+r.XY<-0.489
+n<-100000
+
+X1<-rbinom(n,1,0.5)
+X0<-1-X
+
+
+Y<-rnorm(n, r.XY*X1, sd=sqrt(1-r.XY^2))
+#Y <- X %*% betas + rnorm(n = n, mean = 0, sd = sqrt(1 - r2))
+Y <- r2*X1 + rnorm(n = n, mean = 0, sd = sqrt(1 - r2))
+
+
+
+lm(Y~0+X0+X1) %>% summary()
+
+
+## attempt 2 ---------------------------------------------
+#two means
+d<-0.3
+r2=0.13
+
+M2<-0.1 # mean of the second group
+M1=d+M2
+ratio<-c(M1,M2)
+# ratio2<-1
+# ratio1=(d+M2)/M2
+# ratio<-c(ratio1,ratio2)
+# rho<-cormat(0, length(ratio))
+
+n=200000
+
+group<-rbinom(n,1,0.5)
+
+X<-data.frame(G0 = ifelse(group==0, 1,0),
+              G1 = ifelse(group==1, 1, 0)
+) %>% as.matrix()
+
+betas<-sqrt(length(ratio)*r2 / sum(ratio %*% t(ratio) * rho)) * ratio #3.597*
+
+Y<-X %*% betas + rnorm(n = n, mean = 0, sd = sqrt(1 - r2))
+
+dat<-X %>% 
+  as.data.frame() %>% 
+  mutate(DV=Y)
+
+lm(DV ~ 0 + G0 + G1, data = dat) %>% summary()
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
