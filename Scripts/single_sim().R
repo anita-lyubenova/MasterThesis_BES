@@ -1,5 +1,6 @@
 #a function to simulate a vector of BFs according to certain simulation conditions
 
+source("scripts/ThomVolker scripts/functions.R")
 
 # Simulation conditions -----------------------------------------------------
 # R2
@@ -13,26 +14,72 @@
 # betas : a numeric vector with the beta coefficients;  defines the truth in the population;
 # sigma_beta: variance covariance matrix of the (true) regression parameters - can be used to induce heterogeneity
 # iter: number of iterations
-single_sim<-function(R2,  # R-squared of the regression model
+single_sim<-function(r2,  # R-squared of the regression model
                      pcor,  # correlation between the predictors
                      betas,  # a numeric vector with the beta coefficients;  defines the truth in the population;
                      Sigma_beta,  # variance covariance matrix of the (true) regression parameters - can be used to induce heterogeneity
-                     hypothesis,  # a string with the hypotheses of interest; must be in the format of bain()
+                     hypothesis,  # the hypothesis of interest; must be in the format of bain()
                      n,  #sample size 
                      model,  #linear, logistic or probit regression
-                     iter   #number of iterations
+                     save_mod_coefs # should the estimated coefficients and their standard errors be saved?
 ){
+  #n.hyp<-length(unlist(strsplit(hypothesis, ";")))
+  n.hyp<-1
   
-    
+  f<-as.formula(paste0("V", 1:length(betas)) %>%
+        paste(collapse = "+") %>%  
+        c("Y", "~",.) %>% 
+        paste(collapse = " "))
+   print(f)
+  
+  #obtain BFiu
+  #BF<-
+    gen_dat(r2=r2,
+               betas=betas,
+               rho=cormat(pcor, length(betas)),
+               n=n,
+               model="normal") %$% 
+     lm(formula=f, data=.) %>%
+     bain(hypothesis = hypothesis)%$%fit# %>%     #$BF.u[c(1,2,4)]
+  #   extract(c(1:n.hyp, nrow(.)),"BF.u")#subset only BFiu for the specified hypothesis and the complement
+  # 
+  # res<-rbind(data.frame(), BF)
 }
 
+r2=.13 #effect size r-squared
+pcor<-0.3 #correlation between the predictor variables
+n<-100 #sample sizes
+hypothesis<-"V1>V2>V3" #tested hypotheses
+models <- c("normal") #linear, logistic or probit regression
+ratio_beta<-c(9,3,1)
+betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+
+
+a<-single_sim(r2=0.13,  # R-squared of the regression model
+           pcor=0.3,  # correlation between the predictors
+           betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),  # a numeric vector with the beta coefficients;  defines the truth in the population;
+           Sigma_beta=NULL,  # variance covariance matrix of the (true) regression parameters - can be used to induce heterogeneity
+           hypothesis="V1>V2>V3",  # the hypothesis of interest; must be in the format of bain()
+           n=100,  #sample size 
+           model="linear",  #linear, logistic or probit regression
+           save_mod_coefs=NULL # should the estimated coefficients and their standard errors be saved?
+)
+
+debug(single_sim)
+
+single_sim(r2=0.13,  # R-squared of the regression model
+           pcor=0.3,  # correlation between the predictors
+           betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),  # a numeric vector with the beta coefficients;  defines the truth in the population;
+           Sigma_beta=NULL,  # variance covariance matrix of the (true) regression parameters - can be used to induce heterogeneity
+           hypothesis="V1>V2>V3",  # the hypothesis of interest; must be in the format of bain()
+           n=100,  #sample size 
+           model="linear",  #linear, logistic or probit regression
+           save_mod_coefs=NULL # should the estimated coefficients and their standard errors be saved?
+)
 
 
 
-
-
-
-
+undebug(single_sim)
 
 
 ####################################################################
