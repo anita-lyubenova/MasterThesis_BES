@@ -94,7 +94,7 @@ library(foreach)
 library(doParallel)
 
 system.time(
-  results <- foreach (i=1:1000,
+  results <- foreach (i=1:5000,
                       .combine=rbind,
                       .packages = c("tidyverse","magrittr", "furrr",
                                     "BFpack", "Rcpp", "RcppArmadillo",
@@ -111,17 +111,22 @@ system.time(
                                     }
   
 )
+#iter=1000
 # user  system elapsed 
-# 30.35    0.31   31.42 
+# 30.35    0.31   31.42
+
+# iter=5000
+# user  system elapsed 
+# 144.83    0.87  147.25 
 
 registerDoParallel(numCores)  # use multicore, set to the number of our cores
-
 system.time(
-results <- foreach (i=1:1000,
+results <- foreach (i=1:5000,
                     .combine=rbind,
                     .packages = c("tidyverse","magrittr", "furrr",
-                                  "BFpack", "Rcpp", "RcppArmadillo",
-                                  "MASS","mvtnorm", "bain")) %dopar% {
+                                  "Rcpp", "RcppArmadillo", "MASS",
+                                  "mvtnorm", "bain")
+                    ) %dopar% {
       single_sim(r2=0.13,  # R-squared of the regression model
                  pcor=0.3,  # correlation between the predictors
                  betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),  # a numeric vector with the beta coefficients;  defines the truth in the population;
@@ -131,13 +136,15 @@ results <- foreach (i=1:1000,
                  model="linear",  #linear, logistic or probit regression
                  save_mod_coefs=NULL # should the estimated coefficients and their standard errors be saved?
       )
-}
-
+  }
 )
-#System time
+#System time: iter=1000
 # user  system elapsed 
 # 0.94    0.17   23.10 
 
+#System time: iter=1000
+# user  system elapsed 
+# 3.66    0.88   56.27 
 
 ## parallel -----------------------------------------------
 # kinda hard because it does not recognize custom functions... 
