@@ -152,7 +152,7 @@ ratio<-c(M1,M2)
 # ratio2<-1
 # ratio1=(d+M2)/M2
 # ratio<-c(ratio1,ratio2)
-# rho<-cormat(0, length(ratio))
+rho<-cormat(0, length(ratio))
 
 n=200000
 
@@ -170,9 +170,7 @@ dat<-X %>%
   as.data.frame() %>% 
   mutate(DV=Y)
 
-lm(DV ~ 0 + G0 + G1, data = dat) %>% summary()
-
-
+mod<-lm(DV ~ 0 + G0 + G1, data = dat) %>% summary()
 
 
 
