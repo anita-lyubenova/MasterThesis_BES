@@ -36,7 +36,6 @@ single_sim<-function(r2,  # R-squared of the regression model
      bain(hypothesis = hypothesis)%$%fit %>%     #$BF.u[c(1,2,4)]
      extract(c(1:n.hyp, nrow(.)),"BF.u") #subset only BFiu for the specified hypothesis and the complement
    
-   res<-rbind(data.frame(), BF)
 }
 
 a<-single_sim(r2=0.13,  # R-squared of the regression model
@@ -71,7 +70,7 @@ system.time({
 # user  system elapsed 
 # 36.25    0.21   37.37
 
-# mclapply ---------------------------------------------------------
+## mclapply ---------------------------------------------------------
 # doesn't work on windows
 numCores <- detectCores()
 numCores
@@ -89,6 +88,98 @@ system.time(
     )
   })
 )
+
+## foreach -----------------------------------------------
+library(foreach)
+library(doParallel)
+
+system.time(
+  results <- foreach (i=1:1000,
+                      .combine=rbind,
+                      .packages = c("tidyverse","magrittr", "furrr",
+                                    "BFpack", "Rcpp", "RcppArmadillo",
+                                    "MASS","mvtnorm", "bain")) %do% {
+                                      single_sim(r2=0.13,  # R-squared of the regression model
+                                                 pcor=0.3,  # correlation between the predictors
+                                                 betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),  # a numeric vector with the beta coefficients;  defines the truth in the population;
+                                                 Sigma_beta=NULL,  # variance covariance matrix of the (true) regression parameters - can be used to induce heterogeneity
+                                                 hypothesis="V1>V2>V3",  # the hypothesis of interest; must be in the format of bain()
+                                                 n=100,  #sample size 
+                                                 model="linear",  #linear, logistic or probit regression
+                                                 save_mod_coefs=NULL # should the estimated coefficients and their standard errors be saved?
+                                      )
+                                    }
+  
+)
+# user  system elapsed 
+# 30.35    0.31   31.42 
+
+registerDoParallel(numCores)  # use multicore, set to the number of our cores
+
+system.time(
+results <- foreach (i=1:1000,
+                    .combine=rbind,
+                    .packages = c("tidyverse","magrittr", "furrr",
+                                  "BFpack", "Rcpp", "RcppArmadillo",
+                                  "MASS","mvtnorm", "bain")) %dopar% {
+      single_sim(r2=0.13,  # R-squared of the regression model
+                 pcor=0.3,  # correlation between the predictors
+                 betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),  # a numeric vector with the beta coefficients;  defines the truth in the population;
+                 Sigma_beta=NULL,  # variance covariance matrix of the (true) regression parameters - can be used to induce heterogeneity
+                 hypothesis="V1>V2>V3",  # the hypothesis of interest; must be in the format of bain()
+                 n=100,  #sample size 
+                 model="linear",  #linear, logistic or probit regression
+                 save_mod_coefs=NULL # should the estimated coefficients and their standard errors be saved?
+      )
+}
+
+)
+#System time
+# user  system elapsed 
+# 0.94    0.17   23.10 
+
+
+## parallel -----------------------------------------------
+# kinda hard because it does not recognize custom functions... 
+library(parallel)
+
+cl <- parallel::makeCluster(numCores)
+
+#clusterEvalQ(cl, { library(string); library(rvest); })
+
+iter <- 1:1000
+system.time(
+  results <- parLapply(cl,
+                       iter ,
+                       function(x){
+                         single_sim(r2=0.13,  # R-squared of the regression model
+                                    pcor=0.3,  # correlation between the predictors
+                                    betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),  # a numeric vector with the beta coefficients;  defines the truth in the population;
+                                    Sigma_beta=NULL,  # variance covariance matrix of the (true) regression parameters - can be used to induce heterogeneity
+                                    hypothesis="V1>V2>V3",  # the hypothesis of interest; must be in the format of bain()
+                                    n=100,  #sample size 
+                                    model="linear",  #linear, logistic or probit regression
+                                    save_mod_coefs=NULL # should the estimated coefficients and their standard errors be saved?
+                         )
+                       }
+  )
+  
+)
+
+stopCluster(cl)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # cl <- parallel::makeCluster(2)
