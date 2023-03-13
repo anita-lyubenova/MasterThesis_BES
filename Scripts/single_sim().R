@@ -27,8 +27,7 @@ single_sim<-function(r2,  # R-squared of the regression model
   n.hyp<-1
 
   #obtain BFiu
-  BF<-
-    gen_dat(r2=r2,
+  BF<-gen_dat(r2=r2,
                betas=betas,
                rho=cormat(pcor, length(betas)),
                n=n,
@@ -50,9 +49,50 @@ a<-single_sim(r2=0.13,  # R-squared of the regression model
               save_mod_coefs=NULL # should the estimated coefficients and their standard errors be saved?
 )
 
+#Parallelization --------------------------------------------------------------
+library(parallel)
+
+## regular apply(): no parallel --------------------------------------
+iter <- 1:1000
+system.time({
+  results <- lapply(iter, function(x){
+    single_sim(r2=0.13,  # R-squared of the regression model
+               pcor=0.3,  # correlation between the predictors
+               betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),  # a numeric vector with the beta coefficients;  defines the truth in the population;
+               Sigma_beta=NULL,  # variance covariance matrix of the (true) regression parameters - can be used to induce heterogeneity
+               hypothesis="V1>V2>V3",  # the hypothesis of interest; must be in the format of bain()
+               n=100,  #sample size 
+               model="linear",  #linear, logistic or probit regression
+               save_mod_coefs=NULL # should the estimated coefficients and their standard errors be saved?
+    )
+  })
+})
+# System.time
+# user  system elapsed 
+# 36.25    0.21   37.37
+
+# mclapply ---------------------------------------------------------
+# doesn't work on windows
+numCores <- detectCores()
+numCores
+
+system.time(
+  results <- mclapply(iter, mc.cores = numCores, FUN=function(x){
+    single_sim(r2=0.13,  # R-squared of the regression model
+               pcor=0.3,  # correlation between the predictors
+               betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),  # a numeric vector with the beta coefficients;  defines the truth in the population;
+               Sigma_beta=NULL,  # variance covariance matrix of the (true) regression parameters - can be used to induce heterogeneity
+               hypothesis="V1>V2>V3",  # the hypothesis of interest; must be in the format of bain()
+               n=100,  #sample size 
+               model="linear",  #linear, logistic or probit regression
+               save_mod_coefs=NULL # should the estimated coefficients and their standard errors be saved?
+    )
+  })
+)
 
 
-
+# cl <- parallel::makeCluster(2)
+# parallel::stopCluster(cl)
 
 ###############################################################
 r2=.13 #effect size r-squared
