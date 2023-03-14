@@ -14,15 +14,12 @@
 source("scripts/ThomVolker scripts/functions.R")
 source("scripts/single_sim().R")
 
-# heterogeneity of effect sizes--------------------
+# 1) P(H1==TRUE | propSD) ---------------------
+#the proportion of times H1 is true in the population across iterations
 r2<-0.13
 pcor<-0.3
 ratio_beta<-c(3,2,1)
 betas<-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
-
-
-# bcor<-0 #correlation between the coefficients
-# sigma_beta<-diag(x=0.10*betas, nrow = length(betas),ncol = length(betas)) #covariance matrix of the coefficients
 
 #How often is b1>b2>b3 for SD being the specified percentage of the coefficients
 percentage=c(seq(0.01, 0.09, by=0.01),seq(0.1, 0.9, by=0.1), 0.95, 1)
@@ -44,3 +41,60 @@ a
 # Insights:
 # - The more parsimonious the hypothesis, the more prone to rejection it is in case there is heterogeneity
 # - propSD = 0.5*betas results in H1 not being true 50% of the time (on population level)
+
+# 2) propSD and tau ------------------------------------
+
+## Simulate BF-------------------
+
+library(foreach)
+library(doParallel)
+library(abind)
+
+#these functions are needed to combine the results across the forloops on along the desired dimension
+#combine the matrices along the third dimension,..
+abind_3<-function(...){
+  abind(..., along = 3)
+}
+
+
+registerDoParallel(7)  # use multicore, set to the number of cores
+
+system.time(
+  
+  results <- 
+    foreach(p = c(0.1, 0.3, 0.5, 0.7),
+            .combine = abind_3, #bind along the 3rd dimension
+            #.multicombine =TRUE,
+            .packages = c("tidyverse","magrittr", "furrr",
+                          "Rcpp", "RcppArmadillo", "MASS",
+                          "mvtnorm", "bain", "foreach", "doParallel")
+    ) %dopar%{
+      
+      foreach(i=1:1000,
+              .combine=rbind,
+              .packages = c("tidyverse","magrittr", "furrr",
+                            "Rcpp", "RcppArmadillo", "MASS",
+                            "mvtnorm", "bain")
+      ) %dopar% {
+        
+        #print(paste("Sample size:", n, "; Iter:", i))
+        
+        single_sim(r2=0.13,  # R-squared of the regression model
+                   pcor=0.3,  # correlation between the predictors
+                   betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),  # a numeric vector with the beta coefficients;  defines the truth in the population;
+                   # Sigma_beta=NULL,  # variance covariance matrix of the (true) regression parameters - can be used to induce heterogeneity
+                   propSD = p,
+                   hypothesis="V1>V2>V3",  # the hypothesis of interest; must be in the format of bain()
+                   n=350,  #sample size 
+                   model="linear",  #linear, logistic or probit regression
+                 #  save_mod_coefs=NULL # should the estimated coefficients and their standard errors be saved?
+        )$BF
+        
+      }#end foreach i loop
+      
+    }# end foreach n loop
+  
+)#system.time
+
+#save.image("utputs/investigate heterogeneity/workspace_1.RData")
+
