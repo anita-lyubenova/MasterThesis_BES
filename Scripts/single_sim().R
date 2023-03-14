@@ -2,41 +2,6 @@
 
 source("scripts/ThomVolker scripts/functions.R")
 
-
-# heterogeneity of effect sizes--------------------
-r2<-0.13
-pcor<-0.3
-ratio_beta<-c(3,2,1)
-betas<-coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
-
-
-# bcor<-0 #correlation between the coefficients
-# sigma_beta<-diag(x=0.10*betas, nrow = length(betas),ncol = length(betas)) #covariance matrix of the coefficients
-
-#How often is b1>b2>b3 for SD being the specified percentage of the coefficients
-percentage=c(seq(0.01, 0.09, by=0.01),seq(0.1, 0.9, by=0.1), 0.95, 1)
-iter=10000
-a<-data.frame(percentage=percentage,
-              prop_correct=NA,
-              SDs = NA
-)
-percentage[1]*betas
-for(p in 1:length(percentage)){
-  
-  sigma_beta<-diag(x=(percentage[p]*betas)^2, nrow = length(betas),ncol = length(betas)) #covariance matrix of the coefficients
-  #sigma_beta<-diag(x=percentage[p]*betas)#, nrow = length(betas),ncol = length(betas))
-  b<-mvrnorm(n=iter, mu=betas, Sigma = sigma_beta)
-  a$prop_correct[p]<- sum(b[,1]>b[,2] & b[,2]>b[,3])/iter
-  a$SDs[p]<-paste(round(diag(sigma_beta), digits=3), collapse="; ")
-}
-a
-# Insights:
-# - The more parsimonious the hypothesis, the more prone to rejection it is in case there is heterogeneity
-# - propSD = 0.5*betas results in H1 not being true 50% of the time (on population level)
-
-
-
-
 # FUNCTION -----------------------------------------------------
 
 single_sim<-function(r2,  # R-squared of the regression model
@@ -103,15 +68,15 @@ a<-single_sim(r2=0.13,  # R-squared of the regression model
 )
 a
 
-###############################################################
-r2=.13 #effect size r-squared
-pcor<-0.3 #correlation between the predictor variables
-n<-100 #sample sizes
-hypothesis<-"V1>V2>V3" #tested hypotheses
-models <- c("normal") #linear, logistic or probit regression
-ratio_beta<-c(9,3,1)
-betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
+
+# r2=.13 #effect size r-squared
+# pcor<-0.3 #correlation between the predictor variables
+# n<-100 #sample sizes
+# hypothesis<-"V1>V2>V3" #tested hypotheses
+# models <- c("normal") #linear, logistic or probit regression
+# ratio_beta<-c(9,3,1)
+# betas=coefs(r2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal")
 
 
-####################################################################
+
 
