@@ -77,33 +77,28 @@ system.time(
   compl_power_BES <- 
     
     #n-loop: sample size
-    # foreach(n = c(50,100,150), #,200,300,
-    #         .combine=list,
-    #         .packages = c("tidyverse","magrittr", "furrr",
-    #                       "Rcpp", "RcppArmadillo", "MASS",
-    #                       "mvtnorm", "bain", "foreach", "doParallel")
-    # ) %dopar%{
+    foreach(n = c(50,100,150,200,300), #,
+            .combine=list,
+            .multicombine = TRUE,
+            .packages = c("tidyverse","magrittr", "furrr",
+                          "Rcpp", "RcppArmadillo", "MASS",
+                          "mvtnorm", "bain", "foreach", "doParallel")
+    ) %:% #{
     
       #i-loop: iterations
-      foreach(i = 1:3, #iterations
-              .combine = map_abind_4, #bind along the 3rd dimension
+      foreach(i = 1:1000, #iterations
+              .combine = map_abind_4, #bind along the 4th dimension
               .packages = c("tidyverse","magrittr", "furrr",
                             "Rcpp", "RcppArmadillo", "MASS",
                             "mvtnorm", "bain", "foreach", "doParallel")
-      ) %dopar%{
+      ) %:% #{
         #p-loop: heterogeneity
         foreach(p = c(0.1, 0.3, 0.5), #heterogeneity levels from low to high
-                .combine = map_abind_3, #bind along the 3rd dimension
-                .packages = c("tidyverse","magrittr", "furrr",
-                              "Rcpp", "RcppArmadillo", "MASS",
-                              "mvtnorm", "bain", "foreach", "doParallel")
-        ) %dopar%{
+                .combine = map_abind_3 #bind along the 3rd dimension
+        ) %:% #{
           #t-loop: studies
           foreach(t=1:3,
-                  .combine=map_rbind,
-                  .packages = c("tidyverse","magrittr", "furrr",
-                                "Rcpp", "RcppArmadillo", "MASS",
-                                "mvtnorm", "bain")
+                  .combine=map_rbind
           ) %dopar% {
             
             #print(paste("Sample size:", n, "; Iter:", i))
@@ -114,7 +109,7 @@ system.time(
                             # Sigma_beta=NULL,  # variance covariance matrix of the (true) regression parameters - can be used to induce heterogeneity
                             propSD = p,
                             hypothesis="V1>V2>V3",  # the hypothesis of interest; must be in the format of bain()
-                            n=100,  #sample size 
+                            n=n,  #sample size 
                             model="linear",  #linear, logistic or probit regression
                             #  save_mod_coefs=NULL # should the estimated coefficients and their standard errors be saved?
             )
@@ -128,9 +123,9 @@ system.time(
           
         }#end foreach t loop (studies) (rows)
         
-      }# end foreach p loop (heterogenetity) (3rd dim)
+#      }# end foreach p loop (heterogenetity) (3rd dim)
         
-    }# end i loop (iterations) (4th dim)
+#    }# end i loop (iterations) (4th dim)
   
 #  }# end n loop (sample size) (list)
   
@@ -144,3 +139,4 @@ l3<-map_abind_4(l1,l2)
 map_abind_4(l3,l1)
 
 abind(l1$BF, l2$BF, along = 4)
+length(compl_power_BES)
