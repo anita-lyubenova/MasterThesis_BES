@@ -361,6 +361,9 @@ power_plot<-function(x.n, # a list of lists with BFs created with sim_individual
 #   )
 # }
 
+#Shape of the data
+#list[[n]][t, BF, heterog, i]
+
 #save(power_BES, file = "Outputs/power_BES.RData")
 
 #Number of conditions:n=8 x ratio = 4, x studies=40 x iter=1000 = 1 280 000 BFs

@@ -50,8 +50,6 @@ library(foreach)
 library(doParallel)
 library(abind)
 # custom functions to combine the results from the parallelized for-loops 
-
-
 #add a 3rd dimension to a matrix 
 abind_3<-function(...){
   abind(..., along = 3)
