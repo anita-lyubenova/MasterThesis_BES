@@ -1,12 +1,13 @@
 # create and assess parallelized code
 
+library(foreach)
+library(doParallel)
+library(abind)
+
 source("scripts/ThomVolker scripts/functions.R")
 source("scripts/single_sim().R")
 
 # parallel iter ----------------------------------------------------------
-
-library(foreach)
-library(doParallel)
 
 registerDoParallel(numCores)  # use multicore, set to the number of our cores
 system.time(
@@ -42,7 +43,6 @@ system.time(
 #resulting data:
 #list[[n]][t, BF, heterog, iter]
 
-library(abind)
 
 # custom functions to combine the results from the parallelized for-loops 
 #add a 3rd dimension to a matrix 
@@ -54,6 +54,7 @@ abind_4<-function(...){
   abind(..., along = 4)
 }
 
+#for each element of the list add a 3rd dimension with the current loop values
 # apply abind_3() element-wise for the elements of lists x and y
 map_abind_3<-function(x,y){
   Map(abind_3,x,y)
@@ -69,21 +70,22 @@ map_rbind<-function(x,y){
   Map(rbind,x,y)
 }
 
-registerDoParallel(3)  # use multicore, set to the number of cores
+registerDoParallel(7)  # use multicore, set to the number of cores
 
 system.time(
   
   compl_power_BES <- 
     
     #n-loop: sample size
-    foreach(n = c(50,100,150,200,300), 
-            .packages = c("tidyverse","magrittr", "furrr",
-                          "Rcpp", "RcppArmadillo", "MASS",
-                          "mvtnorm", "bain", "foreach", "doParallel")
-    ) %dopar%{
+    # foreach(n = c(50,100,150), #,200,300,
+    #         .combine=list,
+    #         .packages = c("tidyverse","magrittr", "furrr",
+    #                       "Rcpp", "RcppArmadillo", "MASS",
+    #                       "mvtnorm", "bain", "foreach", "doParallel")
+    # ) %dopar%{
     
       #i-loop: iterations
-      foreach(i = 1:1000, #iterations
+      foreach(i = 1:3, #iterations
               .combine = map_abind_4, #bind along the 3rd dimension
               .packages = c("tidyverse","magrittr", "furrr",
                             "Rcpp", "RcppArmadillo", "MASS",
@@ -97,7 +99,7 @@ system.time(
                               "mvtnorm", "bain", "foreach", "doParallel")
         ) %dopar%{
           #t-loop: studies
-          foreach(t=1:40,
+          foreach(t=1:3,
                   .combine=map_rbind,
                   .packages = c("tidyverse","magrittr", "furrr",
                                 "Rcpp", "RcppArmadillo", "MASS",
@@ -112,7 +114,7 @@ system.time(
                             # Sigma_beta=NULL,  # variance covariance matrix of the (true) regression parameters - can be used to induce heterogeneity
                             propSD = p,
                             hypothesis="V1>V2>V3",  # the hypothesis of interest; must be in the format of bain()
-                            n=350,  #sample size 
+                            n=100,  #sample size 
                             model="linear",  #linear, logistic or probit regression
                             #  save_mod_coefs=NULL # should the estimated coefficients and their standard errors be saved?
             )
@@ -130,18 +132,15 @@ system.time(
         
     }# end i loop (iterations) (4th dim)
   
-  }# end n loop (sample size) (list)
+#  }# end n loop (sample size) (list)
   
 )#system.time
 
-#Parallelized code is 4 times quicker!!
-# user  system elapsed 
-# 0.10    0.03   65.39 
-269/65
 
+l1<-compl_power_BES
+l2<-compl_power_BES
 
+l3<-map_abind_4(l1,l2)
+map_abind_4(l3,l1)
 
-
-
-# cl <- parallel::makeCluster(2)
-# parallel::stopCluster(cl)
+abind(l1$BF, l2$BF, along = 4)
