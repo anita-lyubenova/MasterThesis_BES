@@ -49,29 +49,40 @@ a
 library(foreach)
 library(doParallel)
 library(abind)
+# custom functions to combine the results from the parallelized for-loops 
 
-#these functions are needed to combine the results across the forloops on along the desired dimension
-#combine the matrices along the third dimension,..
+
+#add a 3rd dimension to a matrix 
 abind_3<-function(...){
   abind(..., along = 3)
 }
 
+# apply abind_3() element-wise for the elements of lists x and y
+map_abind_3<-function(x,y){
+  Map(abind_3,x,y)
+}
+ 
+#apply rbind() element-wise for the elements of lists x and y
+#eg. rbind() BFs from each iteration
+map_rbind<-function(x,y){
+  Map(rbind,x,y)
+}
 
 registerDoParallel(7)  # use multicore, set to the number of cores
 
 system.time(
   
-  results <- 
-    foreach(p = c(0.1, 0.3, 0.5, 0.7),
-            .combine = abind_3, #bind along the 3rd dimension
+  results2 <- 
+    foreach(p = c(0.1, 0.3),
+            .combine = map_abind_3, #bind along the 3rd dimension
             #.multicombine =TRUE,
             .packages = c("tidyverse","magrittr", "furrr",
                           "Rcpp", "RcppArmadillo", "MASS",
                           "mvtnorm", "bain", "foreach", "doParallel")
     ) %dopar%{
       
-      foreach(i=1:1000,
-              .combine=rbind,
+      foreach(i=1:200,
+              .combine=map_rbind,
               .packages = c("tidyverse","magrittr", "furrr",
                             "Rcpp", "RcppArmadillo", "MASS",
                             "mvtnorm", "bain")
@@ -79,7 +90,7 @@ system.time(
         
         #print(paste("Sample size:", n, "; Iter:", i))
         
-        single_sim(r2=0.13,  # R-squared of the regression model
+        sim<-single_sim(r2=0.13,  # R-squared of the regression model
                    pcor=0.3,  # correlation between the predictors
                    betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),  # a numeric vector with the beta coefficients;  defines the truth in the population;
                    # Sigma_beta=NULL,  # variance covariance matrix of the (true) regression parameters - can be used to induce heterogeneity
@@ -88,8 +99,15 @@ system.time(
                    n=350,  #sample size 
                    model="linear",  #linear, logistic or probit regression
                  #  save_mod_coefs=NULL # should the estimated coefficients and their standard errors be saved?
-        )$BF
+        )
         
+        #save the results in a list
+        res<-list(BF=sim$BF,
+                  sampled_betas=sim$sampled_betas,
+                  est_betas=sim$est_betas,
+                  est_SE=sim$est_SE
+                  )
+              
       }#end foreach i loop
       
     }# end foreach n loop
@@ -98,3 +116,26 @@ system.time(
 
 #save.image("utputs/investigate heterogeneity/workspace_1.RData")
 
+#checks
+names(results2)
+results2$BF %>% dim()
+results2$sampled_betas %>% dimnames()
+results2$est_betas %>% dim()
+results2$est_SE %>% dim()
+
+#change the dimnames of the arrays sampled_betas, est_betas, and est_SE
+results2[-1]<-lapply(results2[-1], function(x) {
+        dimnames(x)<-list(1:200,
+                          c("V1", "V2", "V3"),
+                          c(0.1, 0.3) #propSD
+              )
+        return(x)
+      }
+  )
+#change the dimnames of the array with the BFs
+dimnames(results2[[1]])<-list(1:200,
+                              c("BFiu", "BFcu", "BFuu"),
+                              c(0.1, 0.3) #propSD
+)
+
+                              
