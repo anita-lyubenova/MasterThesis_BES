@@ -6,7 +6,7 @@
 
 #attempt to relate propSD to 
 #  1) the proportion of times H1 is true across iterations
-#  2) the the meta-analytical tau
+#  2) the the meta-analytical I-squared
 
 # Question: for common tau, such as 0.30, what is corresponding prop of times H1 is true on population level?
 # Implication of the results: it could be that a parsimonious informative hypothesis will not be true too often on population level
@@ -44,7 +44,7 @@ a
 
 # 2) propSD and tau ------------------------------------
 
-## Simulate BF-------------------
+## Simulate -------------------
 
 library(foreach)
 library(doParallel)
@@ -73,7 +73,7 @@ registerDoParallel(7)  # use multicore, set to the number of cores
 system.time(
   
   results2 <- 
-    foreach(p = c(0.1, 0.3),
+    foreach(p = c(0.1, 0.3, 0.7),
             .combine = map_abind_3, #bind along the 3rd dimension
             #.multicombine =TRUE,
             .packages = c("tidyverse","magrittr", "furrr",
@@ -114,7 +114,7 @@ system.time(
   
 )#system.time
 
-#save.image("utputs/investigate heterogeneity/workspace_1.RData")
+#save.image("Outputs/investigate heterogeneity/workspace_1.RData")
 
 #checks
 names(results2)
@@ -127,7 +127,7 @@ results2$est_SE %>% dim()
 results2[-1]<-lapply(results2[-1], function(x) {
         dimnames(x)<-list(1:200,
                           c("V1", "V2", "V3"),
-                          c(0.1, 0.3) #propSD
+                          c(0.1, 0.3, 0.7) #propSD
               )
         return(x)
       }
@@ -135,7 +135,38 @@ results2[-1]<-lapply(results2[-1], function(x) {
 #change the dimnames of the array with the BFs
 dimnames(results2[[1]])<-list(1:200,
                               c("BFiu", "BFcu", "BFuu"),
-                              c(0.1, 0.3) #propSD
+                              c(0.1, 0.3, 0.7) #propSD
 )
+b1.7=results2$est_betas[,,3][,1]
+SE.7=results2$est_SE[,,3][,1]
 
-                              
+b1.3=results2$est_betas[,,2][,1]
+SE.3=results2$est_SE[,,2][,1]
+
+b1.1=results2$est_betas[,,1][,1]
+SE.1=results2$est_SE[,,1][,1]
+
+# Meta-analysis --------------------------------------------
+library(metafor)
+
+0.3*betas[1] #expected tau
+ma <- rma.uni(yi=b1.3[1:50],
+        sei=SE.3[1:50],
+        method="REML")
+ma
+#estimated tau = 0.0634
+#I-squared = 0.582
+
+0.1*betas[1] #expected tau
+ma.1 <- rma.uni(yi=b1.1[1:50],
+              sei=SE.1[1:50],
+              method="REML")
+ma.1
+
+0.7*betas[1]
+ma.7 <- rma.uni(yi=b1.7[1:50],
+                sei=SE.7[1:50],
+                method="REML")
+ma.7
+# tau=0.15
+# I-squared=0.90
