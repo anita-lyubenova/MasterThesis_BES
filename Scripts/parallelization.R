@@ -70,7 +70,19 @@ map_rbind<-function(x,y){
   Map(rbind,x,y)
 }
 
-registerDoParallel(7)  # use multicore, set to the number of cores
+
+
+#registerDoParallel(7)  # use multicore, set to the number of cores
+
+#add progress bar
+library(doSNOW)
+cl <- makeCluster(7)
+registerDoSNOW(cl)
+iterations <- 5*1000*3*40 # total number of conditions - not sure if this actually matters
+pb <- txtProgressBar(max = iterations, style = 3)
+progress <- function(n) setTxtProgressBar(pb, n)
+opts <- list(progress = progress)
+#end  add progress bar
 
 system.time(
   
@@ -80,6 +92,7 @@ system.time(
     foreach(n = c(50,100,150,200,300), #,
             .combine=list,
             .multicombine = TRUE,
+            .options.snow = opts, #add progress bar
             .packages = c("tidyverse","magrittr", "furrr",
                           "Rcpp", "RcppArmadillo", "MASS",
                           "mvtnorm", "bain", "foreach", "doParallel")
@@ -97,7 +110,7 @@ system.time(
                 .combine = map_abind_3 #bind along the 3rd dimension
         ) %:% #{
           #t-loop: studies
-          foreach(t=1:3,
+          foreach(t=1:40,
                   .combine=map_rbind
           ) %dopar% {
             
@@ -130,13 +143,19 @@ system.time(
 #  }# end n loop (sample size) (list)
   
 )#system.time
+#time: 7cl - about 1h 15 min
+close(pb)
+stopCluster(cl) 
 
+save(compl_power_BES, file = "Outputs/compl_power_BES.RData")
 
-l1<-compl_power_BES
-l2<-compl_power_BES
-
-l3<-map_abind_4(l1,l2)
-map_abind_4(l3,l1)
-
-abind(l1$BF, l2$BF, along = 4)
 length(compl_power_BES)
+
+compl_power_BES[[1]]$BF
+
+## Post - processing ------------------------------------
+
+### add names/labels ------------------------------------
+### add simulation conditions ----------------------------------
+
+
