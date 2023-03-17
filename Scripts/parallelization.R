@@ -147,7 +147,7 @@ system.time(
 close(pb)
 stopCluster(cl) 
 
-save(compl_power_BES, file = "Outputs/compl_power_BES.RData")
+#save(compl_power_BES, file = "Outputs/compl_power_BES.RData")
 
 length(compl_power_BES)
 
@@ -192,22 +192,20 @@ compl_power_BES[1:5]<-lapply(compl_power_BES[1:5], function(x){
 #check
 compl_power_BES$n100$BF
 
-
 #change the dimnames of the arrays sampled_betas, est_betas, and est_SE
-compl_power_BES[1:5]<-lapply(compl_power_BES[1:5], function(x) {
-  
-    lapply(x[2:4], function(a){
-      dimnames(a)<-list(1:40,
-                      c("b1", "b2", "b3"),
-                      paste0("p",p),
-                      1:1000
-                  )
-      return(a)
-          }
-      )
+for(i in 1:length(n)){
+  for(j in 2:4){ # arrays with sampled_betas, est_betas, and est_SE
+    dimnames(compl_power_BES[[i]][[j]])<-list(1:40,
+                                              c("b1", "b2", "b3"),
+                                              paste0("p",p),
+                                              1:1000
+    )
   }
-)
-#check
-compl_power_BES$n50
+}
 
-save(compl_power_BES, file = "Outputs/compl_power_BES_r.RData")
+#check
+compl_power_BES$n50$sampled_betas
+
+#save(compl_power_BES, file = "Outputs/compl_power_BES_r.RData")
+
+
