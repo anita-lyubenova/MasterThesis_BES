@@ -154,8 +154,60 @@ length(compl_power_BES)
 compl_power_BES[[1]]$BF
 
 ## Post - processing ------------------------------------
+load("Outputs/compl_power_BES.RData")
+n = c(50,100,150,200,300)
+p = c(0.1, 0.3, 0.5)
+
+### add simulation conditions ----------------------------------
+library(rlist)
+library(purrr)
+compl_power_BES<-list.append(compl_power_BES, 
+       r2=0.13,
+       pcor=0.3,
+       betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),
+       hypothesis="V1>V2>V3",
+       model="linear",
+       propSD=c(0.1, 0.3, 0.5),
+       n=c(50,100,150,200,300),
+       iter=1000,
+       studies=40
+       )
 
 ### add names/labels ------------------------------------
-### add simulation conditions ----------------------------------
+#add names to the lists for the sample sizes
+names(compl_power_BES)[1:length(n)]<-paste0("n",n)
+
+#add dimnames to the arrays
+
+## change the dimnames of the array with BFs
+compl_power_BES[1:5]<-lapply(compl_power_BES[1:5], function(x){
+        dimnames(x$BF)<-list(1:40,
+                             c("BFiu", "BFcu", "BFuu"),
+                             paste0("p",p),
+                             1:1000
+                            )
+        return(x)
+    }
+  )
+#check
+compl_power_BES$n100$BF
 
 
+#change the dimnames of the arrays sampled_betas, est_betas, and est_SE
+compl_power_BES[1:5]<-lapply(compl_power_BES[1:5], function(x) {
+  
+    lapply(x[2:4], function(a){
+      dimnames(a)<-list(1:40,
+                      c("b1", "b2", "b3"),
+                      paste0("p",p),
+                      1:1000
+                  )
+      return(a)
+          }
+      )
+  }
+)
+#check
+compl_power_BES$n50
+
+save(compl_power_BES, file = "Outputs/compl_power_BES_r.RData")
