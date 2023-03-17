@@ -161,17 +161,22 @@ p = c(0.1, 0.3, 0.5)
 ### add simulation conditions ----------------------------------
 library(rlist)
 library(purrr)
-compl_power_BES<-list.append(compl_power_BES, 
-       r2=0.13,
-       pcor=0.3,
-       betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),
-       hypothesis="V1>V2>V3",
-       model="linear",
-       propSD=c(0.1, 0.3, 0.5),
-       n=c(50,100,150,200,300),
-       iter=1000,
-       studies=40
-       )
+for(i in 1:length(n)){
+    compl_power_BES[[i]]<-list.append(compl_power_BES[[i]],
+                                      r2=0.13,
+                                      pcor=0.3,
+                                      betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),
+                                      populations=list(Hu=c(3,2,1, "+heterogeneity of degree propSD")
+                                                       ),
+                                      hypothesis="V1>V2>V3",
+                                      model="linear",
+                                      propSD=c(0.1, 0.3, 0.5),
+                                      iter=1000,
+                                      studies=40,
+                                      n=n[i]
+                                      )
+}
+
 
 ### add names/labels ------------------------------------
 #add names to the lists for the sample sizes
@@ -206,6 +211,6 @@ for(i in 1:length(n)){
 #check
 compl_power_BES$n50$sampled_betas
 
-#save(compl_power_BES, file = "Outputs/compl_power_BES_r.RData")
+save(compl_power_BES, file = "Outputs/compl_power_BES_r.RData")
 
 
