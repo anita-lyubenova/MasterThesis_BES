@@ -188,7 +188,7 @@ names(compl_power_BES)[1:length(n)]<-paste0("n",n)
 compl_power_BES[1:5]<-lapply(compl_power_BES[1:5], function(x){
         dimnames(x$BF)<-list(1:40,
                              c("BFiu", "BFcu", "BFuu"),
-                             paste0("p",p),
+                             paste0("HETEROG_H1p",substr(p,2,3)),
                              1:1000
                             )
         return(x)
@@ -202,7 +202,7 @@ for(i in 1:length(n)){
   for(j in 2:4){ # arrays with sampled_betas, est_betas, and est_SE
     dimnames(compl_power_BES[[i]][[j]])<-list(1:40,
                                               c("b1", "b2", "b3"),
-                                              paste0("p",p),
+                                              paste0("HETEROG_H1p",substr(p,2,3)),
                                               1:1000
     )
   }
