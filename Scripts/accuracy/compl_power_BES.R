@@ -240,24 +240,55 @@ BFdat<-Map(abind_3,c1,c2)
 #check
 BFdat$n50 %>% dimnames()
 
-for(i in 1:length(n)){
-  BFdat[[i]]<-list.append(BFdat[[i]],
-                          r2=0.13,
-                          pcor=0.3,
-                          betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),
-                          populations=list(
-                            H1=c(3,2,1), #population H1 = TRUE
-                            Hc=c(1,2,3),
-                            Hu=paste(paste("50%", c("H1", "Hc")), collapse = " & "),
-                            Hu=c(3,2,1, "+heterogeneity of degree propSD")
-                          ),
-                          hypothesis="V1>V2>V3",
-                          model="linear",
-                          propSD=c(0.1, 0.3, 0.5),
-                          iter=1000,
-                          studies=40,
-                          n=n[i]
-  )
-}
 
-save(BFdat, file = "Outputs/accuracy/simulated files/datBF (merged files).RData")
+# for(i in 1:length(n)){
+#   BFdat[[i]]<-list.append(BFdat[[i]],
+#                           r2=0.13,
+#                           pcor=0.3,
+#                           betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),
+#                           populations=list(
+#                             H1=c(3,2,1), #population H1 = TRUE
+#                             Hc=c(1,2,3),
+#                             Hu=paste(paste("50%", c("H1", "Hc")), collapse = " & "),
+#                             Hu=c(3,2,1, "+heterogeneity of degree propSD")
+#                           ),
+#                           hypothesis="V1>V2>V3",
+#                           model="linear",
+#                           propSD=c(0.1, 0.3, 0.5),
+#                           iter=1000,
+#                           studies=40,
+#                           n=n[i]
+#   )
+# }
+
+
+# Unlist n ------------------------------
+#move the variation of n from list elements to the 5th dimension of the arrays
+BFdat_unlist<-BFdat[[1]]
+BFdat_unlist %>% dimnames()
+for(i in 2:length(n)){
+  BFdat_unlist<-abind(BFdat_unlist, BFdat[[i]], along = 5)
+}
+BFdat_unlist %>% dim()
+dimnames(BFdat_unlist)[[5]]<-names(c1)
+dimnames(BFdat_unlist)
+
+dat<-list(BF=BFdat_unlist,
+          r2=0.13,
+          pcor=0.3,
+          populations=list( # ratio beta
+            TRUE_H0=c("b1:b2:b3 = 1:1:1"),
+            TRUE_H1=c("b1:b2:b3 = 3:2:1"), #population H1 = TRUE
+            TRUE_Hc=c("b1:b2:b3 = 1:2:3"),
+            TRUE_Hu=paste(paste("50%", c("H1", "Hc")), collapse = " & "),
+            HETEROG_H1p.1=c("b1:b2:b3 = 3:2:1 + +heterogeneity: SD_betas=0.1*betas"),
+            HETEROG_H1p.3=c("b1:b2:b3 = 3:2:1 + heterogeneity: SD_betas=0.3*betas"),
+            HETEROG_H1p.5=c("b1:b2:b3 = 3:2:1 + heterogeneity: SD_betas=0.5*betas")
+          ),
+          hypothesis="V1>V2>V3",
+          model="linear",
+          iter=1000,
+          studies=40
+          )
+
+save(dat, file = "Outputs/accuracy/dat (merged simulated files).RData")
