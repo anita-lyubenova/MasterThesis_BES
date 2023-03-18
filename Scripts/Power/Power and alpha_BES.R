@@ -104,7 +104,7 @@ library(plotly)
 #function to aggregate the PMPs for a set of specified hypotheses
 #reteruns the aggregate PMPs and sim conditions in a list
 aggregatePMP2<-function(x, #a list created with sim_BES()
-                       hyp=c("H1", "Hc", "Hu"), #which hypothesis are to be tested interest, note only the index
+                       hyp=c("H1", "Hc", "Hu"), #which hypothesis are to be tested interest
                       # iter=1000,
                        studies=NULL #number of studies to aggregate over
                        
