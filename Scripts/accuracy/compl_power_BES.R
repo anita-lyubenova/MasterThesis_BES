@@ -194,7 +194,7 @@ compl_power_BES$n50$sampled_betas
 
 #load files
 load("Outputs/accuracy/simulated files/power_BES.RData")
-load("Outputs/accuracy/simulated files/compl_power_BES_processed.RData")
+
 ## Files structure ------------------------------------------------
 #the data files power_BES and compl_power_BES have a similar structure
 
@@ -260,4 +260,4 @@ for(i in 1:length(n)){
   )
 }
 
-save(BFdat, file = "Outputs/accuracy/simulated files/merged_datBF.RData")
+save(BFdat, file = "Outputs/accuracy/simulated files/datBF (merged files).RData")
