@@ -82,7 +82,7 @@ iterations <- 5*1000*3*40 # total number of conditions - not sure if this actual
 pb <- txtProgressBar(max = iterations, style = 3)
 progress <- function(n) setTxtProgressBar(pb, n)
 opts <- list(progress = progress)
-#end  add progress bar
+#end progress bar options
 
 system.time(
   
