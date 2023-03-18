@@ -194,7 +194,7 @@ compl_power_BES$n50$sampled_betas
 
 #load files
 load("Outputs/accuracy/simulated files/power_BES.RData")
-
+load("Outputs/accuracy/simulated files/compl_power_BES_processed.RData")
 ## Files structure ------------------------------------------------
 #the data files power_BES and compl_power_BES have a similar structure
 
@@ -240,38 +240,16 @@ BFdat<-Map(abind_3,c1,c2)
 #check
 BFdat$n50 %>% dimnames()
 
-
-# for(i in 1:length(n)){
-#   BFdat[[i]]<-list.append(BFdat[[i]],
-#                           r2=0.13,
-#                           pcor=0.3,
-#                           betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),
-#                           populations=list(
-#                             H1=c(3,2,1), #population H1 = TRUE
-#                             Hc=c(1,2,3),
-#                             Hu=paste(paste("50%", c("H1", "Hc")), collapse = " & "),
-#                             Hu=c(3,2,1, "+heterogeneity of degree propSD")
-#                           ),
-#                           hypothesis="V1>V2>V3",
-#                           model="linear",
-#                           propSD=c(0.1, 0.3, 0.5),
-#                           iter=1000,
-#                           studies=40,
-#                           n=n[i]
-#   )
-# }
-
-
 # Unlist n ------------------------------
 #move the variation of n from list elements to the 5th dimension of the arrays
 BFdat_unlist<-BFdat[[1]]
-BFdat_unlist %>% dimnames()
-for(i in 2:length(n)){
+BFdat_unlist %>% dim
+for(i in 2:5){
   BFdat_unlist<-abind(BFdat_unlist, BFdat[[i]], along = 5)
 }
 BFdat_unlist %>% dim()
 dimnames(BFdat_unlist)[[5]]<-names(c1)
-dimnames(BFdat_unlist)
+dimnames(BFdat_unlist)[[2]]<-c("BF1u", "BFcu", "BFuu")
 
 dat<-list(BF=BFdat_unlist,
           r2=0.13,
