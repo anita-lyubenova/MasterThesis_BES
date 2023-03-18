@@ -122,7 +122,7 @@ system.time(
 close(pb)
 stopCluster(cl) 
 
-#save(compl_power_BES, file = "Outputs/compl_power_BES.RData")
+#save(compl_power_BES, file = "Outputs/accuracy/simulated files/compl_power_BES.RData")
 
 length(compl_power_BES)
 
@@ -130,7 +130,7 @@ compl_power_BES[[1]]$BF
 
 
 # Post - processing --------------------------------------------------------
-load("Outputs/compl_power_BES.RData")
+load("Outputs/accuracy/simulated files/compl_power_BES.RData")
 n = c(50,100,150,200,300)
 p = c(0.1, 0.3, 0.5)
 
@@ -187,4 +187,77 @@ for(i in 1:length(n)){
 #check
 compl_power_BES$n50$sampled_betas
 
-save(compl_power_BES, file = "Outputs/compl_power_BES_r.RData")
+#save(compl_power_BES, file = "Outputs/accuracy/simulated files/compl_power_BES_processed.RData")
+
+
+# Merging ------------------------------------------------------
+
+#load files
+load("Outputs/accuracy/simulated files/power_BES.RData")
+load("Outputs/accuracy/simulated files/compl_power_BES_processed.RData")
+## Files structure ------------------------------------------------
+#the data files power_BES and compl_power_BES have a similar structure
+
+# *elemens present only in compl_power_BES
+names(power_BES[[1]])
+names(compl_power_BES[[1]])
+#NOT code - just to provide the files stucture
+# power_BES[[n]]list(BF [t, BF, population(H0,H1, Hc, Hu:H1+Hc), iter],
+#                    ###unique to compl_ ###
+#                    sampled_betas* [t, beta, heterogeneity (propSD), iter],
+#                    est_betas*,
+#                    est_SE*,
+#                    betas*,
+#                    propSD=c(0.1, 0.3, 0.5),
+#                    
+#                    ####common###
+#                    r2=0.13,
+#                    pcor=0.3,
+#                    n,
+#                    hypothesis="V1>V2>V3",
+#                    populations
+#                    model="linear",
+#                    iter=1000,
+#                    studies=40
+#                    )
+
+## Combine files ----------------------------------------------------------
+#combine power_BES and compl_power_bes
+
+#subset only n that is present in compl_
+c1<-power_BES[1:5]
+#remove BF0u
+c1<-lapply(c1, function(x) x$BF[,-1,,])
+c2<-lapply(compl_power_BES, function(x) x$BF)
+names(c1)<-names(c2)
+
+
+abind_3<-function(...){
+  abind(..., along = 3)
+}
+#merge the BF arrays of the old and new file along the 3rd dimension
+BFdat<-Map(abind_3,c1,c2)
+#check
+BFdat$n50 %>% dimnames()
+
+for(i in 1:length(n)){
+  BFdat[[i]]<-list.append(BFdat[[i]],
+                          r2=0.13,
+                          pcor=0.3,
+                          betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),
+                          populations=list(
+                            H1=c(3,2,1), #population H1 = TRUE
+                            Hc=c(1,2,3),
+                            Hu=paste(paste("50%", c("H1", "Hc")), collapse = " & "),
+                            Hu=c(3,2,1, "+heterogeneity of degree propSD")
+                          ),
+                          hypothesis="V1>V2>V3",
+                          model="linear",
+                          propSD=c(0.1, 0.3, 0.5),
+                          iter=1000,
+                          studies=40,
+                          n=n[i]
+  )
+}
+
+save(BFdat, file = "Outputs/accuracy/simulated files/merged_datBF.RData")

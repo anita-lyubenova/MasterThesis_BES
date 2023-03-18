@@ -128,11 +128,11 @@ for (s in 1:length(n)){
 #list[[n]]($BF[t, BF, heterog, i],
 #          $simulation conditions)
 
-#save(power_BES, file = "Outputs/power_BES.RData")
+#save(power_BES, file = "Outputs/accuracy/simulated files/power_BES.RData")
 
 #Number of conditions:n=8 x ratio = 4, x studies=40 x iter=1000 = 1 280 000 BFs
 8*4*40*1000
 # this simulation broke the fan of my laptop...
 
 #Load power_BES  -----------------------
-load("Outputs/power_BES.RData")
+load("Outputs/accuracy/simulated files/power_BES.RData")
