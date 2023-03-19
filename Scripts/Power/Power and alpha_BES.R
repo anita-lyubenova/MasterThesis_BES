@@ -424,7 +424,7 @@ power_plot(x.n=power_BES,
            hyp=c(H1= "H1", H0="Hu"),
            n=c(50,100,150,200,300,500,800),
            t=1:10)$plot_acc
-
+# Hc ----------------
 # I don't understand...
 power_plot(x.n=power_BES,
            hyp=c(Hc= "Hc", H0="Hu"),

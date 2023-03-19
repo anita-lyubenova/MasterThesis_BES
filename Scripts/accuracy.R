@@ -4,12 +4,13 @@
 # after merging them into BFdat
 
 library(tidyverse)
+library(abind)
 load("Outputs/accuracy/dat (merged simulated files).RData")
 
 #a function to transform BFs to aggregated PMPs
 aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
                        hyp=c("H1", "Hu"),
-                       studies #number of studies to aggregate over, max 40
+                       studies=40 #number of studies to aggregate over, max 40
 ){
   hyp_index<-substr(hyp,2,2)
   BF<-x$BF
@@ -30,70 +31,68 @@ aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
   PMP_t<-aperm(PMP_t, perm = c(1,5,2,3,4))
   dimnames(PMP_t)[[2]]<-paste0("PMP", c(hyp_index))
   PMP_t<-list(PMP=PMP_t,
-              r2=0.13,
-              pcor=0.3,
-              populations=list( # ratio beta
-                TRUE_H0=c("b1:b2:b3 = 1:1:1"),
-                TRUE_H1=c("b1:b2:b3 = 3:2:1"), #population H1 = TRUE
-                TRUE_Hc=c("b1:b2:b3 = 1:2:3"),
-                TRUE_Hu=paste(paste("50%", c("H1", "Hc")), collapse = " & "),
-                HETEROG_H1p.1=c("b1:b2:b3 = 3:2:1 + +heterogeneity: SD_betas=0.1*betas"),
-                HETEROG_H1p.3=c("b1:b2:b3 = 3:2:1 + heterogeneity: SD_betas=0.3*betas"),
-                HETEROG_H1p.5=c("b1:b2:b3 = 3:2:1 + heterogeneity: SD_betas=0.5*betas")
-              ),
-              hypothesis="V1>V2>V3",
-              model="linear",
-              iter=1000,
-              studies=40
+              r2=x$r2,
+              pcor=x$pcor,
+              populations=x$populations,
+              hypothesis=x$hypothesis,
+              model=x$model,
+              iter=x$iter,
+              studies=studies,
+              hypothesis_test = paste(hyp, collapse = " vs. ")
               )
   
   return(PMP_t)
 }
 a<-aggregatePMP(dat,
-                hyp=c("H1", "Hu"),
+                hyp=c("H1","Hc" ,"Hu"),
                 studies = 10)
 
-a$PMP %>% dimnames()
 
-listPMP<-a
-populations<-c(H1="TRUE_H1", Hu="TRUE_Hc", Hu="TRUE_Hu")
+
 #a function to compute confusion matrix from aggregated PMPs
 accuracyPMP<-function(listPMP, #list created with aggregatePMP()
-                     populations, # a named character vector; elements are subset of dimnames(PMP)[[3]]: "TRUE_H0", "TRUE_H1", "TRUE_Hc", "TRUE_Hu", "HETEROG_H1p.1", "HETEROG_H1p.3", "HETEROG_H1p.5", names are the hypotheses for which the populations are true
-                     studies #number of studies for which to evaluate the confusion matrix, 
+                     hyp_to_pop # a named character vector; elements are subset of dimnames(PMP)[[3]]: "TRUE_H0", "TRUE_H1", "TRUE_Hc", "TRUE_Hu", "HETEROG_H1p.1", "HETEROG_H1p.3", "HETEROG_H1p.5", names are the hypotheses for which the populations are true
+                    
 ){
   #subset the populations of interest
-  PMP<-listPMP$PMP[,,populations,,]
+  PMP<-listPMP$PMP[,,hyp_to_pop,,]
   dim(PMP)
-  hyp_index<-substr(names(populations),2,2)
-  h<-1
-  for(h in length(hyp_index)){
-    PMPh<-paste0("PMP", hyp_index[h])
-    notPMPh<-paste0("PMP", hyp_index[-h])
-    a<-PMP[,PMPh,h,,]
-    b<-PMP[,notPMPh,h,,]
-    
-    dim(a)
-    dim(b)
-    
+  hyp_index<-substr(names(hyp_to_pop),2,2)
+  
+  tr<-data.frame(hyp=names(hyp_to_pop),
+                 PMP=paste0("PMP", hyp_index),
+                 pop=hyp_to_pop,
+                 correct=NA
+                 )
+
+  for(h in 1:nrow(tr)){
+
+    correct_logical<-PMP[,tr$PMP[h],tr$pop[h],,]>PMP[,!dimnames(PMP)[[2]] %in% tr$PMP[h],tr$pop[h],,]
+    correct_count<-rowSums(aperm(correct_logical, c(1,3,2)), dims = 2)
+
+    correct_name<-paste0("c", tr$pop[h])
+    assign(correct_name, correct_count)
   }
   
+  paste(paste0("c", tr$pop), collapse = "+")
+  acc<-eval(parse(text = paste(paste0("c", tr$pop), collapse = "+")))/(nrow(tr)*listPMP$iter)
+  list(acc=acc,
+       r2=listPMP$r2,
+       pcor=listPMP$pcor,
+       hypothesis=listPMP$hypothesis,
+       model=listPMP$model,
+       iter=listPMP$iter,
+       studies=listPMP$studies,
+       populations=listPMP$populations[hyp_to_pop],
+       hypothesis_test=listPMP$hypothesis_test,
+       hyp_to_pop=hyp_to_pop
+       )
+
 }
 
-PMP[,,"TRUE_H1",,] %>% dim
-
-correctH1<-PMP[,"PMP1","TRUE_H1",,]>PMP[,"PMPu","TRUE_H1",,]
-cH1<-rowSums(aperm(correctH1, c(1,3,2)), dims = 2 )
-cH1/1000
-
-
-correctHu<-PMP[,"PMP1",-1,,]<PMP[,"PMPu",-1,,] #"-1" because 
-dim(correctHu)
-cHu<-rowSums(aperm(correctHu, c(1,4,2,3)), dims = 2)
-cHu/2000
-
-
-A<-(cH1+cHu)/3000
+accuracyPMP(listPMP = a,
+            hyp_to_pop =c(H1="TRUE_H1", Hc="TRUE_Hc", Hu="TRUE_Hu")
+            )
 
 library(corrplot)
 corrplot(A, method = "shade")
