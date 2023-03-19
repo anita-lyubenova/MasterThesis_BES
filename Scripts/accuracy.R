@@ -44,9 +44,8 @@ aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
   return(PMP_t)
 }
 a<-aggregatePMP(dat,
-                hyp=c("H1","Hc" ,"Hu"),
+                hyp=c("H1","Hc","Hu"),
                 studies = 10)
-
 
 
 #a function to compute confusion matrix from aggregated PMPs
@@ -61,22 +60,28 @@ accuracyPMP<-function(listPMP, #list created with aggregatePMP()
   
   tr<-data.frame(hyp=names(hyp_to_pop),
                  PMP=paste0("PMP", hyp_index),
-                 pop=hyp_to_pop,
-                 correct=NA
+                 pop=hyp_to_pop
                  )
+  
+  correct_name<-paste0("c", tr$pop)
 
   for(h in 1:nrow(tr)){
+    
+    comp<- paste(paste0("PMP[,tr$PMP[h],tr$pop[h],,,drop=FALSE] > ",
+                        paste0("PMP[,",which(!dimnames(PMP)[[2]] %in% tr$PMP[h]), ",tr$pop[h],,,drop=FALSE]")
+                        ),collapse = " & ")
+    
+    correct_logical<-eval(parse(text = comp))
 
-    correct_logical<-PMP[,tr$PMP[h],tr$pop[h],,]>PMP[,!dimnames(PMP)[[2]] %in% tr$PMP[h],tr$pop[h],,]
-    correct_count<-rowSums(aperm(correct_logical, c(1,3,2)), dims = 2)
+    correct_count<-rowSums(aperm(correct_logical, c(1,2,3,5,4)), dims = 4)[,,,,drop=TRUE]
 
-    correct_name<-paste0("c", tr$pop[h])
-    assign(correct_name, correct_count)
+    assign(correct_name[h], correct_count)
   }
   
-  paste(paste0("c", tr$pop), collapse = "+")
-  acc<-eval(parse(text = paste(paste0("c", tr$pop), collapse = "+")))/(nrow(tr)*listPMP$iter)
-  list(acc=acc,
+  
+  acc<-eval(parse(text = paste(correct_name, collapse = "+")))/(nrow(tr)*listPMP$iter)
+  
+  list(acc=round(acc, digits = 3),
        r2=listPMP$r2,
        pcor=listPMP$pcor,
        hypothesis=listPMP$hypothesis,
@@ -90,13 +95,34 @@ accuracyPMP<-function(listPMP, #list created with aggregatePMP()
 
 }
 
-accuracyPMP(listPMP = a,
-            hyp_to_pop =c(H1="TRUE_H1", Hc="TRUE_Hc", Hu="TRUE_Hu")
+# H1 vs Hu
+a<-aggregatePMP(dat,
+                hyp=c("H1","Hu"),
+                studies = 10)
+
+a.acc<-accuracyPMP(listPMP = a,
+            hyp_to_pop =c(H1="TRUE_H1", Hu="TRUE_Hc", Hu="TRUE_Hu")
             )
 
+# VS.
+
+#H1 vs. Hc vs. Hu
+b<-aggregatePMP(dat,
+                hyp=c("H1","Hc","Hu"),
+                studies = 10)
+
+b.acc<-accuracyPMP(listPMP = b,
+            hyp_to_pop =c(H1="TRUE_H1", Hc="TRUE_Hc", Hu="TRUE_Hu")
+)
+a.acc$acc
+b.acc$acc
+
+
+
+
+#####################################
 library(corrplot)
 corrplot(A, method = "shade")
-
 
 
 library(ggcorrplot)
