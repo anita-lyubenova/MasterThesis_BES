@@ -117,18 +117,69 @@ b.acc<-accuracyPMP(listPMP = b,
 a.acc$acc
 b.acc$acc
 
-
-
-
-#####################################
-library(corrplot)
-corrplot(A, method = "shade")
-
-
 library(ggcorrplot)
-Ar<-round(A, digits = 2)
-p<-ggcorrplot(Ar,
-           outline.col = "white",
-           lab = TRUE)
+library(patchwork)
 
-p + scale_fill_gradient2(limit = c(0,1), low = "blue", high =  "red", mid = "white", midpoint = 0.5)
+a.plot<-
+  ggcorrplot(a.acc$acc,
+             outline.col = "white",
+             lab = TRUE)+
+  scale_fill_gradient2(limit = c(0,1),
+                       low = "blue", high =  "red",
+                       mid = "white",
+                       midpoint = 0.87)+
+  scale_x_continuous(breaks = 1:a.acc$studies)+
+  labs(title = a.acc$hypothesis_test,
+       subtitle =paste("Populations:", paste(a.acc$hyp_to_pop, collapse = ", "), collapse = " ")
+       )
+a.plot
+b.plot<-ggcorrplot(b.acc$acc,
+                   outline.col = "white",
+                   lab = TRUE)+
+  scale_fill_gradient2(limit = c(0,1),
+                       low = "blue", high =  "red",
+                       mid = "white",
+                       midpoint = 0.87)+
+  scale_x_continuous(breaks = 1:b.acc$studies)+
+  labs(title = b.acc$hypothesis_test,
+       subtitle =paste("Populations:", paste(b.acc$hyp_to_pop, collapse = ", "), collapse = " ")
+       )
+b.plot
+
+a.plot/b.plot
+
+
+acc_corrplot<-function(a # list created with accuracyPMP()
+                       ){
+  ggcorrplot(a$acc,
+             outline.col = "white",
+             lab = TRUE)+
+    scale_fill_gradient2(limit = c(0,1),
+                         low = "blue", high =  "red",
+                         mid = "white",
+                         midpoint = 0.87)+
+    scale_x_continuous(breaks = 1:a$studies)+
+    labs(title = a$hypothesis_test,
+         subtitle =paste("Populations:", paste(a$hyp_to_pop, collapse = ", "), collapse = " ")
+    )
+}
+
+#
+aggregatePMP(x=dat,
+             h=c("H1" ,"Hu"),
+             studies = 40) %>% 
+  accuracyPMP(hyp_to_pop = c(H1="HETEROG_H1p.1", Hu="TRUE_H0")) %>% 
+  acc_corrplot()/
+  aggregatePMP(x=dat,
+               h=c("H1" ,"Hu"),
+               studies = 40) %>% 
+  accuracyPMP(hyp_to_pop = c(H1="HETEROG_H1p.3", Hu="TRUE_H0")) %>% 
+  acc_corrplot()
+
+
+
+aggregatePMP(x=dat,
+             h=c("H1","Hc"),
+             studies = 40) %>% 
+  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hc="HETEROG_H1p.5")) %>% 
+  acc_corrplot()
