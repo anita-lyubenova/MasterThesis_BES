@@ -125,14 +125,66 @@ stopCluster(cl)
 
 save(compl_power_BES2, file = "Outputs/accuracy/simulated files/compl_power_BES2.RData")
 
+# Post - processing --------------------------------------------------------
+load("Outputs/accuracy/simulated files/compl_power_BES2.RData")
+n = c(50,100,150,200,300)
+p = c(0.75, 1.0, 1.25, 1.5)
 
-#add progress bar
-library(doSNOW)
-cl <- makeCluster(7)
-registerDoSNOW(cl)
-iterations <- 5*1000*2*40 # total number of conditions - not sure if this actually matters
-pb <- txtProgressBar(max = iterations, style = 3)
-progress <- function(n) setTxtProgressBar(pb, n)
-opts <- list(progress = progress)
-#end progress bar options
+### add simulation conditions ----------------------------------
+library(rlist)
+#library(purrr)
+for(i in 1:length(n)){
+  compl_power_BES2[[i]]<-list.append(compl_power_BES2[[i]],
+                                    r2=0.13,
+                                    pcor=0.3,
+                                    populations=list(
+                                      HETEROG_H1p.75=c("b1:b2:b3 = 3:2:1 + +heterogeneity: SD_betas=0.75*betas"),
+                                      HETEROG_H1p1=c("b1:b2:b3 = 3:2:1 + heterogeneity: SD_betas=1*betas"),
+                                      HETEROG_H1p1.25=c("b1:b2:b3 = 3:2:1 + heterogeneity: SD_betas=1.25*betas"),
+                                      HETEROG_H1p1.5=c("b1:b2:b3 = 3:2:1 + heterogeneity: SD_betas=1.5*betas")
+                                    ),
+                                    hypothesis="V1>V2>V3",
+                                    model="linear",
+                                    propSD=p,
+                                    iter=1000,
+                                    studies=40,
+                                    n=n[i]
+  )
+}
+
+
+### add names/labels ------------------------------------
+#add names to the lists for the sample sizes
+names(compl_power_BES2)[1:length(n)]<-paste0("n",n)
+
+#add dimnames to the arrays
+
+## change the dimnames of the array with BFs
+compl_power_BES2[1:5]<-lapply(compl_power_BES2[1:5], function(x){
+  dimnames(x$BF)<-list(1:40,
+                       c("BFiu", "BFcu", "BFuu"),
+                       c("HETEROG_H1p.75",paste0("HETEROG_H1p",c(1,1.25,1.5))),
+                       1:1000
+  )
+  return(x)
+}
+)
+#check
+compl_power_BES2$n100$BF
+
+#change the dimnames of the arrays sampled_betas, est_betas, and est_SE
+for(i in 1:length(n)){
+  for(j in 2:4){ # arrays with sampled_betas, est_betas, and est_SE
+    dimnames(compl_power_BES2[[i]][[j]])<-list(1:40,
+                                              c("b1", "b2", "b3"),
+                                              c("HETEROG_H1p.75",paste0("HETEROG_H1p",c(1,1.25,1.5))),
+                                              1:1000
+    )
+  }
+}
+
+#check
+compl_power_BES2$n50$sampled_betas
+
+save(compl_power_BES2, file = "Outputs/accuracy/simulated files/compl_power_BES2_processed.RData")
 
