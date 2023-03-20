@@ -51,7 +51,7 @@ map_rbind<-function(x,y){
 library(doSNOW)
 cl <- makeCluster(7)
 registerDoSNOW(cl)
-iterations <- 5*1000*4*40 # total number of conditions - not sure if this actually matters
+iterations <- 5*1000*2*40 # total number of conditions - not sure if this actually matters
 pb <- txtProgressBar(max = iterations, style = 3)
 progress <- function(n) setTxtProgressBar(pb, n)
 opts <- list(progress = progress)
@@ -81,11 +81,11 @@ system.time(
     ) %:% #{
     #p-loop: heterogeneity
     foreach(b = list(c(9,3,1),
-                     c(2, 1.5, 1),
-                     c(1, 1.5, 2),
-                     c(1, 3, 9)
-                     ), #heterogeneity levels from low to high
-            .combine = map_abind_3 #bind along the 3rd dimension
+                     c(2, 1.5, 1)#,
+                     # c(1, 1.5, 2),
+                     # c(1, 3, 9)
+    ), #heterogeneity levels from low to high
+    .combine = map_abind_3 #bind along the 3rd dimension
     ) %:% #{
     #t-loop: studies
     foreach(t=1:40,
@@ -125,6 +125,6 @@ system.time(
 close(pb)
 stopCluster(cl) 
 
-length(compl_power_BES3)
-compl_power_BES3[[1]]$BF %>% dim
-save(compl_power_BES, file = "Outputs/accuracy/simulated files/compl_power_BES3.RData")
+save(compl_power_BES3, file = "Outputs/accuracy/simulated files/compl_power_BES3.RData")
+
+str(compl_power_BES3)
