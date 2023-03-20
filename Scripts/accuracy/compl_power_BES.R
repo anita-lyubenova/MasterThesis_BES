@@ -1,4 +1,6 @@
 #the script creates the file compl_power_BES and merges it with with power_BES
+# it adds population HETEROG_H1p.1-3-5, in which ratio_beta=3:2:1(H1) but the betas are not
+# fixed but sampled from Mvnorm with means equalt to the betas, and SD = 0.1, 0.3 or 0.5 * betas
 
 library(foreach)
 library(doParallel)
