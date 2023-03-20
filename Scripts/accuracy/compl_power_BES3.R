@@ -127,4 +127,54 @@ stopCluster(cl)
 
 save(compl_power_BES3, file = "Outputs/accuracy/simulated files/compl_power_BES3.RData")
 
-str(compl_power_BES3)
+# Post - processing --------------------------------------------------------
+load("Outputs/accuracy/simulated files/compl_power_BES3.RData")
+n = c(50,100,150,200,300)
+
+
+### add simulation conditions ----------------------------------
+#library(rlist)
+#library(purrr)
+for(i in 1:length(n)){
+  compl_power_BES3[[i]]<-list(BF=compl_power_BES3[[i]]$BF, #keep onlyBF array; remove the arrays sampled_betas est_betas and SE
+                                     r2=0.13,
+                                     pcor=0.3,
+                                     populations=list(
+                                       TRUE_H1large=c("b1:b2:b3 = 9:3:1"),
+                                       TRUE_H1small=c("b1:b2:b3 = 2:1.5:1")
+                                      ),
+                                     hypothesis="V1>V2>V3",
+                                     model="linear",
+                                     propSD=0,
+                                     iter=1000,
+                                     studies=40,
+                                     n=n[i]
+  )
+}
+
+
+### add names/labels ------------------------------------
+#add names to the lists for the sample sizes
+names(compl_power_BES3)[1:length(n)]<-paste0("n",n)
+
+#add dimnames to the arrays
+compl_power_BES3$n50$BF %>% dim
+compl_power_BES3[[1]]$BF %>% dimnames
+
+## change the dimnames of the array with BFs
+compl_power_BES3[1:length(n)]<-lapply(compl_power_BES3[1:5], function(x){
+  dimnames(x$BF)<-list(1:40,
+                       c("BFiu", "BFcu", "BFuu"),
+                       c("TRUE_H1large","TRUE_H1small"),
+                       1:1000
+  )
+  return(x)
+}
+)
+#check
+compl_power_BES3$n100$BF
+
+
+
+save(compl_power_BES3, file = "Outputs/accuracy/simulated files/compl_power_BES3_processed.RData")
+
