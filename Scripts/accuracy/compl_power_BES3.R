@@ -51,7 +51,7 @@ map_rbind<-function(x,y){
 library(doSNOW)
 cl <- makeCluster(7)
 registerDoSNOW(cl)
-iterations <- 5*1000*3*40 # total number of conditions - not sure if this actually matters
+iterations <- 5*1000*4*40 # total number of conditions - not sure if this actually matters
 pb <- txtProgressBar(max = iterations, style = 3)
 progress <- function(n) setTxtProgressBar(pb, n)
 opts <- list(progress = progress)
@@ -60,7 +60,7 @@ opts <- list(progress = progress)
 ## foreach loops ----------------------------
 system.time(
   
-  compl_power_BES <- 
+  compl_power_BES3 <- 
     
     #n-loop: sample size
     foreach(n = c(50,100,150,200,300), #,
@@ -80,7 +80,11 @@ system.time(
                           "mvtnorm", "bain", "foreach", "doParallel")
     ) %:% #{
     #p-loop: heterogeneity
-    foreach(p = c(0.75, 1.0, 1.25, 1.5), #heterogeneity levels from low to high
+    foreach(b = list(c(9,3,1),
+                     c(2, 1.5, 1),
+                     c(1, 1.5, 2),
+                     c(1, 3, 9)
+                     ), #heterogeneity levels from low to high
             .combine = map_abind_3 #bind along the 3rd dimension
     ) %:% #{
     #t-loop: studies
@@ -92,9 +96,9 @@ system.time(
       
       sim<-single_sim(r2=0.13,  # R-squared of the regression model
                       pcor=0.3,  # correlation between the predictors
-                      betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),  # a numeric vector with the beta coefficients;  defines the truth in the population;
+                      betas=coefs(0.13, b, cormat(0.3, 3), "normal"),  # a numeric vector with the beta coefficients;  defines the truth in the population;
                       # Sigma_beta=NULL,  # variance covariance matrix of the (true) regression parameters - can be used to induce heterogeneity
-                      propSD = p,
+                      propSD = 0,
                       hypothesis="V1>V2>V3",  # the hypothesis of interest; must be in the format of bain()
                       n=n,  #sample size 
                       model="linear",  #linear, logistic or probit regression
@@ -121,4 +125,6 @@ system.time(
 close(pb)
 stopCluster(cl) 
 
-#save(compl_power_BES, file = "Outputs/accuracy/simulated files/compl_power_BES.RData")
+length(compl_power_BES3)
+compl_power_BES3[[1]]$BF %>% dim
+save(compl_power_BES, file = "Outputs/accuracy/simulated files/compl_power_BES3.RData")
