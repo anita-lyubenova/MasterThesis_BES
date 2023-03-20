@@ -1,3 +1,5 @@
+# adds population HETEROG_H1p.75-1-1.25-1.5, in which ratio_beta=3:2:1(H1) but the betas are not
+# fixed but sampled from Mvnorm with means equalt to the betas, and SD = 0.1, 0.3 or 0.5 * betas
 
 library(foreach)
 library(doParallel)
@@ -60,7 +62,7 @@ opts <- list(progress = progress)
 ## foreach loops ----------------------------
 system.time(
   
-  compl_power_BES <- 
+  compl_power_BES2 <- 
     
     #n-loop: sample size
     foreach(n = c(50,100,150,200,300), #,
@@ -80,7 +82,7 @@ system.time(
                           "mvtnorm", "bain", "foreach", "doParallel")
     ) %:% #{
     #p-loop: heterogeneity
-    foreach(p = c(0.1, 0.3, 0.5), #heterogeneity levels from low to high
+    foreach(p = c(0.75, 1.0, 1.25, 1.5), #heterogeneity levels from low to high
             .combine = map_abind_3 #bind along the 3rd dimension
     ) %:% #{
     #t-loop: studies
