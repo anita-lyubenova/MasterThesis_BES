@@ -89,4 +89,4 @@ dat<-list(BF=BFdat,
           studies=40
 )
 
-save(dat, file = "Outputs/accuracy/dat (merged simulated files).RData")
+save(dat, file = "Outputs/accuracy/dat_merged.RData")
