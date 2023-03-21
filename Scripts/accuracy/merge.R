@@ -63,7 +63,7 @@ BFdat<-abind(c0,c1,c2,c3, along = 3)
 #check
 BFdat %>% dimnames()
 dimnames(BFdat)[[5]]<-names(compl_power_BES)
-
+dimnames(BFdat)[[2]]<-c("BF1u", "BFcu", "BFuu")
 
 dat<-list(BF=BFdat,
           r2=0.13,

@@ -2,11 +2,11 @@ library(ggcorrplot)
 library(patchwork)
 library(tidyverse)
 library(abind)
-
+x<-dat
 #a function to transform BFs to aggregated PMPs
 aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
                        hyp=c("H1", "Hu"),
-                       studies=40 #number of studies to aggregate over, max 40
+                       studies=10 #number of studies to aggregate over, max 40
 ){
   hyp_index<-substr(hyp,2,2)
   BF<-x$BF
@@ -39,9 +39,7 @@ aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
   
   return(PMP_t)
 }
-a<-aggregatePMP(dat,
-                hyp=c("H1","Hc","Hu"),
-                studies = 10)
+
 
 
 #a function to compute confusion matrix from aggregated PMPs
