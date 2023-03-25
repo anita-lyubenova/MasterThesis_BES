@@ -104,3 +104,23 @@ acc_corrplot<-function(a # list created with accuracyPMP()
          subtitle =paste("Populations:", paste(a$hyp_to_pop, collapse = ", "), collapse = " ")
     )
 }
+
+acc_lineplot<-function(x){
+  accdat<-x$acc %>%
+    as.data.frame() %>% 
+    rownames_to_column("t") %>% 
+    pivot_longer(cols=starts_with("n"),
+                 names_to = "n",
+                 values_to = "acc"
+    )
+  accdat %>% 
+    ggplot(aes(x=factor(t, levels=unique(t)), y=acc, group=n, color=n)) +
+    geom_point()+
+    geom_line()+
+    theme_minimal()+
+    labs(title = x$hypothesis_test,
+         subtitle = paste0("Populations:",paste(x$hyp_to_pop, collapse = ",")),
+         x="studies")+
+    geom_hline(yintercept = 0.87, color="red", linetype="dashed")
+  
+}
