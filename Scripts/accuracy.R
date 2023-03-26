@@ -77,127 +77,105 @@ x<-aggregatePMP(x=dat,
              studies = 20) %>% 
   accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p1.25"))
 
+#Diff---------------------------------------------------
+# Performance measure: Difference in accuracy
 
-
-
-acc_lineplot<-function(x){
-  accdat<-x$acc %>%
-    as.data.frame() %>% 
-    rownames_to_column("t") %>% 
-    pivot_longer(cols=starts_with("n"),
-                 names_to = "n",
-                 values_to = "acc"
-                 )
-  accdat %>% 
-    ggplot(aes(x=factor(t, levels=unique(t)), y=acc, group=n, color=n)) +
-    geom_point()+
-    geom_line()+
-    theme_minimal()+
-    labs(title = x$hypothesis_test,
-         subtitle = paste0("Populations:",paste(x$hyp_to_pop, collapse = ",")),
-         x="studies")+
-    geom_hline(yintercept = 0.87, color="red", linetype="dashed")
-  
-}
-##############################
-
-H1u_H1_Hu<- aggregatePMP(x=dat,
-                         h=c("H1","Hu"),
-                         studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="TRUE_Hu")) %>% 
-  acc_lineplot()
-
-H1cu_H1_Hu<-aggregatePMP(x=dat,
-                           h=c("H1" ,"Hc","Hu"),
-                           studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="TRUE_Hu")) %>% 
-  acc_lineplot()
-ggsave("Outputs/Thesis Draft/Fig2.png", plot = H1u_H1_Hu, width = 4, height = 2.5, units = "in", dpi = 300, bg="white")
-ggsave("Outputs/Thesis Draft/Fig3.png", plot = H1cu_H1_Hu, width = 4, height = 2.5, units = "in", dpi = 300, bg="white")
-
-
-###############################
-H1u_H1_HETEROGp1.5<- aggregatePMP(x=dat,
-                                   h=c("H1","Hu"),
-                                   studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p1.5")) %>% 
-  acc_lineplot()
-
-H1cu_H1_HETEROGp1.5<-aggregatePMP(x=dat,
-                                   h=c("H1" ,"Hc","Hu"),
-                                   studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p1.5")) %>% 
-  acc_lineplot()
-ggsave("Outputs/Thesis Draft/Fig4.png", plot = H1u_H1_HETEROGp1.5, width = 4, height = 2.5, units = "in", dpi = 300, bg="white")
-ggsave("Outputs/Thesis Draft/Fig5.png", plot = H1cu_H1_HETEROGp1.5, width = 4, height = 2.5, units = "in", dpi = 300, bg="white")
-
-########################################
-
-###############################
-H1u_H1_HETEROGp1.25<- aggregatePMP(x=dat,
-             h=c("H1","Hu"),
-             studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p1.25")) %>% 
-  acc_lineplot()
-
-H1cu_H1_HETEROGp1.25<-aggregatePMP(x=dat,
-             h=c("H1" ,"Hc","Hu"),
-             studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p1.25")) %>% 
-  acc_lineplot()
-ggsave("Outputs/Thesis Draft/Fig6.png", plot = H1u_H1_HETEROGp1.25, width = 4, height = 2.5, units = "in", dpi = 300, bg="white")
-ggsave("Outputs/Thesis Draft/Fig7.png", plot = H1cu_H1_HETEROGp1.25, width = 4, height = 2.5, units = "in", dpi = 300, bg="white")
-
-########################################
-###############################
-H1u_H1_HETEROGp1<- aggregatePMP(x=dat,
-                                   h=c("H1","Hu"),
-                                   studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p1")) %>% 
-  acc_lineplot()
-
-H1cu_H1_HETEROGp1<-aggregatePMP(x=dat,
-                                   h=c("H1" ,"Hc","Hu"),
-                                   studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p1")) %>% 
-  acc_lineplot()
-ggsave("Outputs/Thesis Draft/Fig8.png", plot = H1u_H1_HETEROGp1, width = 4, height = 2.5, units = "in", dpi = 300, bg="white")
-ggsave("Outputs/Thesis Draft/Fig9.png", plot = H1cu_H1_HETEROGp1, width = 4, height = 2.5, units = "in", dpi = 300, bg="white")
-
-########################################
-
-###############################
-H1u_H1_HETEROGp.75<- aggregatePMP(x=dat,
-                                h=c("H1","Hu"),
-                                studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p.75")) %>% 
-  acc_lineplot()
-
-H1cu_H1_HETEROGp.75<-aggregatePMP(x=dat,
-                                h=c("H1" ,"Hc","Hu"),
-                                studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p.75")) %>% 
-  acc_lineplot()
-ggsave("Outputs/Thesis Draft/Fig10.png", plot = H1u_H1_HETEROGp.75, width = 4, height = 2.5, units = "in", dpi = 300, bg="white")
-ggsave("Outputs/Thesis Draft/Fig11.png", plot = H1cu_H1_HETEROGp.75, width = 4, height = 2.5, units = "in", dpi = 300, bg="white")
-
-########################################
-
-###############################
-H1u_H1_HETEROGp.5<- aggregatePMP(x=dat,
+#regular lineplots
+H1u_H1_HETEROGp1.5_corrplot<- aggregatePMP(x=dat,
                                   h=c("H1","Hu"),
                                   studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p.5")) %>% 
-  acc_lineplot()
-
-H1cu_H1_HETEROGp.5<-aggregatePMP(x=dat,
+  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1",Hu="TRUE_Hc", Hu="HETEROG_H1p1.5")) %>% 
+  acc_corrplot()
+H1cu_H1_HETEROGp1.5_corrplot<-aggregatePMP(x=dat,
                                   h=c("H1" ,"Hc","Hu"),
                                   studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p.5")) %>% 
-  acc_lineplot()
-ggsave("Outputs/Thesis Draft/Fig12.png", plot = H1u_H1_HETEROGp.5, width = 4, height = 2.5, units = "in", dpi = 300, bg="white")
-ggsave("Outputs/Thesis Draft/Fig13.png", plot = H1cu_H1_HETEROGp.5, width = 4, height = 2.5, units = "in", dpi = 300, bg="white")
+  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1",Hc="TRUE_Hc", Hu="HETEROG_H1p1.5")) %>% 
+  acc_corrplot()
 
-########################################
-ggsave("Outputs/Thesis Draft/Fig2.png", plot = median.PMP1.noHu.plot, width = 6, height = 2.5, units = "in", dpi = 300, bg="white")
+H1u_H1_HETEROGp1.5/H1cu_H1_HETEROGp1.5
 
+
+
+
+#difference in accuracy
+H1u_H1_HETEROGp1.5<- aggregatePMP(x=dat,
+                                  h=c("H1","Hu"),
+                                  studies = 20) %>% 
+  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1",Hu="TRUE_Hc", Hu="HETEROG_H1p1.5")) 
+
+
+H1cu_H1_HETEROGp1.5<-aggregatePMP(x=dat,
+                                  h=c("H1" ,"Hc","Hu"),
+                                  studies = 20) %>% 
+  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1",Hc="TRUE_Hc", Hu="HETEROG_H1p1.5")) 
+
+
+loss<-H1cu_H1_HETEROGp1.5$acc-H1u_H1_HETEROGp1.5$acc 
+
+
+large.acc<-H1u_H1_HETEROGp1.5$acc >.87 &H1cu_H1_HETEROGp1.5$acc >.87
+large.acc[large.acc==TRUE]<-"green"
+large.acc[large.acc==FALSE]<-"red"
+    
+large.acc<-reshape2::melt(large.acc, na.rm = TRUE)
+lab.col<-loss                                 
+lab.col[H1u_H1_HETEROGp1.5$acc >.87 &H1cu_H1_HETEROGp1.5$acc >.87]<-"green"
+  lab.col[H1u_H1_HETEROGp1.5$acc >.87 &H1cu_H1_HETEROGp1.5$acc <.87]<-"red"
+    lab.col[H1u_H1_HETEROGp1.5$acc <.87 &H1cu_H1_HETEROGp1.5$acc <.87]<-"black"  
+      lab.col<-reshape2::melt(lab.col, na.rm = TRUE)
+      
+
+
+
+loss_corrplot/H1u_H1_HETEROGp1.5_corrplot/H1cu_H1_HETEROGp1.5_corrplot
+
+colors = c("blue", "white", "red")
+tl.cex = 12
+
+corr <- reshape2::melt(loss, na.rm = TRUE)
+colnames(corr) <- c("Var1", "Var2", "value")
+
+if (!is.null(p.mat)) {
+  p.mat <- reshape2::melt(p.mat, na.rm = TRUE)
+  corr$coef <- corr$value
+  corr$pvalue <- p.mat$value
+  corr$signif <- as.numeric(p.mat$value <= sig.level)
+  p.mat <- subset(p.mat, p.mat$value > sig.level)
+  if (insig == "blank") {
+    corr$value <- corr$value * corr$signif
+  }
+}
+corr$abs_corr <- abs(corr$value) * 10
+p <- ggplot2::ggplot(data = corr, mapping = ggplot2::aes_string(x = "Var1", 
+                                                                y = "Var2", fill = "value"))
+p <- p + ggplot2::geom_tile(color = "white")
+p <- p + ggplot2::scale_fill_gradient2(low = colors[1], 
+                                       high = colors[3], mid = colors[2], midpoint = 0, limit = c(-1, 
+                                                                                                  1), space = "Lab", name = "Labname")
+label <- round(x = corr[, "value"], digits = 2)
+
+p <- p + ggplot2::geom_text(mapping = ggplot2::aes_string(x = "Var1", 
+                                                            y = "Var2"
+                                                         ), label = label, color=lab.col$value, size = 4)
+p
+
+corr <- reshape2::melt(loss, na.rm = TRUE)
+label <- round(corr$value,2)
+lab.col<-loss                                 
+lab.col[H1u_H1_HETEROGp1.5$acc >.87 &H1cu_H1_HETEROGp1.5$acc >.87]<-"green"
+  lab.col[H1u_H1_HETEROGp1.5$acc >.87 &H1cu_H1_HETEROGp1.5$acc <.87]<-"red"
+    lab.col[H1u_H1_HETEROGp1.5$acc <.87 &H1cu_H1_HETEROGp1.5$acc <.87]<-"black"  
+      lab.col<-reshape2::melt(lab.col, na.rm = TRUE)
+      
+      
+loss_corrplot<-loss %>% 
+  ggcorrplot(outline.col = "white",
+             lab = TRUE)
+
+loss_corrplot$layers[[2]]<-NULL
+loss_corrplot+
+  geom_text(#mapping = aes_string(x = "Var1",
+            #                     y = "Var2"),
+            label = label,
+            color=lab.col$value,
+            size = 4)

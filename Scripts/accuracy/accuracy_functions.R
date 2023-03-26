@@ -121,6 +121,7 @@ acc_lineplot<-function(x){
     labs(title = x$hypothesis_test,
          subtitle = paste0("Populations:",paste(x$hyp_to_pop, collapse = ",")),
          x="studies")+
-    geom_hline(yintercept = 0.87, color="red", linetype="dashed")
+    geom_hline(yintercept = 0.87, color="red", linetype="dashed")+
+    scale_y_continuous(breaks = seq(0,1,0.1))
   
 }
