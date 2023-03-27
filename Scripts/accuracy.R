@@ -7,78 +7,6 @@ load("Outputs/accuracy/dat_merged.RData")
 source("Scripts/accuracy/accuracy_functions.R")
 
 
-
-#
-aggregatePMP(x=dat,
-             h=c("H1" ,"Hu"),
-             studies = 40) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="HETEROG_H1p.1", Hu="TRUE_H0")) %>% 
-  acc_corrplot()/
-  aggregatePMP(x=dat,
-               h=c("H1" ,"Hu"),
-               studies = 40) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="HETEROG_H1p.3", Hu="TRUE_H0")) %>% 
-  acc_corrplot()
-
-
-
-aggregatePMP(x=dat,
-             h=c("H1","Hc"),
-             studies = 40) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hc="HETEROG_H1p1")) %>% 
-  acc_corrplot()
-
-a<-aggregatePMP(x=dat,
-             h=c("H1" ,"Hu"),
-             studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="TRUE_H0")) %>% 
-  acc_corrplot()
-  
-
-b<-aggregatePMP(x=dat,
-               h=c("H1" ,"Hu"),
-               studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p.75")) %>% 
-  acc_corrplot()
-
-c<-aggregatePMP(x=dat,
-                h=c("H1" ,"Hu"),
-                studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p1")) %>% 
-  acc_corrplot()
-
-d<-aggregatePMP(x=dat,
-                h=c("H1" ,"Hu"),
-                studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p1.25")) %>% 
-  acc_corrplot()
-
-e<-aggregatePMP(x=dat,
-                h=c("H1" ,"Hu"),
-                studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p1.5")) %>% 
-  acc_corrplot()
-a/b
-
-a/c
-a/d
-a/e
-(a+b+c)/(d+e)
-
-dc<-aggregatePMP(x=dat,
-                h=c("H1" ,"Hc","Hu"),
-                studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p1.25")) %>% 
-  acc_corrplot()
-d/dc
-
-x<-aggregatePMP(x=dat,
-             h=c("H1" ,"Hc","Hu"),
-             studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p1.25"))
-
-
-
 #Diff---------------------------------------------------
 # Performance measure: Difference in accuracy
 
@@ -203,3 +131,42 @@ c<-aggregatePMP(x=dat,
   accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="TRUE_Hc")) %>% 
   acc_lineplot()
 c
+
+#True positives --------------------------------------------
+aggregatePMP(x=dat,
+             h=c("H1" ,"Hu"),
+             studies = 10) %>% 
+  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="TRUE_H0")) %>% 
+  acc_corrplot(object = "TP")+
+
+
+aggregatePMP(x=dat,
+             h=c("H1" ,"Hu"),
+             studies = 10) %>% 
+  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1large", Hu="TRUE_H0")) %>% 
+  acc_corrplot(object = "TP")
+
+aggregatePMP(x=dat,
+             h=c("H1" ,"Hu"),
+             studies = 10) %>% 
+  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="TRUE_H0")) %>% 
+  acc_corrplot(object = "TP")+
+
+aggregatePMP(x=dat,
+             h=c("H1" ,"Hu"),
+             studies = 10) %>% 
+  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p.75")) %>% 
+  acc_corrplot(object = "TP")
+
+aggregatePMP(x=dat,
+             h=c("H1" ,"Hu"),
+             studies = 10) %>% 
+  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="TRUE_H0")) %>% 
+  acc_corrplot(object = "TP")+
+aggregatePMP(x=dat,
+             h=c("Hc" ,"Hu"),
+             studies = 10) %>% 
+  accuracyPMP(hyp_to_pop = c(Hc="TRUE_Hc", Hu="TRUE_H0")) %>% 
+  acc_corrplot(object = "TP")
+
+dimnames(dat$BF)[[3]]
