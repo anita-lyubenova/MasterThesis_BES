@@ -77,6 +77,8 @@ x<-aggregatePMP(x=dat,
              studies = 20) %>% 
   accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p1.25"))
 
+
+
 #Diff---------------------------------------------------
 # Performance measure: Difference in accuracy
 
@@ -179,3 +181,25 @@ loss_corrplot+
             label = label,
             color=lab.col$value,
             size = 4)
+
+
+# Accuracy of individual studies---------------------------------------
+
+a<-aggregatePMP(x=dat,
+                h=c("H1" ,"Hu"),
+                studies = 20) %>% 
+  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="TRUE_H0")) %>% 
+  acc_corrplot()
+a
+b<-aggregatePMP(x=dat,
+                h=c("H1" ,"Hu"),
+                studies = 20) %>% 
+  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="HETEROG_H1p.75")) %>% 
+  acc_lineplot()
+a/b
+c<-aggregatePMP(x=dat,
+                h=c("H1" ,"Hu"),
+                studies = 30) %>% 
+  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="TRUE_Hc")) %>% 
+  acc_lineplot()
+c
