@@ -2,7 +2,7 @@ library(ggcorrplot)
 library(patchwork)
 library(tidyverse)
 library(abind)
-x<-dat
+
 #a function to transform BFs to aggregated PMPs
 aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
                        hyp=c("H1", "Hu"),
@@ -41,6 +41,12 @@ aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
 }
 
 
+listPMP<-aggregatePMP(x,
+                      hyp=c("H1", "Hu"),
+                      studies=10
+                      )
+hyp_to_pop=c(H1="TRUE_H1", Hc="TRUE_Hc", Hu="TRUE_H0")
+hyp_to_pop=c(H1="TRUE_H1", Hu="TRUE_H0")
 
 #a function to compute confusion matrix from aggregated PMPs
 accuracyPMP<-function(listPMP, #list created with aggregatePMP()
@@ -56,22 +62,30 @@ accuracyPMP<-function(listPMP, #list created with aggregatePMP()
                  PMP=paste0("PMP", hyp_index),
                  pop=hyp_to_pop
   )
-  
+  # a character vector whose elements are the names of the variables storing the correct classifications for each population
   correct_name<-paste0("c", tr$pop)
   
+  #a loop that computes the true classifications for each population and stores it into the respective variables
   for(h in 1:nrow(tr)){
     
+    #a character string that specifies which comparison should be made
+    # the comparison yields TRUE if is the PMPs of the true Hypothesis of the current population [h] are larger than the remaining PMPs
     comp<- paste(paste0("PMP[,tr$PMP[h],tr$pop[h],,,drop=FALSE] > ",
                         paste0("PMP[,",which(!dimnames(PMP)[[2]] %in% tr$PMP[h]), ",tr$pop[h],,,drop=FALSE]")
     ),collapse = " & ")
     
+    #perform the comparison specified in the string
     correct_logical<-eval(parse(text = comp))
     
+    #compute the number of correct classifications by summing the TRUE values
     correct_count<-rowSums(aperm(correct_logical, c(1,2,3,5,4)), dims = 4)[,,,,drop=TRUE]
     
+    #store the number of correct classifications in the respective variable
     assign(correct_name[h], correct_count)
-  }
-  
+  } 
+  #the result of the loop are variables with names specified in correct_name
+  #there is a variable for each population 
+  #each variable contains the true classifications for each population
   
   acc<-eval(parse(text = paste(correct_name, collapse = "+")))/(nrow(tr)*listPMP$iter)
   
