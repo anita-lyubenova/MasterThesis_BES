@@ -145,3 +145,150 @@ acc_lineplot<-function(x){
     scale_y_continuous(breaks = seq(0,1,0.1))
   
 }
+
+
+listPMP
+
+plot_list<-create_median_plot_data(listPMP, pop = "TRUE_Hu",n=c("n150"))
+
+create_median_plot_data<-function(listPMP, pop, n){ 
+  aggrPMP<-listPMP$PMP[,,pop,,n]
+  
+  medians<-apply(aggrPMP,c(1,2),median)%>% 
+    as.data.frame() %>% 
+    rownames_to_column(var="t") %>% 
+    pivot_longer(cols = dimnames(aggrPMP)[[2]],
+                 names_to = "Hypothesis",
+                 values_to = "median_aggrPMP") %>%
+    mutate(Hypothesis=as.factor(Hypothesis),
+           t=factor(t, levels = unique(t))
+    )
+  
+  #lower bounds of the aggregate values per hypothesis h per study number t
+  lbs<-apply(aggrPMP,c(1,2),function(x) quantile(x,probs=c(0.025))) %>% 
+    as.data.frame() %>% 
+    rownames_to_column(var="t") %>% 
+    pivot_longer(cols = dimnames(aggrPMP)[[2]],
+                 names_to = "Hypothesis",
+                 values_to = "lb_aggrPMP") %>%
+    mutate(Hypothesis=as.factor(Hypothesis),
+           t=factor(t, levels = unique(t))
+    )  
+  
+  ubs<-apply(aggrPMP,c(1,2),function(x) quantile(x,probs=c(0.975))) %>% 
+    as.data.frame() %>% 
+    rownames_to_column(var="t") %>% 
+    pivot_longer(cols = dimnames(aggrPMP)[[2]],
+                 names_to = "Hypothesis",
+                 values_to = "ub_aggrPMP") %>%
+    mutate(Hypothesis=as.factor(Hypothesis),
+           t=factor(t, levels = unique(t))
+    )  
+  
+  df<-left_join(medians, lbs, by=c("t", "Hypothesis")) %>%
+    left_join(., ubs, by=c("t", "Hypothesis")) %>% 
+    as.data.frame() %>% 
+    mutate(color=case_when(Hypothesis=="PMP1" ~ "#7fc97f",
+                           Hypothesis=="PMPc" ~ "#fdc086",
+                           Hypothesis=="PMPu" ~ "black",
+                           Hypothesis=="PMP0" ~ "#aa69b5",#6B2B74
+    ),
+    name=case_when(Hypothesis=="PMP1" ~ "H1",
+                   Hypothesis=="PMPc" ~ "Hc",
+                   Hypothesis=="PMPu" ~ "Hu",
+                   Hypothesis=="PMP0" ~ "H0",
+    )
+    )
+  
+  list(plot_data=df,
+       pop=paste0(pop,": ",listPMP$populations[[pop]]),
+       n=n,
+       r2=listPMP$r2,
+       pcor=listPMP$pcor,
+       hypothesis=listPMP$hypothesis,
+       hypothesis_test=listPMP$hypothesis_test,
+       iter=listPMP$iter,
+       studies=listPMP$studies
+       )
+  
+  #return(df)
+}
+
+# ###### temp #########
+
+hyp_input<-c("1", "u")
+library(highcharter)
+
+median_plot<-function(plot_list, #list with plot data created with create_median_plot_data()
+                      hyp_input # index of hte hypotheses of interest
+                      ){
+  plot_data<-  plot_list$plot_data
+  plot_data%>%
+    hchart("scatter",
+           hcaes(x=t, y=median_aggrPMP,
+                 group=factor(Hypothesis,levels = unique(plot_data$Hypothesis))
+           ),
+           color=plot_data$color[1:length(hyp_input)],
+           name=plot_data$name[1:length(hyp_input)],
+           id=letters[1:length(unique(plot_data$Hypothesis))]
+    )%>%
+    hc_tooltip(enabled=TRUE,
+               valueDecimals=2)%>%
+    hc_yAxis(labels=list(enabled=TRUE),
+             #reversed=TRUE,
+             title=list(text="Aggregated PMPs"),
+             gridLineWidth=0
+             
+             )%>%
+    hc_xAxis(labels=list(style=list(color="black", fontSize="12px")),
+             title=list(text="Number of aggregated studies")
+             # opposite=TRUE
+    )%>%
+    hc_legend(enabled=TRUE,
+              verticalAlign = "bottom",
+              align="left",
+              title=list(text="Hypotheses"
+              )) %>% 
+    hc_title(text="Variation of aggregate PMPs for each hypothesis across iterations",
+             align="left") %>% 
+    hc_subtitle(text=paste(paste0("H",hyp_input), collapse = " vs. "),
+                align="left") %>% 
+    hc_add_series(
+      plot_data,
+      "errorbar", 
+      hcaes(y = median_aggrPMP, x = t, low = lb_aggrPMP, high = ub_aggrPMP,
+            group = factor(Hypothesis, levels = unique(plot_data$Hypothesis))
+      ),
+      color=plot_data$color[1:length(hyp_input)],
+      linkedTo = letters[1:length(unique(plot_data$Hypothesis))],
+      enableMouseTracking = TRUE,
+      showInLegend = FALSE,
+      grouping=TRUE,
+      groupPadding=0.3
+    ) 
+  
+  
+}
+
+mu<-aggregatePMP(dat,
+            hyp=c("H1", "Hu"),
+            studies=10
+            ) %>% 
+  create_median_plot_data(pop = "TRUE_Hu",n=c("n300")) %>% 
+  median_plot(hyp_input=c("i", "u"))
+
+m1<-aggregatePMP(dat,
+                 hyp=c("H1", "Hu"),
+                 studies=10
+) %>% 
+  create_median_plot_data(pop = "TRUE_H1",n=c("n300")) %>% 
+  median_plot(hyp_input=c("i", "u"))
+
+acc1u<-aggregatePMP(dat,
+             hyp=c("H1", "Hu"),
+             studies=10
+) %>% 
+  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="TRUE_Hu")) %>% 
+  acc_lineplot()
+
+
