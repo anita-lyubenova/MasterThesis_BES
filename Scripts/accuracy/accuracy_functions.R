@@ -39,14 +39,14 @@ aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
   
   return(PMP_t)
 }
-
-
-listPMP<-aggregatePMP(x,
-                      hyp=c("H1", "Hu"),
-                      studies=10
-                      )
-hyp_to_pop=c(H1="TRUE_H1", Hc="TRUE_Hc", Hu="TRUE_H0")
-hyp_to_pop=c(H1="TRUE_H1", Hu="TRUE_H0")
+# 
+# 
+# listPMP<-aggregatePMP(x,
+#                       hyp=c("H1", "Hu"),
+#                       studies=10
+#                       )
+# hyp_to_pop=c(H1="TRUE_H1", Hu="TRUE_Hc", Hu="TRUE_H0")
+# hyp_to_pop=c(H1="TRUE_H1", Hu="TRUE_H0")
 
 #a function to compute confusion matrix from aggregated PMPs
 accuracyPMP<-function(listPMP, #list created with aggregatePMP()
@@ -87,9 +87,13 @@ accuracyPMP<-function(listPMP, #list created with aggregatePMP()
   #there is a variable for each population 
   #each variable contains the true classifications for each population
   
+
+  true<-lapply( mget(correct_name), function(x) x/listPMP$iter)
+  
   acc<-eval(parse(text = paste(correct_name, collapse = "+")))/(nrow(tr)*listPMP$iter)
   
   list(acc=round(acc, digits = 3),
+       TP=true,
        r2=listPMP$r2,
        pcor=listPMP$pcor,
        hypothesis=listPMP$hypothesis,
@@ -104,9 +108,11 @@ accuracyPMP<-function(listPMP, #list created with aggregatePMP()
 }
 
 
-acc_corrplot<-function(a # list created with accuracyPMP()
+acc_corrplot<-function(a, # a list created with accuracyPMP()
+                       object # what should be plotted? Acc or TP?
 ){
-  ggcorrplot(a$acc,
+  
+  ggcorrplot(as.data.frame(a[object]),   #a$acc,
              outline.col = "white",
              lab = TRUE)+
     scale_fill_gradient2(limit = c(0,1),
