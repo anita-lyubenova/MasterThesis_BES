@@ -2,3 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
+Outputs/generate datasets/TRUE_H0.RData
+Outputs/generate datasets/TRUE_H1.RData
+Outputs/generate datasets/TRUE_Hc.RData
