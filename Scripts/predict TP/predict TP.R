@@ -99,7 +99,12 @@ system.time(
 )
 
 computeBFs<-function(data, hypothesis, n.cores=7, n, studies, iter){
-  registerDoParallel(3)
+  cl <- makeCluster(n.cores)
+  registerDoParallel(cl)
+  clusterEvalQ(cl, {
+    library(tidyverse)
+  })
+  
   system.time(
     BF_list <-
       foreach(s = 1:length(n),
@@ -114,10 +119,24 @@ computeBFs<-function(data, hypothesis, n.cores=7, n, studies, iter){
           c(.,"BFuu"=1)
       }
   )
-  BF_list
+  
+  #BF_list
+  
+  BF_split<-
+    parLapply(cl, BF_list, function(d){
+      d<-d %>%
+        as.data.frame() %>% 
+        mutate(spl=gl(iter, studies, studies*iter), .before =V1)
+      
+      d<-split(d, d$spl)
+      #d<-split(d, gl(iter, studies, studies*iter))
+      # return(d)
+    } )
+  
+  stopCluster(cl)
+  return(BF_split)
 }
-
-computeBFs(test, hypothesis = hypothesis,
+BFs<-computeBFs(test, hypothesis = hypothesis,
            n.cores = 3,
            n=c(25,100),
            studies=4,
