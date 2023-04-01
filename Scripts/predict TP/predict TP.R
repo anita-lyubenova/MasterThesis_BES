@@ -13,98 +13,16 @@ library(doParallel)
 
 load("Outputs/generate datasets/test.RData")
 iter<-10
-
-#function to compute BFiu, BFcu, adn BFuu for each dataset
-get_BF<-function(x, hypothesis){
-  lm(Y~., data=x)%>% 
-    bain(hypothesis = hypothesis)%$%fit %>%     #$BF.u[c(1,2,4)]
-    extract(c(1, nrow(.)),c("BF.u")) %>%  #subset only BFiu for the specified hypothesis and the complement
-    c(.,"BFuu"=1)
-}
-
-# computeBFs<-function(data, hypothesis, n.cores=7){
-#   cl <- makeCluster(n.cores)
-#   clusterExport(cl, c("get_BF", "hypothesis"))
-#   clusterEvalQ(cl, {
-#     library(bain)
-#     library(magrittr)
-#     library(tidyverse)
-#   })
-#   
-#   #1. compute BFiu, BFcu adn BFuu for each dataset
-# 
-#   BF_list <-
-#     lapply(data, function(x){
-#       parLapply(cl, x, function(y){
-#         get_BF(y,hypothesis = hypothesis)
-#       })
-#     }
-#   )
-# 
-#   # 2. rbind the BFs for a study set
-#   BF_unl<-
-#     parLapply(cl, BF_list, function(x){
-#       d<-do.call(rbind, x)
-#       d <- data.frame(iter = rownames(d), d, row.names = NULL)
-#       colnames(d)<-c("iter", "BF1u", "BFcu", "BFuu")
-#       d<-split(d, d$iter)
-#       # return(d)
-#     } )
-#   
-#   
-#   stopCluster(cl)
-#   return(BF_unl)
-# }
-# computeBFs(data=test,hypothesis="V1>V2>V3")
-
-# 1. replace each dataset with BFiu, cu and uu --------------------------------
-cl <- makeCluster(6)
-clusterExport(cl, c("get_BF", "hypothesis"))
-clusterEvalQ(cl, {
-  library(bain)
-  library(magrittr)
-})
-
-#1. compute BFiu, BFcu adn BFuu for each dataset
-system.time(
-  BF_list <-
-    lapply(test, function(x){
-      parLapply(cl, x, function(y){
-        get_BF(y,hypothesis = hypothesis)
-      })
-        }
-      )
-)
-
-stopCluster(cl)
-
-s<-1
-i<-1
-hypothesis = "V1>V2>V3"
-
-#parallel via foreach loops
-library(doParallel)
-library(foreach)
-registerDoParallel(3)
-system.time(
-  BF_list <-
-    foreach(s = 1:length(n),
-            .packages = c("bain", "magrittr", "dplyr")
-    )%:%
-    foreach(i = 1:(studies*iter),
-            .combine = rbind
-    ) %dopar% {
-      get_BF(test[[s]][[i]],hypothesis = hypothesis)
-    }
-)
-
+hypothesis="V1>V2>V3"
 computeBFs<-function(data, hypothesis, n.cores=7, n, studies, iter){
   cl <- makeCluster(n.cores)
   registerDoParallel(cl)
   clusterEvalQ(cl, {
     library(tidyverse)
+    library(abind)
   })
   
+  #1) Compute Bfs
   system.time(
     BF_list <-
       foreach(s = 1:length(n),
@@ -121,7 +39,7 @@ computeBFs<-function(data, hypothesis, n.cores=7, n, studies, iter){
   )
   
   #BF_list
-  
+  #2) Split BFs into lists for each iteration
   BF_split<-
     parLapply(cl, BF_list, function(d){
       d<-d %>%
@@ -133,53 +51,42 @@ computeBFs<-function(data, hypothesis, n.cores=7, n, studies, iter){
       # return(d)
     } )
   
+  # 2.5) abind the list elements to array
+  BF_3darray<-parLapply(cl,BF_split, function(x){
+    do.call(abind, args=list(x, along=3) )
+  } )
+  
   stopCluster(cl)
-  return(BF_split)
+  
+  BF_4d<-do.call(abind::abind, args=list(BF_3darray, along=4))
+  BF_4d<-BF_4d[,-1,,]#remove column iter
+  
+  #fix dimnames
+  dimnames(BF_4d)<-list(1:studies,
+                        c("BF1u", "BFcu", "BFuu"),
+                        1:iter,
+                        n
+                        )
+  
+  class(BF_4d) <- "numeric" #transform BFs from character to numeric
+  
+  return(BF_4d)
 }
-BFs<-computeBFs(test, hypothesis = hypothesis,
+BFs<-computeBFs(test,
+                hypothesis = hypothesis,
+                 n.cores = 3,
+                 n=c(25,100),
+                 studies=4,
+                 iter=10
+                 )
+system.time(
+PMP<-computeBFs(test, hypothesis = hypothesis,
            n.cores = 3,
            n=c(25,100),
            studies=4,
-           iter=10
-           )
-
-# #non-parallel vesrion
-# BF_list <-
-#   lapply(test, function(x){
-#     lapply(x, function(y) get_BF(y, hypothesis = "V1>V2>V3") )
-#   }
-# )
-# nr <- studies*iter
-# split(BF_list[[1]] , rep(1:iter, each=studies, length.out=studies*iter))
-
-## 2. rbind the BFs for a study set ------------------------------------------
-cl <- makeCluster(4)
-clusterEvalQ(cl, {
-  library(tidyverse)
-})
-BF_unl<-
-  parLapply(cl, BF_list, function(x){
-    d<-do.call(rbind, x)
-    d <- data.frame(iter = rownames(d), d, row.names = NULL)
-    colnames(d)<-c("iter", "BF1u", "BFcu", "BFuu")
-    d<-split(d, d$iter)
-   # return(d)
-  } )
-
-stopCluster(cl)
-
-
-## 2.5 abind to array ----------------------------------------------------------
-library(abind)
-BF_unl$n100$i9[,-1]
-
-BF_3darray<-lapply(BF_unl, function(x){
-  do.call(abind, args=list(x, along=3) )
-} )
-BF_4d<-do.call(abind, args=list(BF_3darray, along=4))
-BF_4d<-BF_4d[,-1,,]#remove column iter
-
-class(BF_4d) <- "numeric" #transform BFs from character to numeric
+           iter=10) %>% 
+aggregatePMP(c("H1","Hu"), studies = 3)
+)
 
 # array structure :: BF_4d[t, hyp, iter, n]
 
