@@ -98,7 +98,31 @@ system.time(
     }
 )
 
+computeBFs<-function(data, hypothesis, n.cores=7, n, studies, iter){
+  registerDoParallel(3)
+  system.time(
+    BF_list <-
+      foreach(s = 1:length(n),
+              .packages = c("bain", "magrittr", "dplyr")
+      )%:%
+      foreach(i = 1:(studies*iter),
+              .combine = rbind
+      ) %dopar% {
+        lm(Y~., data=data[[s]][[i]])%>% 
+          bain(hypothesis = hypothesis)%$%fit %>%     #$BF.u[c(1,2,4)]
+          extract(c(1, nrow(.)),c("BF.u")) %>%  #subset only BFiu for the specified hypothesis and the complement
+          c(.,"BFuu"=1)
+      }
+  )
+  BF_list
+}
 
+computeBFs(test, hypothesis = hypothesis,
+           n.cores = 3,
+           n=c(25,100),
+           studies=4,
+           iter=10
+           )
 
 # #non-parallel vesrion
 # BF_list <-
