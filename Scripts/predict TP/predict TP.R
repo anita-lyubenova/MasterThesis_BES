@@ -22,36 +22,72 @@ get_BF<-function(x, hypothesis){
     c(.,"BFuu"=1)
 }
 
-## 1. replace each dataset with BFiu, cu and uu --------------------------------
-# cl <- makeCluster(6)
-# #clusterExport(cl, "test")
-# clusterEvalQ(cl, {
-#   library(bain)
-#   library(magrittr)
-# })
+# computeBFs<-function(data, hypothesis, n.cores=7){
+#   cl <- makeCluster(n.cores)
+#   clusterExport(cl, c("get_BF", "hypothesis"))
+#   clusterEvalQ(cl, {
+#     library(bain)
+#     library(magrittr)
+#     library(tidyverse)
+#   })
+#   
+#   #1. compute BFiu, BFcu adn BFuu for each dataset
 # 
-# #compute BFiu, BFcu adn BFuu for each dataset
-# system.time(
-#   BF_list <- 
-#     lapply(test, function(x){
+#   BF_list <-
+#     lapply(data, function(x){
 #       parLapply(cl, x, function(y){
-#         get_BF(y,hypothesis = "V1>V2>V3")
+#         get_BF(y,hypothesis = hypothesis)
 #       })
-#         }
-#       )
-# )
-# stopCluster(cl)
+#     }
+#   )
+# 
+#   # 2. rbind the BFs for a study set
+#   BF_unl<-
+#     parLapply(cl, BF_list, function(x){
+#       d<-do.call(rbind, x)
+#       d <- data.frame(iter = rownames(d), d, row.names = NULL)
+#       colnames(d)<-c("iter", "BF1u", "BFcu", "BFuu")
+#       d<-split(d, d$iter)
+#       # return(d)
+#     } )
+#   
+#   
+#   stopCluster(cl)
+#   return(BF_unl)
+# }
+# computeBFs(data=test,hypothesis="V1>V2>V3")
 
-s<-1 
+# 1. replace each dataset with BFiu, cu and uu --------------------------------
+cl <- makeCluster(6)
+clusterExport(cl, c("get_BF", "hypothesis"))
+clusterEvalQ(cl, {
+  library(bain)
+  library(magrittr)
+})
+
+#1. compute BFiu, BFcu adn BFuu for each dataset
+system.time(
+  BF_list <-
+    lapply(test, function(x){
+      parLapply(cl, x, function(y){
+        get_BF(y,hypothesis = hypothesis)
+      })
+        }
+      )
+)
+
+stopCluster(cl)
+
+s<-1
 i<-1
 hypothesis = "V1>V2>V3"
 
 #parallel via foreach loops
 library(doParallel)
 library(foreach)
-registerDoParallel(6)
+registerDoParallel(3)
 system.time(
-  BF_list <- 
+  BF_list <-
     foreach(s = 1:length(n),
             .packages = c("bain", "magrittr", "dplyr")
     )%:%
@@ -64,13 +100,14 @@ system.time(
 
 
 
-#non-parallel vesrion
-BF_list <-
-  lapply(test, function(x){
-    lapply(x, function(y) get_BF(y, hypothesis = "V1>V2>V3") )
-  }
-)
-
+# #non-parallel vesrion
+# BF_list <-
+#   lapply(test, function(x){
+#     lapply(x, function(y) get_BF(y, hypothesis = "V1>V2>V3") )
+#   }
+# )
+# nr <- studies*iter
+# split(BF_list[[1]] , rep(1:iter, each=studies, length.out=studies*iter))
 
 ## 2. rbind the BFs for a study set ------------------------------------------
 cl <- makeCluster(4)
