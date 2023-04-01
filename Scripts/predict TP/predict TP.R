@@ -15,36 +15,59 @@ load("Outputs/generate datasets/test.RData")
 iter<-10
 
 #function to compute BFiu, BFcu, adn BFuu for each dataset
-get_BF<-function(x){
+get_BF<-function(x, hypothesis){
   lm(Y~., data=x)%>% 
-    bain(hypothesis = "V1>V2>V3")%$%fit %>%     #$BF.u[c(1,2,4)]
+    bain(hypothesis = hypothesis)%$%fit %>%     #$BF.u[c(1,2,4)]
     extract(c(1, nrow(.)),c("BF.u")) %>%  #subset only BFiu for the specified hypothesis and the complement
     c(.,"BFuu"=1)
 }
 
 ## 1. replace each dataset with BFiu, cu and uu --------------------------------
-cl <- makeCluster(7)
-#clusterExport(cl, "test")
-clusterEvalQ(cl, {
-  library(bain)
-  library(magrittr)
-})
+# cl <- makeCluster(6)
+# #clusterExport(cl, "test")
+# clusterEvalQ(cl, {
+#   library(bain)
+#   library(magrittr)
+# })
+# 
+# #compute BFiu, BFcu adn BFuu for each dataset
+# system.time(
+#   BF_list <- 
+#     lapply(test, function(x){
+#       parLapply(cl, x, function(y){
+#         get_BF(y,hypothesis = "V1>V2>V3")
+#       })
+#         }
+#       )
+# )
+# stopCluster(cl)
 
-#compute BFiu, BFcu adn BFuu for each dataset
+s<-1 
+i<-1
+hypothesis = "V1>V2>V3"
+
+#parallel via foreach loops
+library(doParallel)
+library(foreach)
+registerDoParallel(6)
 system.time(
   BF_list <- 
-    lapply(test, function(x){
-      parLapply(cl, x, get_BF)
-        }
-      )
+    foreach(s = 1:length(n),
+            .packages = c("bain", "magrittr", "dplyr")
+    )%:%
+    foreach(i = 1:(studies*iter),
+            .combine = rbind
+    ) %dopar% {
+      get_BF(test[[s]][[i]],hypothesis = hypothesis)
+    }
 )
 
-stopCluster(cl)
+
 
 #non-parallel vesrion
 BF_list <-
   lapply(test, function(x){
-    lapply(x, get_BF)
+    lapply(x, function(y) get_BF(y, hypothesis = "V1>V2>V3") )
   }
 )
 
