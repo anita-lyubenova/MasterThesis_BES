@@ -13,7 +13,7 @@ source("scripts/generate_datasets().R")
 
 
 #Generate TRUE_H1_medium---------------------------------------------------------------------------
-#parallel t x heterog x iter x n
+#parallel x iter x n
 
 #resulting data:
 # list[[n]] $BF[t, BF, heterog, iter]
@@ -229,3 +229,87 @@ close(pb)
 stopCluster(cl) vr                             
 
 save(TRUE_H0,file="Outputs/generate datasets/TRUE_H0.RData")
+
+
+# test ---------------------------------------------------------
+cl <- makeCluster(7)
+registerDoSNOW(cl)
+
+# #setting seed
+n <-  c(25,100)
+studies<-4 #studies
+iter<-studies*10 # 10 iterations for each of the 4 studies
+rng <- RNGseq(length(n)* iter, 123)
+
+#add progress bar
+iterations <- length(n)*iter # total number of conditions - not sure if this actually matters
+pb <- txtProgressBar(max = iterations, style = 3)
+progress <- function(x) setTxtProgressBar(pb, x)
+opts <- list(progress = progress)
+#end progress bar options
+
+# run standard nested foreach loo
+## foreach loops
+system.time(
+  
+  test <- 
+    
+    #n-loop: sample size
+    foreach(s = 1:length(n), #,
+            #     .combine=list,
+            .options.snow = opts, #add progress bar
+            .packages = c("tidyverse","magrittr", "furrr",
+                          "Rcpp", "RcppArmadillo", "MASS",
+                          "mvtnorm", "bain", "foreach", "doParallel")
+    ) %:% #{
+    
+    #i-loop: iterations
+    foreach(i = 1:iter, #iterations
+            r=rng[(s-1)*iter + 1:iter],
+            #.combine = list, #bind along the 4th dimension
+            .packages = c("tidyverse","magrittr", "furrr",
+                          "Rcpp", "RcppArmadillo", "MASS",
+                          "mvtnorm", "bain", "foreach", "doParallel")
+    )%dopar% {
+      
+      # set RNG seed
+      rngtools::setRNG(r)
+      
+      generate_dataset(r2=0.13,  # R-squared of the regression model
+                       pcor=0.3,  # correlation between the predictors
+                       betas=coefs(0.13, c(3,2,1), cormat(0.3, 3), "normal"),  # a numeric vector with the beta coefficients;  defines the truth in the population;
+                       propSD = 0,
+                       n=n[s],  #sample size 
+                       model="linear"  #linear, logistic or probit regression
+      )$d
+      
+      # #save the results in a list
+      # res<-list(d=sim$BF,
+      #           sampled_betas=sim$sampled_betas
+      # )
+      
+    } #end foreach t loop (studies) (rows)
+  
+  
+)#system.time
+#time: 7cl - about 1h 15 min
+close(pb)
+stopCluster(cl) 
+
+
+test
+
+#label the names of the list elements corresponding to different sample sizes n
+names(test)<-paste0("n", n)
+
+#label the names of the list elements corresponding to different study numbers t
+test<-lapply(test, FUN=function(x) {
+  names(x)<-paste0("t",rep(1:studies, times=10))
+  return(x)
+}
+)
+
+
+test$n25 %>% names()
+
+save(test,file="Outputs/generate datasets/test.RData")
