@@ -10,14 +10,16 @@ library(parallel)
 library(foreach)
 library(doParallel)
 library(doRNG)
+library(doSNOW)
 source("scripts/ThomVolker scripts/functions.R")
 # test.RData ---------------------------------------------------------------
 
 load("Outputs/generate datasets/test.RData")
+
 iter<-10
 studies=4
 hypothesis="V1>V2>V3"
-data<-test
+
 get_complexity<-function(data, hypothesis, cl=2, hyp=c("H1","Hc", "Hu")){
   
   registerDoParallel(cl)
@@ -40,8 +42,8 @@ get_complexity<-function(data, hypothesis, cl=2, hyp=c("H1","Hc", "Hu")){
       hist =  hist(compl[,1]))
 }
 
-compl<-get_complexity(test, hypothesis = hypothesis, cl=2)
-compl$avg_compl
+# compl<-get_complexity(test, hypothesis = hypothesis, cl=2)
+# compl$avg_compl
 
 computeBFs<-function(data, hypothesis, n.cores=7, n, studies, iter){
   cl <- makeCluster(n.cores)
@@ -51,10 +53,17 @@ computeBFs<-function(data, hypothesis, n.cores=7, n, studies, iter){
     library(abind)
   })
   
+  #add progress bar
+  iterations <- length(n)*iter*studies # total number of conditions - not sure if this actually matters
+  pb <- txtProgressBar(max = iterations, style = 3)
+  progress <- function(x) setTxtProgressBar(pb, x)
+  opts <- list(progress = progress)
+  
   #1) Compute Bfs
   system.time(
     BF_list <-
       foreach(s = 1:length(n),
+              .options.snow = opts,
               .packages = c("bain", "magrittr", "dplyr")
       )%:%
       foreach(i = 1:(studies*iter),
@@ -66,7 +75,7 @@ computeBFs<-function(data, hypothesis, n.cores=7, n, studies, iter){
           c(.,"BFuu"=1)
       }
   )
-  
+  close(pb)
   #BF_list
   #2) Split BFs into lists for each iteration
   BF_split<-
@@ -104,7 +113,7 @@ computeBFs<-function(data, hypothesis, n.cores=7, n, studies, iter){
 # array structure :: BF_4d[t, hyp, iter, n]
 
 
-x<-BF_4d
+# x<-BF_4d
 #a function to transform BFs to aggregated PMPs
 aggregatePMP<-function(x, # a 4 dim array with structure [t, BF, pop, iter, n]
                        hyp=c("H1", "Hu"),
@@ -135,10 +144,9 @@ aggregatePMP<-function(x, # a 4 dim array with structure [t, BF, pop, iter, n]
 
 
 
-PMP<-aggregatePMP(BF_4d, c("H1","Hu"), studies = 3)
+# PMP<-aggregatePMP(BF_4d, c("H1","Hu"), studies = 3)
 
 # 4. compute the TP rates
-
 
 #a function to compute confusion matrix from aggregated PMPs
 TPRi<-function(PMP, #an array created with aggregatePMP()[studies, hyp, iter, n]
@@ -189,16 +197,6 @@ add_info<-function(TPR,
 
 
 
-BFs<-computeBFs(test,
-                hypothesis = hypothesis,
-                n.cores = 3,
-                n=c(25,100),
-                studies=4,
-                iter=10
-)
-PMP<-aggregatePMP(BFs,c("H1","Hu"), studies = 3) 
-TPRi(PMP,true_pop = "H1")
-
 
 TP<-
   computeBFs(test,
@@ -223,64 +221,23 @@ add_info(TP,
 
 #TRUE_H1.RData --------------------------------------------------------
 load("Outputs/generate datasets/TRUE_H1.RData")
-n<-c(25,100,200,250,350,500, 800)
-iter<-1000
+
+n <-  c(25,100,200,250,350,500, 800)
 studies<-40
-
-#label the names of the list elements corresponding to different sample sizes n
-names(TRUE_H1)<-paste0("n", n)
-
-#label the names of the list elements corresponding to different study numbers t
-TRUE_H1<-lapply(TRUE_H1, FUN=function(x) {
-  names(x)<-paste0("t",rep(1:studies, times=iter))
-  return(x)
-    }
-  )
-
-TRUE_H1$n25[names(TRUE_H1$n25)=="t1"]
-
-#from each data.frame (at the lowest level) I obtain BFiu for hypothesis Hi
-# V1 > V2 > V3 >0  :: ci=0.0118714 
-# (V1,V2,V3)>0     :: ci=0.0778
-# V1 > V2 > V3     :: ci=0.1354515
-# V1> V2 & V3>0    :: ci=0.2754828
-# V1 > (V2,V3)     :: ci=0.3104396
-# V1+V2+V3>0       :: ci=0.5
+iter<-1000
+hypothesis="V1>V2>V3"
 
 
-lm(Y~., data=TRUE_H1$n25$t1)%>% 
-  bain(hypothesis = "V1>V2+V3")%$%fit %>%     #$BF.u[c(1,2,4)]
-  extract(c(1, nrow(.)),c("Com","BF.u")) %>%  #subset only BFiu for the specified hypothesis and the complement
-  rbind(.,1) #add BFuu = 1
+TP1_TRUE_H1<-
+  computeBFs(TRUE_H1,
+             hypothesis = hypothesis,
+             n.cores = 7,
+             n=n,
+             studies=40,
+             iter=1000
+  ) %>% 
+  aggregatePMP(c("H1","Hu"), studies = 3) %>% 
+  TPRi(true_pop = "H1")
 
 
-a<-lapply(TRUE_H1[c("n25", "n50")], function(n){
-  lapply(n, function(t){
-    lm(Y~., data=t)%>% 
-      bain(hypothesis = "V1>V2>V3")%$%fit %>%     #$BF.u[c(1,2,4)]
-      extract(c(1, nrow(.)),c("Com","BF.u")) %>%  #subset only BFiu for the specified hypothesis and the complement
-      rbind(.,1) #add BFuu = 1
-      }
-    )
-  }
-)
-
-data.frame(R2=0.13,
-           pcor=0.3,
-           diff.betas=0.07
-           )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+ 
