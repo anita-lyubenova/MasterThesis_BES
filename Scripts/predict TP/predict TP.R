@@ -13,7 +13,31 @@ library(doParallel)
 
 load("Outputs/generate datasets/test.RData")
 iter<-10
+studies=4
 hypothesis="V1>V2>V3"
+data<-test
+get_complexity<-function(data, hypothesis, cl, hyp=c("H1","Hc", "Hu")){
+  
+  registerDoParallel(cl)
+  compl<-
+    foreach(i = 1:(studies*iter),
+            .combine=rbind,
+            .packages = c("bain", "magrittr", "dplyr")
+    )%dopar% {
+      lm(Y~., data=data[[1]][[1]])%>% 
+        bain(hypothesis = hypothesis)%$%fit %>%     #$BF.u[c(1,2,4)]
+        extract(c(1, nrow(.)),c("Com")) %>%  #subset only BFiu for the specified hypothesis and the complement
+        c(.,"Hu"=1)
+      
+
+    }
+  
+  colnames(compl)<-hyp
+  colMeans(compl)
+}
+
+compl<-get_complexity(test, hypothesis = hypothesis, cl=2)
+
 computeBFs<-function(data, hypothesis, n.cores=7, n, studies, iter){
   cl <- makeCluster(n.cores)
   registerDoParallel(cl)
@@ -72,25 +96,10 @@ computeBFs<-function(data, hypothesis, n.cores=7, n, studies, iter){
   
   return(BF_4d)
 }
-BFs<-computeBFs(test,
-                hypothesis = hypothesis,
-                 n.cores = 3,
-                 n=c(25,100),
-                 studies=4,
-                 iter=10
-                 )
-system.time(
-PMP<-computeBFs(test, hypothesis = hypothesis,
-           n.cores = 3,
-           n=c(25,100),
-           studies=4,
-           iter=10) %>% 
-aggregatePMP(c("H1","Hu"), studies = 3)
-)
-
 # array structure :: BF_4d[t, hyp, iter, n]
 
-## 3. compute aggregate. PMPs -----------------------------------------------------
+
+## compute aggregate. PMPs -----------------------------------------------------
 x<-BF_4d
 #a function to transform BFs to aggregated PMPs
 aggregatePMP<-function(x, # a 4 dim array with structure [t, BF, pop, iter, n]
@@ -149,10 +158,10 @@ TPRi<-function(PMP, #an array created with aggregatePMP()[studies, hyp, iter, n]
     TPR %>% 
     as.data.frame() %>% 
     rownames_to_column(var="t") %>% 
-    pivot_longer(cols =starts_with("n"),
+    pivot_longer(cols = dimnames(PMP)[[4]],
                  names_to = "n",
                  values_to = "TPR") %>% 
-    mutate(n=as.numeric(substr(n,2,nchar(n))),
+    mutate(n=as.numeric(n),
            t=as.numeric(t))
   return(TPR)
   
@@ -161,18 +170,30 @@ TPRi<-function(PMP, #an array created with aggregatePMP()[studies, hyp, iter, n]
 
 
 
-aggregatePMP(BF_4d, c("H1","Hu"), studies = 4) %>% 
+
+
+
+BFs<-computeBFs(test,
+                hypothesis = hypothesis,
+                n.cores = 3,
+                n=c(25,100),
+                studies=4,
+                iter=10
+)
+PMP<-aggregatePMP(BFs,c("H1","Hu"), studies = 3) 
+TPRi(PMP,true_pop = "H1")
+
+
+TP<-
+  computeBFs(test,
+             hypothesis = hypothesis,
+             n.cores = 3,
+             n=c(25,100),
+             studies=4,
+             iter=10
+  ) %>% 
+  aggregatePMP(c("H1","Hu"), studies = 3) %>% 
   TPRi(true_pop = "H1")
-
-
-
-
-
-
-
-
-
-
 
 
 
