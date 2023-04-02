@@ -9,6 +9,8 @@ library(magrittr)
 library(parallel)
 library(foreach)
 library(doParallel)
+library(doRNG)
+source("scripts/ThomVolker scripts/functions.R")
 # test.RData ---------------------------------------------------------------
 
 load("Outputs/generate datasets/test.RData")
@@ -16,27 +18,30 @@ iter<-10
 studies=4
 hypothesis="V1>V2>V3"
 data<-test
-get_complexity<-function(data, hypothesis, cl, hyp=c("H1","Hc", "Hu")){
+get_complexity<-function(data, hypothesis, cl=2, hyp=c("H1","Hc", "Hu")){
   
   registerDoParallel(cl)
   compl<-
     foreach(i = 1:(studies*iter),
             .combine=rbind,
-            .packages = c("bain", "magrittr", "dplyr")
+            .packages = c("bain", "magrittr")
     )%dopar% {
-      lm(Y~., data=data[[1]][[1]])%>% 
+      set.seed(123)
+      lm(Y~., data=data[[1]][[i]])%>% 
         bain(hypothesis = hypothesis)%$%fit %>%     #$BF.u[c(1,2,4)]
-        extract(c(1, nrow(.)),c("Com")) %>%  #subset only BFiu for the specified hypothesis and the complement
+        extract(c(1, nrow(.)),c("Com")) %>%   #subset only BFiu for the specified hypothesis and the complement
         c(.,"Hu"=1)
       
 
     }
   
   colnames(compl)<-hyp
-  colMeans(compl)
+  list(avg_compl=colMeans(compl),
+      hist =  hist(compl[,1]))
 }
 
 compl<-get_complexity(test, hypothesis = hypothesis, cl=2)
+compl$avg_compl
 
 computeBFs<-function(data, hypothesis, n.cores=7, n, studies, iter){
   cl <- makeCluster(n.cores)
@@ -99,7 +104,6 @@ computeBFs<-function(data, hypothesis, n.cores=7, n, studies, iter){
 # array structure :: BF_4d[t, hyp, iter, n]
 
 
-## compute aggregate. PMPs -----------------------------------------------------
 x<-BF_4d
 #a function to transform BFs to aggregated PMPs
 aggregatePMP<-function(x, # a 4 dim array with structure [t, BF, pop, iter, n]
@@ -168,8 +172,20 @@ TPRi<-function(PMP, #an array created with aggregatePMP()[studies, hyp, iter, n]
 }
 
 
+add_info<-function(TPR,
+                   complexity,
+                   R2,
+                   pcor,
+                   ratio_beta
+){
+  #TPR[,c("R2", "pcor")]<-c(R2,pcor)
+  TPR$R2<-R2
+  TPR$pcor<-pcor
+  TPR[,"diff_betas"]<-Reduce(`-`,coefs(R2, ratio_beta, cormat(pcor, length(ratio_beta)), "normal"), accumulate = TRUE)[2]
+  TPR[,"complexity"]<-get_complexity(data=data, hypothesis=hypothesis)$avg_compl[1]
 
-
+  return(TPR)
+}
 
 
 
@@ -197,7 +213,12 @@ TP<-
 
 
 
-
+add_info(TP, 
+         R2=0.13,
+         pcor=0.3,
+         complexity = get_complexity(data=test,hypothesis = "V1>V2>V3"),
+         ratio_beta=c(3,2,1)
+         )
 
 
 #TRUE_H1.RData --------------------------------------------------------

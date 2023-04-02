@@ -304,12 +304,19 @@ names(test)<-paste0("n", n)
 
 #label the names of the list elements corresponding to different study numbers t
 test<-lapply(test, FUN=function(x) {
-  names(x)<-paste0("t",rep(1:studies, times=10))
+  names(x)<-paste0("set",rep(1:studies, times=10))
   return(x)
 }
 )
 
+# #alternative
+test<-lapply(test, FUN=function(x) {
+  names(x)<-paste0("i",rep(1:10, times=studies))
+  return(x)
+}
+)
 
 test$n25 %>% names()
 
 save(test,file="Outputs/generate datasets/test.RData")
+
