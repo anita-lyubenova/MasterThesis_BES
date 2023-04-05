@@ -109,21 +109,25 @@ accuracyPMP<-function(listPMP, #list created with aggregatePMP()
 
 
 acc_corrplot<-function(a, # a list created with accuracyPMP()
-                       object # what should be plotted? Acc or TP?
+                       object # what should be plotted? acc or TP?
 ){
   
   ggcorrplot(as.data.frame(a[object]),   #a$acc,
-             outline.col = "white",
+             outline.col = "black",
              lab = TRUE)+
     scale_fill_gradient2(limit = c(0,1),
+                         breaks=seq(0,1,0.1),
                          low = "blue", high =  "red",
                          mid = "white",
                          midpoint = 0.87)+
     scale_x_continuous(breaks = 1:a$studies)+
+  #  scale_y_discrete(labels= substr(colnames(a$acc), 2, nchar(colnames(a$acc))))+
     labs(title = a$hypothesis_test,
-         subtitle =paste("Populations:", paste(a$hyp_to_pop, collapse = ", "), collapse = " ")
+         subtitle =paste("Populations:", paste(a$hyp_to_pop, collapse = ", "), collapse = " "),
+         fill="Accuracy"
     )
 }
+
 
 acc_lineplot<-function(x){
   accdat<-x$acc %>%
@@ -145,11 +149,6 @@ acc_lineplot<-function(x){
     scale_y_continuous(breaks = seq(0,1,0.1))
   
 }
-
-
-listPMP
-
-plot_list<-create_median_plot_data(listPMP, pop = "TRUE_Hu",n=c("n150"))
 
 create_median_plot_data<-function(listPMP, pop, n){ 
   aggrPMP<-listPMP$PMP[,,pop,,n]
@@ -214,81 +213,141 @@ create_median_plot_data<-function(listPMP, pop, n){
   #return(df)
 }
 
-# ###### temp #########
 
-hyp_input<-c("1", "u")
-library(highcharter)
 
-median_plot<-function(plot_list, #list with plot data created with create_median_plot_data()
-                      hyp_input # index of hte hypotheses of interest
-                      ){
-  plot_data<-  plot_list$plot_data
-  plot_data%>%
-    hchart("scatter",
-           hcaes(x=t, y=median_aggrPMP,
-                 group=factor(Hypothesis,levels = unique(plot_data$Hypothesis))
-           ),
-           color=plot_data$color[1:length(hyp_input)],
-           name=plot_data$name[1:length(hyp_input)],
-           id=letters[1:length(unique(plot_data$Hypothesis))]
-    )%>%
-    hc_tooltip(enabled=TRUE,
-               valueDecimals=2)%>%
-    hc_yAxis(labels=list(enabled=TRUE),
-             #reversed=TRUE,
-             title=list(text="Aggregated PMPs"),
-             gridLineWidth=0
-             
-             )%>%
-    hc_xAxis(labels=list(style=list(color="black", fontSize="12px")),
-             title=list(text="Number of aggregated studies")
-             # opposite=TRUE
-    )%>%
-    hc_legend(enabled=TRUE,
-              verticalAlign = "bottom",
-              align="left",
-              title=list(text="Hypotheses"
-              )) %>% 
-    hc_title(text="Variation of aggregate PMPs for each hypothesis across iterations",
-             align="left") %>% 
-    hc_subtitle(text=paste(paste0("H",hyp_input), collapse = " vs. "),
-                align="left") %>% 
-    hc_add_series(
-      plot_data,
-      "errorbar", 
-      hcaes(y = median_aggrPMP, x = t, low = lb_aggrPMP, high = ub_aggrPMP,
-            group = factor(Hypothesis, levels = unique(plot_data$Hypothesis))
-      ),
-      color=plot_data$color[1:length(hyp_input)],
-      linkedTo = letters[1:length(unique(plot_data$Hypothesis))],
-      enableMouseTracking = TRUE,
-      showInLegend = FALSE,
-      grouping=TRUE,
-      groupPadding=0.3
-    ) 
+median_plot<-function(x # a list created with create_median_plot_data()
+){
   
+  pd <- position_dodge(width = 0.4) # set desired dodge width
+  col.H1<-"#7fc97f"
+  col.Hc<-"#fdc086"
+  col.Hu<-"black"
+  lightness(col.H1, scalefac(0.50))
+  all.colors <-c(H1="#7fc97f", Hc="#fdc086",Hu="black")
+  #subset the names of the tested hypoteheses
+  hyp<-unlist(str_extract_all(x$hypothesis_test, "H(1|c|u)"))
+  sub.colors<-all.colors[names(all.colors) %in% hyp]
   
+  p<-x$plot_data
+    
+  p$Hypothesis<-factor(p$Hypothesis, levels = unique(p$Hypothesis))
+  
+  pplot<-p %>% 
+          ggplot(aes(x=t, y=median_aggrPMP, group=Hypothesis, color=Hypothesis))+
+          geom_point(position = pd)+
+          geom_line(position = pd)+
+          geom_errorbar(aes(ymin = lb_aggrPMP, ymax = ub_aggrPMP),position = pd)+
+          theme_minimal()+
+          labs(#title = "Aggregate PMPs for each hypothesis with increasing number of studies",
+                title=x$pop,
+                # title=paste0("MPCTH: ",str_extract(x$pop, "H."),str_split(x$pop, ':', simplify = TRUE)[,2]),
+                # subtitle = paste0(x$hypothesis_test, " (MPCTH: ",str_extract(a$pop, "H."),str_split(a$pop, ':', simplify = TRUE)[,2], ")"),
+                subtitle = paste0(x$hypothesis_test, " (",x$n, ")"),
+                x="Number of aggregated studies",
+                #x=" ",
+                y="Aggregate PMP")+
+          theme(text = element_text(size = 9),
+                plot.title = element_text(face="bold", size=11),
+                #  axis.text.x = element_text(size = 8, colour = rep(c(lightness(col.H1, scalefac(0.70)),lightness(col.Hc, scalefac(0.70))), times=20)),
+                legend.title = element_text(size = 8),
+                #plot.subtitle = element_text(hjust = 0.5), #center aligned subtitle
+                #  plot.margin = unit(c(0.5,1.1,0,0.2), "cm"),
+                legend.position="bottom"
+                # legend.text = element_text(size = 10),
+          )+
+          scale_colour_manual(values = unname(sub.colors),labels=names(sub.colors),name = "Hypothesis")
+      
+  return(pplot)
 }
 
-mu<-aggregatePMP(dat,
-            hyp=c("H1", "Hu"),
-            studies=10
-            ) %>% 
-  create_median_plot_data(pop = "TRUE_Hu",n=c("n300")) %>% 
-  median_plot(hyp_input=c("i", "u"))
+# a$pop
+# 
+# dat$populations
+# sub('.*_', '', a$pop)
+# sub(".*_", "", a$pop)
+# str_split(a$pop,)
+# str_extract( a$pop,"_H.")
+# 
+# 
+# str_split(names(dat$populations)[10], "_", simplify = TRUE)[2] %>% 
+#   str_extract("H.")
 
-m1<-aggregatePMP(dat,
-                 hyp=c("H1", "Hu"),
-                 studies=10
-) %>% 
-  create_median_plot_data(pop = "TRUE_H1",n=c("n300")) %>% 
-  median_plot(hyp_input=c("i", "u"))
-
-acc1u<-aggregatePMP(dat,
-             hyp=c("H1", "Hu"),
-             studies=10
-) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="TRUE_Hu")) %>% 
-  acc_lineplot()
-
+# # ###### temp #########
+# 
+# hyp_input<-c("1", "u")
+# library(highcharter)
+# 
+# median_plot<-function(plot_list, #list with plot data created with create_median_plot_data()
+#                       hyp_input # index of hte hypotheses of interest
+#                       ){
+#   plot_data<-  plot_list$plot_data
+#   plot_data%>%
+#     hchart("scatter",
+#            hcaes(x=t, y=median_aggrPMP,
+#                  group=factor(Hypothesis,levels = unique(plot_data$Hypothesis))
+#            ),
+#            color=plot_data$color[1:length(hyp_input)],
+#            name=plot_data$name[1:length(hyp_input)],
+#            id=letters[1:length(unique(plot_data$Hypothesis))]
+#     )%>%
+#     hc_tooltip(enabled=TRUE,
+#                valueDecimals=2)%>%
+#     hc_yAxis(labels=list(enabled=TRUE),
+#              #reversed=TRUE,
+#              title=list(text="Aggregated PMPs"),
+#              gridLineWidth=0
+#              
+#              )%>%
+#     hc_xAxis(labels=list(style=list(color="black", fontSize="12px")),
+#              title=list(text="Number of aggregated studies")
+#              # opposite=TRUE
+#     )%>%
+#     hc_legend(enabled=TRUE,
+#               verticalAlign = "bottom",
+#               align="left",
+#               title=list(text="Hypotheses"
+#               )) %>% 
+#     hc_title(text="Variation of aggregate PMPs for each hypothesis across iterations",
+#              align="left") %>% 
+#     hc_subtitle(text=paste(paste0("H",hyp_input), collapse = " vs. "),
+#                 align="left") %>% 
+#     hc_add_series(
+#       plot_data,
+#       "errorbar", 
+#       hcaes(y = median_aggrPMP, x = t, low = lb_aggrPMP, high = ub_aggrPMP,
+#             group = factor(Hypothesis, levels = unique(plot_data$Hypothesis))
+#       ),
+#       color=plot_data$color[1:length(hyp_input)],
+#       linkedTo = letters[1:length(unique(plot_data$Hypothesis))],
+#       enableMouseTracking = TRUE,
+#       showInLegend = FALSE,
+#       grouping=TRUE,
+#       groupPadding=0.3
+#     ) 
+#   
+#   
+# }
+# 
+# 
+# mu<-aggregatePMP(dat,
+#             hyp=c("H1", "Hu"),
+#             studies=10
+#             ) %>% 
+#   create_median_plot_data(pop = "TRUE_Hu",n=c("n300")) %>% 
+#   median_plot(hyp_input=c("i", "u"))
+# 
+# m1<-aggregatePMP(dat,
+#                  hyp=c("H1", "Hu"),
+#                  studies=10
+# ) %>% 
+#   create_median_plot_data(pop = "TRUE_H1",n=c("n300")) %>% 
+#   median_plot(hyp_input=c("i", "u"))
+# 
+# acc1u<-aggregatePMP(dat,
+#              hyp=c("H1", "Hu"),
+#              studies=10
+# ) %>% 
+#   accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hu="TRUE_Hu")) %>% 
+#   acc_lineplot()
+# 
 
