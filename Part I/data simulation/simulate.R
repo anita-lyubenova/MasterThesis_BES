@@ -7,16 +7,6 @@ library(abind)
 
 source("Part I/data simulation/functions.R")
 
-# custom functions to combine the results from the parallelized for-loops 
-#add a 3rd dimension to a matrix 
-abind_3<-function(...){
-  abind(..., along = 3)
-}
-#add a 4th dimension to a matrix 
-abind_4<-function(...){
-  abind(..., along = 4)
-}
-
 # H1_r.13_pcor.3_b321_p0_linear ---------------------------------------------------------------------------------
 
 
@@ -136,3 +126,6 @@ test2<-run_sim(r2=0.13,
 #the results replicate
 test1[[1]]==test2[[1]]
 test1[[2]]==test2[[2]]
+
+saveRDS(test1,"Part I/data simulation/output/test1.rds")
+saveRDS(test2,"Part I/data simulation/output/test2.rds")

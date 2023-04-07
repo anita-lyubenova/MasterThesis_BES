@@ -209,7 +209,10 @@ run_sim<-function(r2=0.13,
                             ratio_beta=ratio_beta,
                             p=0,
                             model="linear",
-                            seed=seed)
+                            seed=seed,
+                            iterations=iterations,
+                            studies=studies,
+                            n=n)
   
   return(BF_list)
   
