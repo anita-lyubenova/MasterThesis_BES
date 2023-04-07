@@ -127,5 +127,5 @@ test2<-run_sim(r2=0.13,
 test1[[1]]==test2[[1]]
 test1[[2]]==test2[[2]]
 
-saveRDS(test1,"Part I/data simulation/output/test1.rds")
-saveRDS(test2,"Part I/data simulation/output/test2.rds")
+# saveRDS(test1,"Part I/data simulation/output/test1.rds")
+# saveRDS(test2,"Part I/data simulation/output/test2.rds")
