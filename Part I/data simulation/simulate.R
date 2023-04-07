@@ -5,7 +5,7 @@ library(doRNG)
 library(doSNOW)
 library(abind)
 
-source("Part I/data simulation/functions.R")
+source("Part I/data simulation/simulation functions.R")
 
 # H1_r.13_pcor.3_b321_p0_linear ---------------------------------------------------------------------------------
 
