@@ -19,148 +19,40 @@ abind_4<-function(...){
 
 # H1_r.13_pcor.3_b321_p0_linear ---------------------------------------------------------------------------------
 
-#Simulation conditions
-n = c(50,75,100,150,200,300)
-studies<-30 #studies
-iterations=1000
-iter<-studies*iterations # 10 iterations for each of the 4 studies
-hypothesis=c("V1>V2>V3")
-s<-1
 
-cl <- makeCluster(7)
-registerDoSNOW(cl)
+H1_r.13_pcor.3_b321_p0_linear <-
+      run_sim(r2=0.13,
+             pcor=0.3,
+             hypothesis="V1>V2>V3",
+             ratio_beta=c(3,2,1),
+             p=0,
+             n = c(50,75,100,150,200,300),
+             model="linear",
+             studies=30,
+             iterations=1000,
+             ncores=7,
+             chunkSize=2,
+             seed=123)
 
-# #setting seed
-
-rng <- RNGseq(length(n)* iter, 123)
-#add progress bar
-iterations <- length(n)*iter # total number of conditions - not sure if this actually matters
-pb <- txtProgressBar(max = iterations, style = 3)
-progress <- function(x) setTxtProgressBar(pb, x)
-opts <- list(progress = progress)
-#end progress bar options
-
-# run standard nested foreach loops
-## foreach loops
-system.time(
-  
-  H1_r.13_pcor.3_b321_p0_linear <- 
-    
-    #n-loop: sample size
-    foreach(s = 1:length(n), #,
-            .combine=abind_3,
-            .options.snow = opts, #add progress bar
-            .packages = c("tidyverse","magrittr", "furrr", "MASS",
-                          "mvtnorm", "bain", "foreach", "doParallel")
-    ) %:% 
-    
-    #i-loop: iterations
-    foreach(i = 1:iter, #iterations
-            r=rng[(s-1)*iter + 1:iter],
-            .combine = rbind,
-            .packages = c("tidyverse","magrittr", "furrr", "MASS",
-                          "mvtnorm", "bain", "foreach", "doParallel")
-    )%dopar% {
-      
-      # set RNG seed
-      rngtools::setRNG(r)
-      
-      fc<-single_sim(r2=0.13,  # R-squared of the regression model
-                     pcor=0.3,  # correlation between the predictors
-                     ratio_beta=c(3,2,1),  # a numeric vector with the beta coefficients;  defines the truth in the population;
-                     p = 0,
-                     n=n[s],  #sample size
-                     model="linear"  #linear, logistic or probit regression
-      )$m %>% 
-        bain(hypothesis = "V1>V2>V3")%$%fit[1,c("Fit", "Com")] 
-      
-      BF<-as.numeric(c(fc[1]/fc[2], (1-fc[1])/(1-fc[2]))) %>%
-        c(.,1) %>% 
-        setNames(c("H1", "Hc", "Hu"))
-      
-      
-    } 
-  
-  
-)#system.time
-#time: 7cl - about 13.508 min
-close(pb)
-stopCluster(cl) 
 saveRDS(H1_r.13_pcor.3_b321_p0_linear,"Part I/data simulation/output/H1_r.13_pcor.3_b321_p0_linear.rds")
 
 
 
 
 # H1_r.13_pcor.3_b321_p.50_linear ---------------------------------------------------------------------------------
-
-#Simulation conditions
-n = c(50,75,100,150,200,300)
-studies<-30 #studies
-iterations=1000
-iter<-studies*iterations # 10 iterations for each of the 4 studies
-hypothesis=c("V1>V2>V3")
-s<-1
-
-cl <- makeCluster(7)
-registerDoSNOW(cl)
-
-# #setting seed
-
-rng <- RNGseq(length(n)* iter, 456)
-#add progress bar
-iterations <- length(n)*iter # total number of conditions - not sure if this actually matters
-pb <- txtProgressBar(max = iterations, style = 3)
-progress <- function(x) setTxtProgressBar(pb, x)
-opts <- list(progress = progress)
-#end progress bar options
-
-# run standard nested foreach loops
-## foreach loops
-system.time(
-  
-  H1_r.13_pcor.3_b321_p.50_linear <- 
-    
-    #n-loop: sample size
-    foreach(s = 1:length(n), #,
-            .combine=abind_3,
-            .options.snow = opts, #add progress bar
-            .packages = c("tidyverse","magrittr", "furrr", "MASS",
-                          "mvtnorm", "bain", "foreach", "doParallel")
-    ) %:% 
-    
-    #i-loop: iterations
-    foreach(i = 1:iter, #iterations
-            r=rng[(s-1)*iter + 1:iter],
-            .combine = rbind,
-            .packages = c("tidyverse","magrittr", "furrr", "MASS",
-                          "mvtnorm", "bain", "foreach", "doParallel")
-    )%dopar% {
-      
-      # set RNG seed
-      rngtools::setRNG(r)
-      
-      fc<-single_sim(r2=0.13,  # R-squared of the regression model
-                     pcor=0.3,  # correlation between the predictors
-                     ratio_beta=c(3,2,1),  # a numeric vector with the beta coefficients;  defines the truth in the population;
-                     p = 0.68,
-                     n=n[s],  #sample size
-                     model="linear"  #linear, logistic or probit regression
-      )$m %>% 
-        bain(hypothesis = "V1>V2>V3")%$%fit[1,c("Fit", "Com")] 
-      
-      BF<-as.numeric(c(fc[1]/fc[2], (1-fc[1])/(1-fc[2]))) %>%
-        c(.,1) %>% 
-        setNames(c("H1", "Hc", "Hu"))
-      
-      
-    } 
-  
-  
-)#system.time
-#time: 7cl - about 1h 15 min
-close(pb)
-stopCluster(cl) 
-
+H1_r.13_pcor.3_b321_p0_linear <-
+  run_sim(r2=0.13,
+          pcor=0.3,
+          hypothesis="V1>V2>V3",
+          ratio_beta=c(3,2,1),
+          p=0.50,
+          n = c(50,75,100,150,200,300),
+          model="linear",
+          studies=30,
+          iterations=1000,
+          ncores=7,
+          chunkSize=2,
+          seed=123)
 saveRDS(H1_r.13_pcor.3_b321_p.50_linear,"Part I/data simulation/output/H1_r.13_pcor.3_b321_p.50_linear.rds")
 
 
@@ -168,143 +60,40 @@ saveRDS(H1_r.13_pcor.3_b321_p.50_linear,"Part I/data simulation/output/H1_r.13_p
 
 # H1_r.13_pcor.3_b321_p.68_linear ---------------------------------------------------------------------------------
 
-#Simulation conditions
-n = c(50,75,100,150,200,300)
-studies<-30 #studies
-iterations=1000
-iter<-studies*iterations # 10 iterations for each of the 4 studies
-hypothesis=c("V1>V2>V3")
-s<-1
-
-cl <- makeCluster(7)
-registerDoSNOW(cl)
-
-# #setting seed
-
-rng <- RNGseq(length(n)* iter, 456)
-#add progress bar
-iterations <- length(n)*iter # total number of conditions - not sure if this actually matters
-pb <- txtProgressBar(max = iterations, style = 3)
-progress <- function(x) setTxtProgressBar(pb, x)
-opts <- list(progress = progress)
-#end progress bar options
-
-# run standard nested foreach loops
-## foreach loops
-system.time(
-  
-  H1_r.13_pcor.3_b321_p.68_linear <- 
-    
-    #n-loop: sample size
-    foreach(s = 1:length(n), #,
-            .combine=abind_3,
-            .options.snow = opts, #add progress bar
-            .packages = c("tidyverse","magrittr", "furrr", "MASS",
-                          "mvtnorm", "bain", "foreach", "doParallel")
-    ) %:% 
-    
-    #i-loop: iterations
-    foreach(i = 1:iter, #iterations
-            r=rng[(s-1)*iter + 1:iter],
-            .combine = rbind
-    )%dopar% {
-      
-      # set RNG seed
-      rngtools::setRNG(r)
-      
-      fc<-single_sim(r2=0.13,  # R-squared of the regression model
-                     pcor=0.3,  # correlation between the predictors
-                     ratio_beta=c(3,2,1),  # a numeric vector with the beta coefficients;  defines the truth in the population;
-                     p = 0.68,
-                     n=n[s],  #sample size
-                     model="linear"  #linear, logistic or probit regression
-      )$m %>% 
-        bain(hypothesis = "V1>V2>V3")%$%fit[1,c("Fit", "Com")] 
-      
-      BF<-as.numeric(c(fc[1]/fc[2], (1-fc[1])/(1-fc[2]))) %>%
-        c(.,1) %>% 
-        setNames(c("H1", "Hc", "Hu"))
-      
-      
-    } 
-  
-  
-)#system.time
-#time: 7cl - about 1h 15 min
-close(pb)
-stopCluster(cl) 
+H1_r.13_pcor.3_b321_p.68_linear <-
+  run_sim(r2=0.13,
+          pcor=0.3,
+          hypothesis="V1>V2>V3",
+          ratio_beta=c(3,2,1),
+          p=0.68,
+          n = c(50,75,100,150,200,300),
+          model="linear",
+          studies=30,
+          iterations=1000,
+          ncores=7,
+          chunkSize=2,
+          seed=123)
 
 saveRDS(H1_r.13_pcor.3_b321_p.68_linear,"Part I/data simulation/output/H1_r.13_pcor.3_b321_p.68_linear.rds")
 
 
-
 # Hc_r.13_pcor.3_b123_p0_linear ---------------------------------------------------------------------------------
 
-#Simulation conditions
-n = c(50,75,100,150,200,300)
-studies<-30 #studies
-iterations=1000
-iter<-studies*iterations # 10 iterations for each of the 4 studies
-hypothesis=c("V1>V2>V3")
-s<-1
-
-cl <- makeCluster(7)
-registerDoSNOW(cl)
-
-# #setting seed
-
-rng <- RNGseq(length(n)* iter, 123)
-#add progress bar
-iterations <- length(n)*iter # total number of conditions - not sure if this actually matters
-pb <- txtProgressBar(max = iterations, style = 3)
-progress <- function(x) setTxtProgressBar(pb, x)
-opts <- list(progress = progress)
-#end progress bar options
-
-# run standard nested foreach loops
-## foreach loops
-system.time(
   
-  Hc_r.13_pcor.3_b123_p0_linear <- 
-    
-    #n-loop: sample size
-    foreach(s = 1:length(n), #,
-            .combine=abind_3,
-            .options.snow = opts, #add progress bar
-            .packages = c("tidyverse","magrittr", "furrr", "MASS",
-                          "mvtnorm", "bain", "foreach", "doParallel")
-    ) %:% 
-    
-    #i-loop: iterations
-    foreach(i = 1:iter, #iterations
-            r=rng[(s-1)*iter + 1:iter],
-            .combine = rbind
-    )%dopar% {
-      
-      # set RNG seed
-      rngtools::setRNG(r)
-      
-      fc<-single_sim(r2=0.13,  # R-squared of the regression model
-                     pcor=0.3,  # correlation between the predictors
-                     ratio_beta=c(1,2,3),  # a numeric vector with the beta coefficients;  defines the truth in the population;
-                     p = 0,
-                     n=n[s],  #sample size
-                     model="linear"  #linear, logistic or probit regression
-      )$m %>% 
-        bain(hypothesis = "V1>V2>V3")%$%fit[1,c("Fit", "Com")] 
-      
-      BF<-as.numeric(c(fc[1]/fc[2], (1-fc[1])/(1-fc[2]))) %>%
-        c(.,1) %>% 
-        setNames(c("H1", "Hc", "Hu"))
-      
-      
-    } 
-  
-  
-)#system.time
-#time: 7cl - about 13.508 min
-close(pb)
-stopCluster(cl) 
+Hc_r.13_pcor.3_b123_p0_linear <- 
+  run_sim(r2=0.13,
+          pcor=0.3,
+          hypothesis="V1>V2>V3",
+          ratio_beta=c(1,2,3),
+          p=0,
+          n = c(50,75,100,150,200,300),
+          model="linear",
+          studies=30,
+          iterations=1000,
+          ncores=7,
+          chunkSize=2,
+          seed=123)
+
 saveRDS(Hc_r.13_pcor.3_b123_p0_linear,"Part I/data simulation/output/Hc_r.13_pcor.3_b123_p0_linear.rds")
 
 
@@ -312,139 +101,38 @@ saveRDS(Hc_r.13_pcor.3_b123_p0_linear,"Part I/data simulation/output/Hc_r.13_pco
 
 
 
-# test ---------------------------------------------------------------------------------------
-#run the same small scale simulation to confirm the structure and check the reproducibility
-
-##test1--------------------------------------------
-#Simulation conditions
-n = c(50,100)
-studies<-4 #studies
-iterations=10
-iter<-studies*iterations # 10 iterations for each of the 4 studies
-hypothesis="V1>V2>V3"
-s<-1
+#reproducibility test ---------------------------------------------------------------------------------------
+#run twice the same small scale simulation to confirm the structure and check the reproducibility
 
 
+test1<-run_sim(r2=0.13,
+        pcor=0.3,
+        hypothesis="V1>V2>V3",
+        ratio_beta=c(3,2,1),
+        p=0,
+        n = c(50,75),
+        model="linear",
+        studies=2,
+        iterations=5,
+        ncores=3,
+        chunkSize=2,
+        seed=123
+)
 
-cl <- makeCluster(3)
-registerDoSNOW(cl)
+test2<-run_sim(r2=0.13,
+               pcor=0.3,
+               hypothesis="V1>V2>V3",
+               ratio_beta=c(3,2,1),
+               p=0,
+               n = c(50,75),
+               model="linear",
+               studies=2,
+               iterations=5,
+               ncores=3,
+               chunkSize=2,
+               seed=123
+)
 
-# #setting seed
-
-rng <- RNGseq(length(n)* iter, 123)
-#add progress bar
-iterations <- length(n)*iter # total number of conditions - not sure if this actually matters
-pb <- txtProgressBar(max = iterations, style = 3)
-progress <- function(x) setTxtProgressBar(pb, x)
-opts <- list(progress = progress)
-#end progress bar options
-
-# run standard nested foreach loo
-## foreach loops
-system.time(
-  
-  test1 <- 
-    
-    #n-loop: sample size
-    foreach(s = 1:length(n), #,
-            .combine=abind_3,
-            .options.snow = opts, #add progress bar
-            .packages = c("tidyverse","magrittr", "furrr", "MASS",
-                          "mvtnorm", "bain", "foreach", "doParallel")
-    ) %:% 
-    
-    #i-loop: iterations
-    foreach(i = 1:iter, #iterations
-            r=rng[(s-1)*iter + 1:iter],
-            .combine = rbind,
-            .packages = c("tidyverse","magrittr", "furrr", "MASS",
-                          "mvtnorm", "bain", "foreach", "doParallel")
-    )%dopar% {
-      
-      # set RNG seed
-      rngtools::setRNG(r)
-      
-      fc<-single_sim(r2=0.13,  # R-squared of the regression model
-                     pcor=0.3,  # correlation between the predictors
-                     ratio_beta=c(3,2,1),  # a numeric vector with the beta coefficients;  defines the truth in the population;
-                     p = 0,
-                     n=n[s],  #sample size
-                     model="linear"  #linear, logistic or probit regression
-      )$m %>% 
-        bain(hypothesis = "V1>V2>V3")%$%fit[1,c("Fit", "Com")] 
-      
-      BF<-as.numeric(c(fc[1]/fc[2], (1-fc[1])/(1-fc[2]))) %>%
-        c(.,1) %>% 
-        setNames(c("H1", "Hc", "Hu")) 
-      
-    } 
-  
-  
-)#system.time
-#time: 7cl - about 1h 15 min
-close(pb)
-stopCluster(cl) 
-
-
-## test 2 ----------------------------
-cl <- makeCluster(3)
-registerDoSNOW(cl)
-
-# #setting seed
-
-rng <- RNGseq(length(n)* iter, 123)
-#add progress bar
-iterations <- length(n)*iter # total number of conditions - not sure if this actually matters
-pb <- txtProgressBar(max = iterations, style = 3)
-progress <- function(x) setTxtProgressBar(pb, x)
-opts <- list(progress = progress)
-#end progress bar options
-
-# run standard nested foreach loo
-## foreach loops
-system.time(
-  
-  test2 <- 
-    
-    #n-loop: sample size
-    foreach(s = 1:length(n), #,
-            .combine=abind_3,
-            .options.snow = opts, #add progress bar
-            .packages = c("tidyverse","magrittr", "furrr", "MASS",
-                          "mvtnorm", "bain", "foreach", "doParallel")
-    ) %:% 
-    
-    #i-loop: iterations
-    foreach(i = 1:iter, #iterations
-            r=rng[(s-1)*iter + 1:iter],
-            .combine = rbind,
-            .packages = c("tidyverse","magrittr", "furrr", "MASS",
-                          "mvtnorm", "bain", "foreach", "doParallel")
-    )%dopar% {
-      
-      # set RNG seed
-      rngtools::setRNG(r)
-      
-      fc<-single_sim(r2=0.13,  # R-squared of the regression model
-                     pcor=0.3,  # correlation between the predictors
-                     ratio_beta=c(3,2,1),  # a numeric vector with the beta coefficients;  defines the truth in the population;
-                     p = 0,
-                     n=n[s],  #sample size
-                     model="linear"  #linear, logistic or probit regression
-      )$m %>% 
-        bain(hypothesis = "V1>V2>V3")%$%fit[1,c("Fit", "Com")] 
-      
-      BF<-as.numeric(c(fc[1]/fc[2], (1-fc[1])/(1-fc[2]))) %>%
-        c(.,1) %>% 
-        setNames(c("H1", "Hc", "Hu"))
-      
-    } 
-  
-  
-)#system.time
-#time: 7cl - about 1h 15 min
-close(pb)
-stopCluster(cl) 
-
-#the results replicate!
-test1==test2
+#the results replicate
+test1[[1]]==test2[[1]]
+test1[[2]]==test2[[2]]

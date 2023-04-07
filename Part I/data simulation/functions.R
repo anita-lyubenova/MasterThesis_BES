@@ -100,14 +100,122 @@ single_sim<-function(r2,  # R-squared of the regression model
   )
 }
 #test
-a<-single_sim(r2=0.13,  # R-squared of the regression model
-              pcor=0.3,  # correlation between the predictors
-              ratio_beta=c(3,2,1),  # a numeric vector with the beta coefficients;  defines the truth in the population;
-              p = 0.68,
-              n=50,  #sample size
-              model="linear"  #linear, logistic or probit regression
-)
- a
+# a<-single_sim(r2=0.13,  # R-squared of the regression model
+#               pcor=0.3,  # correlation between the predictors
+#               ratio_beta=c(3,2,1),  # a numeric vector with the beta coefficients;  defines the truth in the population;
+#               p = 0.68,
+#               n=50,  #sample size
+#               model="linear"  #linear, logistic or probit regression
+# )
+#  a
+
+run_sim<-function(r2=0.13,
+                  pcor=0.3,
+                  hypothesis="V1>V2>V3",
+                  ratio_beta=c(3,2,1),
+                  p=0,
+                  n = c(50,75,100,150,200,300),
+                  model="linear",
+                  studies=30,
+                  iterations=1000,
+                  ncores=7,
+                  chunkSize,
+                  seed
+                  ){
+  
+  
+  on.exit({
+    try({
+      cat("Attempting to stop cluster\n")
+      stopImplicitCluster()        # package: `doParallel`
+      stopCluster(cl) # package: `parallel`
+    })
+  })
+  
+  iter<-studies*iterations
+  source("Part I/data simulation/functions.R")
+  
+  cl <- makeCluster(ncores)
+  registerDoSNOW(cl)
+  
+  # #setting seed
+  
+  rng <- RNGseq(length(n)* iter, seed)
+  #add progress bar
+  repetitions <- length(n)*iter # total number of conditions - not sure if this actually matters
+  pb <- txtProgressBar(max = repetitions, style = 3)
+  progress <- function(x) setTxtProgressBar(pb, x)
+  opts <- list(progress = progress)
+  #end progress bar options
+  opts.nws <- list(chunkSize=chunkSize)
+  mcoptions <- list(preschedule = FALSE) #dynamic load balancing
+  
+  # run standard nested foreach loops
+  ## foreach loops
+ print( system.time(
+    
+    BF_list <- 
+      
+      #n-loop: sample size
+      foreach(s = 1:length(n), #,
+              .combine=list,
+              .options.snow = opts, #add progress bar
+              .options.nws=opts.nws, # chunkSize option
+              .options.multicore = mcoptions, #dynamic load balacing option
+              .export=c("single_sim", "coefs", "cormat", "gen_dat", "q_glm"),
+              .packages = c("tidyverse","magrittr", "furrr", "MASS",
+                            "mvtnorm", "bain", "foreach", "doParallel")
+      ) %:% 
+      
+      #i-loop: iterations
+      foreach(i = 1:iter, #iterations
+              r=rng[(s-1)*iter + 1:iter],
+              .combine = rbind
+      )%dopar% {
+        
+        # set RNG seed
+        rngtools::setRNG(r)
+        
+        fc<-single_sim(r2=r2,  # R-squared of the regression model
+                       pcor=pcor,  # correlation between the predictors
+                       ratio_beta=ratio_beta,  # a numeric vector with the beta coefficients;  defines the truth in the population;
+                       p = p,
+                       n=n[s],  #sample size
+                       model=model  #linear, logistic or probit regression
+        )$m %>% 
+          bain(hypothesis = hypothesis)%$%fit[1,c("Fit", "Com")] 
+        
+        BF<-as.numeric(c(fc[1]/fc[2], (1-fc[1])/(1-fc[2]))) %>%
+          c(.,1) 
+        
+        
+      } 
+    
+    
+  ))#system.time
+  #time: 7cl - about 1h 15 min
+  close(pb)
+  stopCluster(cl) 
+  
+  BF_list<-lapply(BF_list, function(x) {
+    colnames(x)<-c("H1", "Hc", "Hu")
+    return(x)
+ } )
+  
+  attributes(BF_list)<-list(hypothesis=hypothesis,
+                            complexity="check",
+                            r2=r2,
+                            pcor=pcor,
+                            ratio_beta=ratio_beta,
+                            p=0,
+                            model="linear",
+                            seed=seed)
+  
+  return(BF_list)
+  
+
+}
+
 # BF<-lm.mod %>% 
 #   bain(hypothesis = hypothesis)%$%fit %>%     #$BF.u[c(1,2,4)]
 #   extract(c(1:n.hyp, nrow(.)),c("BF.u", "Com"))
