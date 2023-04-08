@@ -15,7 +15,7 @@ reshapeBFs<-function(BF_list, # a list, where each element (a dataframe, col=hyp
       lapply(BF_list, function(d){
         d<-d %>%
           as.data.frame() %>% 
-          mutate(spl=as.numeric(gl(iterations, studies, iterations*studies)), .before=H1)
+          mutate(spl=as.numeric(gl(iterations, studies, iterations*studies)), .before=1)
         
         d<-split(d, d$spl)
       } )
