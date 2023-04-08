@@ -50,11 +50,26 @@ BF_bind <-do.call(abind, args=list(mget(pop_names), along=5)) %>%
   #and reorder the dims such that the structure is [t,BF_hyp, pop, iter,n]
   aperm(perm=c(1,2,5,3,4)) 
 
-attributes(BF_bind)<-c(attributes(BF_bind),
+
+#add BFuu = 1
+#First, create an array slice for BFuu
+Hu_array<-array(1, dim = c(studies,
+                           1,
+                           length(filenames),
+                           iterations,
+                           length(n)
+                           ))
+#combine the array slicefor BFuu with the main array
+BF_bind2<-abind(BF_bind, Hu_array, along = 2)
+#give the BFuu slice a name "Hu"
+dimnames(BF_bind2)[[2]]<-c("H1", "Hc", "Hu")
+
+
+attributes(BF_bind2)<-c(attributes(BF_bind2),
                        att)
 
-
-saveRDS(BF_bind, "Part I/pre-processing/output/BF_data.rds")
+#save the complete 5d array
+saveRDS(BF_bind2, "Part I/pre-processing/output/BF_data.rds")
 
 
 

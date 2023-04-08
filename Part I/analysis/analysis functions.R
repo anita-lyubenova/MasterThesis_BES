@@ -8,8 +8,9 @@ aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
                        studies=10 #number of studies to aggregate over, max 40
 ){
   hyp_index<-substr(hyp,2,2)
+  search_terms <- paste0(hyp, collapse = "|")
   BF<-x
-  BF<-BF[1:studies,dimnames(BF)[[2]] %in% hyp,,,,drop=FALSE]
+  BF<-BF[1:studies,str_subset(dimnames(BF)[[2]], search_terms),,,,drop=FALSE]
   
   nom<-aperm(BF, perm=c(1,3,4,5,2))
   denom<-rowSums(nom, dims = 4)
