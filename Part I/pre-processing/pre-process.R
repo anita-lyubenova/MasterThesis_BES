@@ -11,7 +11,7 @@ path<-"Part I/data simulation/output"
 
 filenames<-filenames[5:6]
 
-varnames<-paste0("BF_pop_", 1:1:length(filenames))
+varnames<-paste0("BF_pop_", 1:length(filenames))
 
 
 for(i in 1:length(filenames)){
