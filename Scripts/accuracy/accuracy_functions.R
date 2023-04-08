@@ -109,7 +109,7 @@ accuracyPMP<-function(listPMP, #list created with aggregatePMP()
 
 
 acc_corrplot<-function(a, # a list created with accuracyPMP()
-                       object # what should be plotted? acc or TP?
+                       object="acc" # what should be plotted? acc or TP?
 ){
   
   ggcorrplot(as.data.frame(a[object]),   #a$acc,
@@ -127,6 +127,65 @@ acc_corrplot<-function(a, # a list created with accuracyPMP()
          fill="Accuracy"
     )
 }
+a
+#a custom corrlot 
+acc_corrplot<-function(a, # a list created with accuracyPMP()
+                       object="acc", # what should be plotted? acc or TP?
+                       b=NULL #optional: another list created with accuracyPMP to plot differences in acc
+){
+  #create the data to plot
+  if(is.null(b)){
+    x<-
+      a[[object]] %>% 
+      reshape2::melt() %>% 
+      mutate(n=factor(gsub('n','',Var2), levels=c(n)),
+             t=Var1) %>% 
+      select(-Var1, -Var2)
+    
+   apply(a[[object]], c(1,2), function(w) {
+                    w[which(w>.87)[1]]
+   }
+   ) 
+    
+   q<-a[[object]]
+   q[-which(q>.86 & q<.88)]<-NA
+   label<-reshape2::melt(q) %>% 
+     pull(value) %>% 
+     round(digits=2)
+  }else{
+    #compute differences in accuracies & reshape
+  }
+  
+  label<-round(x$value, digits = 2)
+    
+  ggplot(data = x, mapping = aes(x=t, y=n, fill=value))+
+    geom_tile(color = "white")+
+    scale_fill_gradientn(colours = c("red", "white", "#7fc97f"),
+                         limit = c(0, 1),
+                         space = "Lab",
+                         name = "Accuracy",
+                         values = scales::rescale(c(0,0.87,1))
+                         )+
+    geom_text(mapping = aes(x=t, y=n),
+              label = label,
+              size = 4)+
+  
+    theme_minimal()
+  
+  
+  
+  
+}
+
+################################################################################### t
+
+p <- ggplot2::ggplot(data = x, mapping = ggplot2::aes_string(x = "t", 
+                                                                y = "n", fill = "value"))
+p <- p + ggplot2::geom_tile(color = "white")
+
+
+################################################################################### t
+
 
 
 acc_lineplot<-function(x){

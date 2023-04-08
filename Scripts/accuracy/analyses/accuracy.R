@@ -5,27 +5,10 @@
 
 load("Outputs/accuracy/dat_merged.RData")
 source("Scripts/accuracy/accuracy_functions.R")
-
+library(magrittr)
 
 #Diff---------------------------------------------------
 # Performance measure: Difference in accuracy
-
-#regular lineplots
-H1u_H1_HETEROGp1.5_corrplot<- aggregatePMP(x=dat,
-                                  h=c("H1","Hu"),
-                                  studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1",Hu="TRUE_Hc", Hu="HETEROG_H1p1.5")) %>% 
-  acc_corrplot()
-H1cu_H1_HETEROGp1.5_corrplot<-aggregatePMP(x=dat,
-                                  h=c("H1" ,"Hc","Hu"),
-                                  studies = 20) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1",Hc="TRUE_Hc", Hu="HETEROG_H1p1.5")) %>% 
-  acc_corrplot()
-
-H1u_H1_HETEROGp1.5/H1cu_H1_HETEROGp1.5
-
-
-
 
 #difference in accuracy
 H1u_H1_HETEROGp1.5<- aggregatePMP(x=dat,
@@ -50,9 +33,9 @@ large.acc[large.acc==FALSE]<-"red"
 large.acc<-reshape2::melt(large.acc, na.rm = TRUE)
 lab.col<-loss                                 
 lab.col[H1u_H1_HETEROGp1.5$acc >.87 &H1cu_H1_HETEROGp1.5$acc >.87]<-"green"
-  lab.col[H1u_H1_HETEROGp1.5$acc >.87 &H1cu_H1_HETEROGp1.5$acc <.87]<-"red"
-    lab.col[H1u_H1_HETEROGp1.5$acc <.87 &H1cu_H1_HETEROGp1.5$acc <.87]<-"black"  
-      lab.col<-reshape2::melt(lab.col, na.rm = TRUE)
+lab.col[H1u_H1_HETEROGp1.5$acc >.87 &H1cu_H1_HETEROGp1.5$acc <.87]<-"red"
+lab.col[H1u_H1_HETEROGp1.5$acc <.87 &H1cu_H1_HETEROGp1.5$acc <.87]<-"black"  
+lab.col<-reshape2::melt(lab.col, na.rm = TRUE)
       
 
 
@@ -132,3 +115,9 @@ c<-aggregatePMP(x=dat,
   acc_lineplot()
 c
 
+
+a<-aggregatePMP(dat,
+             hyp=c("H1","Hc","Hu"),
+             studies=20
+) %>%
+  accuracyPMP(hyp_to_pop = c(H1="TRUE_H1", Hc="TRUE_Hc", Hu="HETEROG_H1p.75"))
