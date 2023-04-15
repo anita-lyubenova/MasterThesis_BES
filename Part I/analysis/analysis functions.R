@@ -200,7 +200,8 @@ accuracyPMP<-function(listPMP, #list created with aggregatePMP()
        studies=listPMP$studies,
        populations=listPMP$populations[hyp_to_pop],
        hypothesis_test=listPMP$hypothesis_test,
-       hyp_to_pop=hyp_to_pop
+       hyp_to_pop=hyp_to_pop,
+       n=listPMP$n
   )
   
 }
@@ -226,3 +227,4 @@ acc_corrplot<-function(a, # a list created with accuracyPMP()
          fill="Accuracy"
     )
 }
+
