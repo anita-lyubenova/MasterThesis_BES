@@ -49,36 +49,38 @@ p.plot1<-ggplot(ps) +
                  binwidth = 0.1, fill = "#F8766D", color = scales::muted("#F8766D",50))+
   #scale_x_continuous(breaks = seq(0,2, by=0.1))+
   geom_vline(xintercept=mean.win1, color="black")+
-  geom_text(mapping = aes(x=mean.win1+0.2,
+  geom_text(mapping = aes(x=mean.win1+0.3,
                           y=22
   ),
   label=paste0("M[win]==", round(mean.win1, 2)), 
   color="black",
-  parse = FALSE)+
+  parse = TRUE)+
   theme_minimal()+
   scale_x_continuous(breaks = seq(0,2, 0.2))+
-  labs(x="p", y="Meta-analyses count")
+  labs(x="p", y="Meta-analyses count",
+       title="Distribution of 10% winsorized p across 150 meta-analyses")+
+  theme(plot.title = element_text(size=7))
 p.plot1
 
-ggsave("Part I/simulation planning/output/Methods_f1_pdist.png", plot = p.plot1, width = 4, height = 2.5, units = "in", dpi = 300, bg="white")
+ggsave("Part I/simulation planning/output/hist_p.png", plot = p.plot1, width = 4, height = 2.5, units = "in", dpi = 300, bg="white")
 
 
-p.plot2<-ggplot(ps.long) +
-  geom_histogram(aes(x = value, fill = variable),
-                 binwidth = 0.1, color = "black", alpha=0.7)+
-  geom_vline(mapping = aes(xintercept=mean.win, color=variable))+
-  geom_text(mapping = aes(x=mean.win+0.25,
-                          y=38,
-                          label=paste0("M[win]==", round(mean.win, 2)), 
-                          color=variable
-                          ),
-            parse = TRUE)+
-  scale_x_continuous(breaks = seq(0,2,0.2))+
-  facet_wrap(~variable)+
-  theme_bw()+
-  labs(x="p", y="Count")+
-  theme(legend.position = "none")
-p.plots
+# p.plot2<-ggplot(ps.long) +
+#   geom_histogram(aes(x = value, fill = variable),
+#                  binwidth = 0.1, color = "black", alpha=0.7)+
+#   geom_vline(mapping = aes(xintercept=mean.win, color=variable))+
+#   geom_text(mapping = aes(x=mean.win+0.25,
+#                           y=38,
+#                           label=paste0("M[win]==", round(mean.win, 2)), 
+#                           color=variable
+#                           ),
+#             parse = TRUE)+
+#   scale_x_continuous(breaks = seq(0,2,0.2))+
+#   facet_wrap(~variable)+
+#   theme_bw()+
+#   labs(x="p", y="Count")+
+#   theme(legend.position = "none")
+# p.plots
 
 
 
@@ -86,7 +88,6 @@ p.plots
 
 
 # SAMPLE SIZES --------------------------------------------------------------------------------------------
-# IMPORT DATA ----------------------------------------------------------------------------------------------------
 
 #list all sheets
 all.sheets.raw<-excel_sheets("Part I/simulation planning/Linden & Hönekopp raw data.xlsx")
@@ -116,12 +117,17 @@ hist(n.win)
 ss<-data.frame(raw.n=rawdat$N,
                nwin1=winsor(rawdat$N, trim = .1))
 
-ggplot(ss) +
+dist_n<-ggplot(ss) +
   geom_histogram(aes(x = nwin1),
                  binwidth = 10, fill = "#619CFF", color = scales::muted("#619CFF",50))+
   scale_x_continuous(breaks = seq(0,500, by=50))+
   scale_y_continuous(breaks=seq(0,800, 100))+
   theme_minimal()+
-  labs(x="Sample size", y= "Meta-analyses count")
+  labs(x="Sample size", y= "Meta-analyses count",
+       title = "Distribution of 10% winsorized N across studies included in 150 meta-anayses")+
+  theme(plot.title = element_text(size=7))
 
+
+
+ggsave("Part I/simulation planning/output/hist_n.png", plot = dist_n, width = 4, height = 2.5, units = "in", dpi = 300, bg="white")
 
