@@ -207,7 +207,6 @@ accuracyPMP<-function(listPMP, #list created with aggregatePMP()
 }
 
 
-
 acc_corrplot<-function(a, # a list created with accuracyPMP()
                        object="acc" # what should be plotted? acc or TP?
 ){
@@ -297,20 +296,6 @@ ggplot(data = x, mapping = aes(x=t, y=n, fill=value))+
 }
 
 
-library(scales)
-show_col(viridis_pal(option = "B")(20))
-viridis_pal()(20)
-hcl.pals()
-
-library(colorspace)
-pal<- colorspace::diverging_hcl(6, palette = "Berlin",p2=0.3)
-swatchplot(pal)
-
-library(viridis)
-p<-viridis(6)
-
-pal<-c("black", "#481568FF", "#913640","#D67500", "#FDE725FF", "#1F968BFF")
-# 
 # ##a custom corrlot without scaling
 # acc_corrplot3<-function(a, # a list created with accuracyPMP()
 #                         object="acc", # what should be plotted? acc or TP?
