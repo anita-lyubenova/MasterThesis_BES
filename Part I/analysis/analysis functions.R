@@ -261,24 +261,6 @@ acc_corrplot2<-function(a, # a list created with accuracyPMP()
     #compute differences in accuracies & reshape
   }
 
-ggplot(data = x, mapping = aes(x=t, y=n, fill=value))+
-    geom_tile()+#color = "white"
-    scale_fill_gradientn(colours = c("#481568FF","#AC82C9","#FDE725FF","#1F968BFF"), #  c("#481568FF","#AC82C9","#FDE725FF","#1F968BFF")
-                         limit = c(0, 1),
-                         breaks=c(0,0.10,0.20, 0.30, 0.4,0.50,0.60,0.70,0.80, 0.87, 0.95, 1),
-                         space = "Lab",
-                         name = "Accuracy",
-                         values = scales::rescale(c(0,0.55,0.75,0.82,0.87,0.93,1))
-    )+
-    geom_text(mapping = aes(x=t, y=n),
-              label = label,
-              color= "black",  #"white",
-              size = 3)+
-    geom_point(data = linedat[-nrow(linedat),], mapping = aes(x=x, y=y), inherit.aes = FALSE)+
-    geom_step(data = linedat, mapping = aes(x=x, y=y), inherit.aes = FALSE)+
-    theme_minimal()+
-    theme(legend.position="bottom",
-         legend.key.width=unit(3,"cm"))
   
 pal<-c(  "#1344CD"  ,"#481568FF","#A67DC4" ,"#D5984D", "#FDE725FF","#1F968BFF")
 
