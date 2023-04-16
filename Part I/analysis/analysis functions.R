@@ -230,7 +230,7 @@ acc_corrplot<-function(a, # a list created with accuracyPMP()
 
 
 ##a custom corrlot with a lot of scaling 
-acc_corrplot2<-function(a, # a list created with accuracyPMP()
+acc_corrplot<-function(a, # a list created with accuracyPMP()
                        object="acc", # what should be plotted? acc or TP?
                        b=NULL #optional: another list created with accuracyPMP to plot differences in acc
 ){
@@ -242,26 +242,38 @@ acc_corrplot2<-function(a, # a list created with accuracyPMP()
       reshape2::melt() %>% 
       rename(n=Var2,
              t=Var1) %>%
-      mutate(cat=cut(value, breaks=c(0,0.4,0.5,0.7,0.8,0.9,1)),
-             n=factor(n),
+      mutate(n=factor(n),
              t=factor(t)
       )
-    
+    #show accuracy text only for certain t
     q<-a[[object]]
-    q[-c(1,10,20, 30),]<-NA
-    label<-reshape2::melt(q)%>% 
-      pull(value) %>% 
+    q[-c(1,nrow(q)),]<-NA
+    label.df<-
+      reshape2::melt(q)%>% 
+      mutate(color=case_when(value<=.65 ~ "white",
+                             value>=.56~ "black"
+                             )) %>% 
+      pull(value,color) %>% 
       round(.,digits=2) %>% 
-     # as.character() %>% 
       format(nsmall=2) %>% 
       gsub("^0", "", .) %>% 
       gsub("NA", NA, .)
+    
+    #create line data
+    l<-a[[object]] 
+    ld<-data.frame(x=NA,
+                   y=1:ncol(l))
+    for(i in 1:ncol(l)){
+      ld[i,"x"]<- suppressWarnings(min(which(l[,i]>=0.865)))
+    }
+    ld[ld$x=="Inf",]<-c(nrow(l)-0.3,
+                        ld[ld$x=="Inf",]$y+1
+                                    )
     
   }else{
     #compute differences in accuracies & reshape
   }
 
-  
 pal<-c(  "#1344CD"  ,"#481568FF","#A67DC4" ,"#D5984D", "#FDE725FF","#1F968BFF")
 
 ggplot(data = x, mapping = aes(x=t, y=n, fill=value))+
@@ -273,18 +285,17 @@ ggplot(data = x, mapping = aes(x=t, y=n, fill=value))+
                        name = "Accuracy",
                        values = scales::rescale(c(0,0.5,0.70,0.8,0.87,1))
   )+
+  geom_point(data = ld[unique(ld$y),], mapping = aes(x=x, y=y), inherit.aes = FALSE)+
+  geom_step(data = ld, mapping = aes(x=x, y=y), inherit.aes = FALSE)+
   geom_text(mapping = aes(x=t, y=n),
-            label = label,
-            color= "black",  #"white",
+            label = label.df,
+            color= names(label.df),  #"white",
             size = 3)+
-  # geom_point(data = linedat[-nrow(linedat),], mapping = aes(x=x, y=y), inherit.aes = FALSE)+
-  # geom_step(data = linedat, mapping = aes(x=x, y=y), inherit.aes = FALSE)+
   theme_minimal()+
   theme(legend.position="bottom",
         legend.key.width=unit(3,"cm"))
 }
-linedat<-data.frame(x=c(7,11,17,18,24,30),
-                    y=c(seq(length(unique(x$n)),2,-1),2))
+
 
 library(scales)
 show_col(viridis_pal(option = "B")(20))
@@ -299,77 +310,77 @@ library(viridis)
 p<-viridis(6)
 
 pal<-c("black", "#481568FF", "#913640","#D67500", "#FDE725FF", "#1F968BFF")
-
-##a custom corrlot without scaling
-acc_corrplot3<-function(a, # a list created with accuracyPMP()
-                        object="acc", # what should be plotted? acc or TP?
-                        b=NULL #optional: another list created with accuracyPMP to plot differences in acc
-){
-  #create the data to plot
-  if(is.null(b)){
-    
-    x<-
-      a[[object]] %>% 
-      reshape2::melt() %>% 
-      rename(n=Var2,
-             t=Var1) %>%
-      mutate(cat=cut(value, breaks=c(0,0.4,0.5,0.7,0.8,0.9,1)),
-             n=factor(n),
-             t=factor(t)
-      )
-    
-    q<-a[[object]]
-    q[-c(1, nrow(q)),]<-NA
-    label<-reshape2::melt(q)%>% 
-      pull(value) %>% 
-      round(.,digits=2) %>% 
-      # as.character() %>% 
-      format(nsmall=2) %>% 
-      gsub("^0", "", .) %>% 
-      gsub("NA", NA, .)
-    
-  }else{
-    #compute differences in accuracies & reshape
-  }
-  
-  ggplot(data = x, mapping = aes(x=t, y=n, fill=value))+
-    geom_tile()+#color = "white"
-    scale_fill_gradientn(colours = c("#481568FF","#FDE725FF","#1F968BFF"), #  c("#481568FF","#AC82C9","#FDE725FF","#1F968BFF")
-                         limit = c(0, 1),
-                         breaks=c(0,0.10,0.20, 0.30, 0.4,0.50,0.60,0.70,0.80, 0.87, 0.95, 1),
-                         space = "Lab",
-                         name = "Accuracy",
-                         values = scales::rescale(c(0,0.87,1))
-    )+
-    geom_text(mapping = aes(x=t, y=n),
-              label = label,
-              color= "black",  #"white",
-              size = 3)+
-    # geom_point(data = linedat[-nrow(linedat),], mapping = aes(x=x, y=y), inherit.aes = FALSE)+
-    # geom_step(data = linedat, mapping = aes(x=x, y=y), inherit.aes = FALSE)+
-    theme_minimal()+
-    theme(legend.position="bottom",
-          legend.key.width=unit(3,"cm"))
-}
-
-
-acc_lineplot<-function(x){
-  accdat<-x$acc %>%
-    as.data.frame() %>% 
-    rownames_to_column("t") %>% 
-    reshape2::melt() %>% 
-    rename(n=variable,
-           acc=value)
-  accdat %>% 
-    ggplot(aes(x=factor(t, levels=unique(t)), y=acc, group=n, color=n)) +
-    geom_point()+
-    geom_line()+
-    theme_minimal()+
-    labs(title = x$hypothesis_test,
-         subtitle = paste0("Populations:",paste(x$hyp_to_pop, collapse = ",")),
-         x="studies")+
-    geom_hline(yintercept = 0.87, color="red", linetype="dashed")+
-    scale_y_continuous(breaks = seq(0,1,0.1))+
-    scale_color_manual(values=rev(viridis::viridis(6)))
-  
-}
+# 
+# ##a custom corrlot without scaling
+# acc_corrplot3<-function(a, # a list created with accuracyPMP()
+#                         object="acc", # what should be plotted? acc or TP?
+#                         b=NULL #optional: another list created with accuracyPMP to plot differences in acc
+# ){
+#   #create the data to plot
+#   if(is.null(b)){
+#     
+#     x<-
+#       a[[object]] %>% 
+#       reshape2::melt() %>% 
+#       rename(n=Var2,
+#              t=Var1) %>%
+#       mutate(cat=cut(value, breaks=c(0,0.4,0.5,0.7,0.8,0.9,1)),
+#              n=factor(n),
+#              t=factor(t)
+#       )
+#     
+#     q<-a[[object]]
+#     q[-c(1, nrow(q)),]<-NA
+#     label<-reshape2::melt(q)%>% 
+#       pull(value) %>% 
+#       round(.,digits=2) %>% 
+#       # as.character() %>% 
+#       format(nsmall=2) %>% 
+#       gsub("^0", "", .) %>% 
+#       gsub("NA", NA, .)
+#     
+#   }else{
+#     #compute differences in accuracies & reshape
+#   }
+#   
+#   ggplot(data = x, mapping = aes(x=t, y=n, fill=value))+
+#     geom_tile()+#color = "white"
+#     scale_fill_gradientn(colours = c("#481568FF","#FDE725FF","#1F968BFF"), #  c("#481568FF","#AC82C9","#FDE725FF","#1F968BFF")
+#                          limit = c(0, 1),
+#                          breaks=c(0,0.10,0.20, 0.30, 0.4,0.50,0.60,0.70,0.80, 0.87, 0.95, 1),
+#                          space = "Lab",
+#                          name = "Accuracy",
+#                          values = scales::rescale(c(0,0.87,1))
+#     )+
+#     geom_text(mapping = aes(x=t, y=n),
+#               label = label,
+#               color= "black",  #"white",
+#               size = 3)+
+#     # geom_point(data = linedat[-nrow(linedat),], mapping = aes(x=x, y=y), inherit.aes = FALSE)+
+#     # geom_step(data = linedat, mapping = aes(x=x, y=y), inherit.aes = FALSE)+
+#     theme_minimal()+
+#     theme(legend.position="bottom",
+#           legend.key.width=unit(3,"cm"))
+# }
+# 
+# 
+# acc_lineplot<-function(x){
+#   accdat<-x$acc %>%
+#     as.data.frame() %>% 
+#     rownames_to_column("t") %>% 
+#     reshape2::melt() %>% 
+#     rename(n=variable,
+#            acc=value)
+#   accdat %>% 
+#     ggplot(aes(x=factor(t, levels=unique(t)), y=acc, group=n, color=n)) +
+#     geom_point()+
+#     geom_line()+
+#     theme_minimal()+
+#     labs(title = x$hypothesis_test,
+#          subtitle = paste0("Populations:",paste(x$hyp_to_pop, collapse = ",")),
+#          x="studies")+
+#     geom_hline(yintercept = 0.87, color="red", linetype="dashed")+
+#     scale_y_continuous(breaks = seq(0,1,0.1))+
+#     scale_color_manual(values=rev(viridis::viridis(6)))
+#   
+# }

@@ -101,7 +101,7 @@ datln %>%
                studies=30) %>% 
   accuracyPMP(hyp_to_pop = c(H1="H1_r.13_pcor.3_b321_p0_linear",
                              Hu="Hc_r.13_pcor.3_b123_p0_linear",
-                             Hu="H1_r.13_pcor.3_b321_p.86_linear"
+                             Hu="H1_r.13_pcor.3_b321_p.75_linear"
   )) %>% 
   acc_corrplot2(object = "acc")
 
@@ -112,9 +112,20 @@ cp3.1504.2203_withscaling<-datln %>%
                              Hc="Hc_r.13_pcor.3_b123_p0_linear",
                              Hu="H1_r.13_pcor.3_b321_p.86_linear"
   )) %>% 
-  acc_corrplot2(object = "acc")
+  acc_corrplot(object = "acc")
 
 ggsave("Part I/analysis/output/cp3.1504.2203_withscaling.png", plot = cp3.1504.2203_withscaling, width = 7.5, height = 3.5, units = "in", dpi = 300, bg="white")
+
+cp.1604.1422<-datln %>% 
+  aggregatePMP(hyp=c("H1","Hc","Hu"),
+               studies=30) %>% 
+  accuracyPMP(hyp_to_pop = c(H1="H1_r.13_pcor.3_b321_p0_linear",
+                             Hc="Hc_r.13_pcor.3_b123_p0_linear",
+                             Hu="H1_r.13_pcor.3_b321_p.86_linear"
+  )) %>% 
+  acc_corrplot(object = "acc")
+
+ggsave("Part I/analysis/output/cp.1604.1422.png", plot = cp.1604.1422, width = 7.5, height = 3.5, units = "in", dpi = 300, bg="white")
 
 
 cp2.1504.2159_noscaling<- datln %>% 
