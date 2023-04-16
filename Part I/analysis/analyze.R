@@ -138,3 +138,6 @@ lp.1504.2203<-
                                Hu="H1_r.13_pcor.3_b321_p.86_linear"
     )) %>% 
     acc_lineplot()
+
+ggsave("Part I/analysis/output/lp.1504.2203_noscaling.png", plot = lp.1504.2203,width = 7.5, height = 3.5, units = "in", dpi = 300, bg="white")
+

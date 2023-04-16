@@ -248,7 +248,7 @@ acc_corrplot2<-function(a, # a list created with accuracyPMP()
       )
     
     q<-a[[object]]
-    q[-c(1, nrow(q)),]<-NA
+    q[-c(1,10,20, 30),]<-NA
     label<-reshape2::melt(q)%>% 
       pull(value) %>% 
       round(.,digits=2) %>% 
@@ -274,31 +274,49 @@ ggplot(data = x, mapping = aes(x=t, y=n, fill=value))+
               label = label,
               color= "black",  #"white",
               size = 3)+
-    # geom_point(data = linedat[-nrow(linedat),], mapping = aes(x=x, y=y), inherit.aes = FALSE)+
-    # geom_step(data = linedat, mapping = aes(x=x, y=y), inherit.aes = FALSE)+
+    geom_point(data = linedat[-nrow(linedat),], mapping = aes(x=x, y=y), inherit.aes = FALSE)+
+    geom_step(data = linedat, mapping = aes(x=x, y=y), inherit.aes = FALSE)+
     theme_minimal()+
     theme(legend.position="bottom",
          legend.key.width=unit(3,"cm"))
+  
+pal<-c(  "#1344CD"  ,"#481568FF","#A67DC4" ,"#D5984D", "#FDE725FF","#1F968BFF")
+
+ggplot(data = x, mapping = aes(x=t, y=n, fill=value))+
+  geom_tile()+#color = "white"
+  scale_fill_gradientn(colours =pal, #c("#481568FF","#ACAD94","#A77E82","#D2973F","#FDE725FF","#1F968BFF"), #  c("#481568FF","#AC82C9","#FDE725FF","#1F968BFF")
+                       limit = c(0, 1),
+                       breaks=c(0,0.10,0.20, 0.30, 0.4,0.50,0.60,0.70,0.80, 0.87, 0.95, 1),
+                       space = "Lab",
+                       name = "Accuracy",
+                       values = scales::rescale(c(0,0.5,0.70,0.8,0.87,1))
+  )+
+  geom_text(mapping = aes(x=t, y=n),
+            label = label,
+            color= "black",  #"white",
+            size = 3)+
+  # geom_point(data = linedat[-nrow(linedat),], mapping = aes(x=x, y=y), inherit.aes = FALSE)+
+  # geom_step(data = linedat, mapping = aes(x=x, y=y), inherit.aes = FALSE)+
+  theme_minimal()+
+  theme(legend.position="bottom",
+        legend.key.width=unit(3,"cm"))
 }
-
-library(scales)
-show_col(viridis_pal()(20))
-viridis_pal()(20)
-
-
-RColorBrewer::display.brewer.pal(11,"Spectral")
 linedat<-data.frame(x=c(7,11,17,18,24,30),
                     y=c(seq(length(unique(x$n)),2,-1),2))
+
+library(scales)
+show_col(viridis_pal(option = "B")(20))
+viridis_pal()(20)
+hcl.pals()
+
 library(colorspace)
-pal<- colorspace::diverging_hcl(11, palette = "Berlin",p2=0.3)
+pal<- colorspace::diverging_hcl(6, palette = "Berlin",p2=0.3)
 swatchplot(pal)
 
 library(viridis)
 p<-viridis(6)
-pal<-c(rev(p[1:3]),p[6],p[1:3])
-pal
 
-
+pal<-c("black", "#481568FF", "#913640","#D67500", "#FDE725FF", "#1F968BFF")
 
 ##a custom corrlot without scaling
 acc_corrplot3<-function(a, # a list created with accuracyPMP()
