@@ -125,30 +125,41 @@ cp.1604.1422<-datln %>%
   )) %>% 
   acc_corrplot(object = "acc")
 
-ggsave("Part I/analysis/output/cp.1604.1422.png", plot = cp.1604.1422, width = 7.5, height = 3.5, units = "in", dpi = 300, bg="white")
+ggsave("Part I/analysis/output/cp.1604.1422.png", plot = cp.1604.1422, width = 7, height = 2.6, units = "in", dpi = 300, bg="white")
 
 
-cp2.1504.2159_noscaling<- datln %>% 
+TP.1604.1627<-datln %>% 
   aggregatePMP(hyp=c("H1","Hc","Hu"),
                studies=30) %>% 
   accuracyPMP(hyp_to_pop = c(H1="H1_r.13_pcor.3_b321_p0_linear",
                              Hc="Hc_r.13_pcor.3_b123_p0_linear",
                              Hu="H1_r.13_pcor.3_b321_p.86_linear"
   )) %>% 
-  acc_corrplot3(object = "acc")
+  TP_corrplot()
+ggsave("Part I/analysis/output/TP.1604.1627.png", plot = TP.1604.1627, width = 7, height = 6.6, units = "in", dpi = 300, bg="white")
 
-ggsave("Part I/analysis/output/cp2.1504.2159_noscaling.png", plot = cp2.1504.2159_noscaling,width = 7.5, height = 3.5, units = "in", dpi = 300, bg="white")
 
-
-lp.1504.2203<-  
-  datln %>% 
-    aggregatePMP(hyp=c("H1","Hc","Hu"),
-                               studies=30) %>% 
-    accuracyPMP(hyp_to_pop = c(H1="H1_r.13_pcor.3_b321_p0_linear",
-                               Hc="Hc_r.13_pcor.3_b123_p0_linear",
-                               Hu="H1_r.13_pcor.3_b321_p.86_linear"
-    )) %>% 
-    acc_lineplot()
-
-ggsave("Part I/analysis/output/lp.1504.2203_noscaling.png", plot = lp.1504.2203,width = 7.5, height = 3.5, units = "in", dpi = 300, bg="white")
-
+# cp2.1504.2159_noscaling<- datln %>% 
+#   aggregatePMP(hyp=c("H1","Hc","Hu"),
+#                studies=30) %>% 
+#   accuracyPMP(hyp_to_pop = c(H1="H1_r.13_pcor.3_b321_p0_linear",
+#                              Hc="Hc_r.13_pcor.3_b123_p0_linear",
+#                              Hu="H1_r.13_pcor.3_b321_p.86_linear"
+#   )) %>% 
+#   acc_corrplot3(object = "acc")
+# 
+# ggsave("Part I/analysis/output/cp2.1504.2159_noscaling.png", plot = cp2.1504.2159_noscaling,width = 7.5, height = 3.5, units = "in", dpi = 300, bg="white")
+# 
+# 
+# lp.1504.2203<-  
+#   datln %>% 
+#     aggregatePMP(hyp=c("H1","Hc","Hu"),
+#                                studies=30) %>% 
+#     accuracyPMP(hyp_to_pop = c(H1="H1_r.13_pcor.3_b321_p0_linear",
+#                                Hc="Hc_r.13_pcor.3_b123_p0_linear",
+#                                Hu="H1_r.13_pcor.3_b321_p.86_linear"
+#     )) %>% 
+#     acc_lineplot()
+# 
+# ggsave("Part I/analysis/output/lp.1504.2203_noscaling.png", plot = lp.1504.2203,width = 7.5, height = 3.5, units = "in", dpi = 300, bg="white")
+# 

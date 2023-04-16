@@ -1,7 +1,8 @@
 library(ggcorrplot)
 #library(patchwork)
 library(tidyverse)
-
+library(gridExtra)
+library(ggpubr)
 #a function to compute aggregate PMPs for selected hypotheses from the BFs
 aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
                        hyp=c("H1", "Hu"),
@@ -231,10 +232,9 @@ acc_corrplot<-function(a, # a list created with accuracyPMP()
 ##a custom corrlot with a lot of scaling 
 acc_corrplot<-function(a, # a list created with accuracyPMP()
                        object="acc", # what should be plotted? acc or TP?
-                       b=NULL #optional: another list created with accuracyPMP to plot differences in acc
+                   #    b=NULL #optional: another list created with accuracyPMP to plot differences in acc
 ){
   #create the data to plot
-  if(is.null(b)){
     
     x<-
       a[[object]] %>% 
@@ -248,14 +248,14 @@ acc_corrplot<-function(a, # a list created with accuracyPMP()
     q<-a[[object]]
     q[-c(1,nrow(q)),]<-NA
     label.df<-
-      reshape2::melt(q)%>% 
+      reshape2::melt(q)%>%
       mutate(color=case_when(value<=.65 ~ "white",
                              value>=.56~ "black"
-                             )) %>% 
-      pull(value,color) %>% 
-      round(.,digits=2) %>% 
-      format(nsmall=2) %>% 
-      gsub("^0", "", .) %>% 
+                             )) %>%
+      pull(value,color) %>%
+      round(.,digits=2) %>%
+      format(nsmall=2) %>%
+      gsub("^0", "", .) %>%
       gsub("NA", NA, .)
     
     #create line data
@@ -269,9 +269,6 @@ acc_corrplot<-function(a, # a list created with accuracyPMP()
                         ld[ld$x=="Inf",]$y+1
                                     )
     
-  }else{
-    #compute differences in accuracies & reshape
-  }
 
 pal<-c(  "#1344CD"  ,"#481568FF","#A67DC4" ,"#D5984D", "#FDE725FF","#1F968BFF")
 
@@ -290,11 +287,76 @@ ggplot(data = x, mapping = aes(x=t, y=n, fill=value))+
             label = label.df,
             color= names(label.df),  #"white",
             size = 3)+
+  labs(title="Accuracy")+
   theme_minimal()+
   theme(legend.position="bottom",
         legend.key.width=unit(3,"cm"))
-}
+}#end acc_corrplot()
 
+a
+TP_corrplot<-function(a# a list created with accuracyPMP() containgin TPRs
+                      ){
+  i<-0
+  #TPm<-a$TP$cH1_r.13_pcor.3_b321_p.86_linear
+  TPplots<-lapply(1: length(a$TP), function(i){
+    TPm<-a$TP[[i]]
+    x<-
+      TPm %>% 
+      reshape2::melt() %>% 
+      rename(n=Var2,
+             t=Var1) %>%
+      mutate(n=factor(n),
+             t=factor(t)
+      )
+    #show accuracy text only for certain t
+    q<-TPm
+    q[-c(1,nrow(q)),]<-NA
+    label.df<-
+      reshape2::melt(q)%>%
+      mutate(color=case_when(value<=.65 ~ "white",
+                             value>=.56~ "black"
+      )) %>%
+      pull(value,color) %>%
+      round(.,digits=2) %>%
+      format(nsmall=2) %>%
+      gsub("^0", "", .) %>%
+      gsub("NA", NA, .)
+    
+    
+    
+    pal<-c(  "#1344CD"  ,"#481568FF","#A67DC4" ,"#D5984D", "#FDE725FF","#1F968BFF")
+    
+    ggplot(data = x, mapping = aes(x=t, y=n, fill=value))+
+      geom_tile()+#color = "white"
+      scale_fill_gradientn(colours =pal, #c("#481568FF","#ACAD94","#A77E82","#D2973F","#FDE725FF","#1F968BFF"), #  c("#481568FF","#AC82C9","#FDE725FF","#1F968BFF")
+                           limit = c(0, 1),
+                           breaks=c(0,0.10,0.20, 0.30, 0.4,0.50,0.60,0.70,0.80, 0.87, 0.95, 1),
+                           space = "Lab",
+                           name = "Accuracy",
+                           values = scales::rescale(c(0,0.5,0.70,0.8,0.87,1))
+      )+
+      geom_text(mapping = aes(x=t, y=n),
+                label = label.df,
+                color= names(label.df),  #"white",
+                size = 3)+
+      labs(
+          subtitle = paste0("MPCTH: ", names(a$hyp_to_pop)[i]))+
+      theme_minimal()+
+      theme(legend.position="bottom",
+            legend.key.width=unit(3,"cm")
+            )
+      
+     
+    
+  } )
+  
+  
+# print(TPplots)
+  printTPs<-ggarrange(plotlist=TPplots, ncol=1, common.legend = TRUE, legend = "bottom")
+  # annotate_figure(printTPs, top = text_grob("True positive rates for different MPCTH", 
+  #                                       color = "black", face = "bold", hjust = 1.1))
+  # 
+}#end TP_corrplot
 
 # ##a custom corrlot without scaling
 # acc_corrplot3<-function(a, # a list created with accuracyPMP()
