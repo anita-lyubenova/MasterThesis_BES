@@ -88,33 +88,63 @@ datln<-readRDS("Part I/pre-processing/output/BF_data_lognorm.rds")
 source("Part I/analysis/analysis functions.R")
 dimnames(datln)
 
-datln %>% 
-  aggregatePMP(hyp=c("H1", "Hu"),
-               studies=30) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="H1_r.13_pcor.3_b321_p0_linear",
-                             Hu="H1_r.13_pcor.3_b321_p.86_linear"
-  )) %>% 
-  acc_corrplot(object = "TP")
+# RQ1 Median plots ---------------------------------------------------------------------------------
+
+
 
 datln %>% 
-  aggregatePMP(hyp=c("H1", "Hu"),
-               studies=30) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="H1_r.13_pcor.3_b321_p0_linear",
-                             Hu="Hc_r.13_pcor.3_b123_p0_linear",
-                             Hu="H1_r.13_pcor.3_b321_p.75_linear"
-  )) %>% 
-  acc_corrplot2(object = "acc")
+    aggregatePMP(hyp=c("H1","Hc"),
+                 studies=30) %>% 
+    create_median_plot_data(pop="H1_r.13_pcor.3_b321_p.86_linear",
+                            n="300") %>% 
+    median_plot()
+  
+datln %>% 
+  aggregatePMP(hyp=c("H1","Hu"),
+               studies=15) %>% 
+  create_median_plot_data(pop="H1_r.13_pcor.3_b321_p.86_linear",
+                          n="300") %>% 
+  median_plot()
+datln %>% 
+  aggregatePMP(hyp=c("H1","Hc","Hu"),
+               studies=15) %>% 
+  create_median_plot_data(pop="H1_r.13_pcor.3_b321_p.86_linear",
+                          n="300") %>% 
+  median_plot()
 
-cp3.1504.2203_withscaling<-datln %>% 
+
+
+
+
+datln %>% 
+  aggregatePMP(hyp=c("H1","Hc"),
+               studies=15) %>% 
+  create_median_plot_data(pop="H1_r.13_pcor.3_b321_p.5_linear",
+                          n="300") %>% 
+  median_plot()
+
+datln %>% 
+  aggregatePMP(hyp=c("H1","Hu"),
+               studies=30) %>% 
+  create_median_plot_data(pop="H1_r.13_pcor.3_b321_p.5_linear",
+                          n="300") %>% 
+  median_plot()
+
+datln %>% 
   aggregatePMP(hyp=c("H1","Hc","Hu"),
                studies=30) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="H1_r.13_pcor.3_b321_p0_linear",
-                             Hc="Hc_r.13_pcor.3_b123_p0_linear",
-                             Hu="H1_r.13_pcor.3_b321_p.86_linear"
-  )) %>% 
-  acc_corrplot(object = "acc")
+  create_median_plot_data(pop="H1_r.13_pcor.3_b321_p.5_linear",
+                          n="300") %>% 
+  median_plot()
 
-ggsave("Part I/analysis/output/cp3.1504.2203_withscaling.png", plot = cp3.1504.2203_withscaling, width = 7.5, height = 3.5, units = "in", dpi = 300, bg="white")
+
+
+
+
+# RQ2 Tile plots -------------------------------------------------------------------------------
+
+## Conjoint testing --------------------------------------------------
+### Accuracy 
 
 cp.1604.1422<-datln %>% 
   aggregatePMP(hyp=c("H1","Hc","Hu"),
@@ -128,38 +158,16 @@ cp.1604.1422<-datln %>%
 ggsave("Part I/analysis/output/cp.1604.1422.png", plot = cp.1604.1422, width = 7, height = 2.6, units = "in", dpi = 300, bg="white")
 
 
-TP.1604.1627<-datln %>% 
-  aggregatePMP(hyp=c("H1","Hc","Hu"),
-               studies=30) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="H1_r.13_pcor.3_b321_p0_linear",
-                             Hc="Hc_r.13_pcor.3_b123_p0_linear",
-                             Hu="H1_r.13_pcor.3_b321_p.86_linear"
-  )) %>% 
-  TP_corrplot()
+### TPR  
+TP.1604.1627<-
+  datln %>% 
+    aggregatePMP(hyp=c("H1","Hc","Hu"),
+                 studies=30) %>% 
+    accuracyPMP(hyp_to_pop = c(H1="H1_r.13_pcor.3_b321_p0_linear",
+                               Hc="Hc_r.13_pcor.3_b123_p0_linear",
+                               Hu="H1_r.13_pcor.3_b321_p.86_linear"
+    )) %>% 
+    TP_corrplot()
 ggsave("Part I/analysis/output/TP.1604.1627.png", plot = TP.1604.1627, width = 7, height = 6.6, units = "in", dpi = 300, bg="white")
 
 
-# cp2.1504.2159_noscaling<- datln %>% 
-#   aggregatePMP(hyp=c("H1","Hc","Hu"),
-#                studies=30) %>% 
-#   accuracyPMP(hyp_to_pop = c(H1="H1_r.13_pcor.3_b321_p0_linear",
-#                              Hc="Hc_r.13_pcor.3_b123_p0_linear",
-#                              Hu="H1_r.13_pcor.3_b321_p.86_linear"
-#   )) %>% 
-#   acc_corrplot3(object = "acc")
-# 
-# ggsave("Part I/analysis/output/cp2.1504.2159_noscaling.png", plot = cp2.1504.2159_noscaling,width = 7.5, height = 3.5, units = "in", dpi = 300, bg="white")
-# 
-# 
-# lp.1504.2203<-  
-#   datln %>% 
-#     aggregatePMP(hyp=c("H1","Hc","Hu"),
-#                                studies=30) %>% 
-#     accuracyPMP(hyp_to_pop = c(H1="H1_r.13_pcor.3_b321_p0_linear",
-#                                Hc="Hc_r.13_pcor.3_b123_p0_linear",
-#                                Hu="H1_r.13_pcor.3_b321_p.86_linear"
-#     )) %>% 
-#     acc_lineplot()
-# 
-# ggsave("Part I/analysis/output/lp.1504.2203_noscaling.png", plot = lp.1504.2203,width = 7.5, height = 3.5, units = "in", dpi = 300, bg="white")
-# 

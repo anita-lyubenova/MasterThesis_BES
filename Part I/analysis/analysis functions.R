@@ -127,7 +127,7 @@ median_plot<-function(x # a list created with create_median_plot_data()
       title=x$pop,
       # title=paste0("MPCTH: ",str_extract(x$pop, "H."),str_split(x$pop, ':', simplify = TRUE)[,2]),
       # subtitle = paste0(x$hypothesis_test, " (MPCTH: ",str_extract(a$pop, "H."),str_split(a$pop, ':', simplify = TRUE)[,2], ")"),
-      subtitle = paste0(x$hypothesis_test, " (",x$n, ")"),
+      subtitle = paste0(x$hypothesis_test, " (n = ",x$n, ")"),
       x="Number of aggregated studies",
       #x=" ",
       y="Aggregate PMP")+
@@ -208,30 +208,30 @@ accuracyPMP<-function(listPMP, #list created with aggregatePMP()
 }
 
 
+# acc_corrplot<-function(a, # a list created with accuracyPMP()
+#                        object="acc" # what should be plotted? acc or TP?
+# ){
+#   
+#   ggcorrplot(as.data.frame(a[object]),   #a$acc,
+#              outline.col = "black",
+#              lab = TRUE)+
+#     scale_fill_gradient2(limit = c(0,1),
+#                          breaks=seq(0,1,0.1),
+#                          low = "blue", high =  "red",
+#                          mid = "white",
+#                          midpoint = 0.87)+
+#     scale_x_continuous(breaks = 1:a$studies)+
+#     #  scale_y_discrete(labels= substr(colnames(a$acc), 2, nchar(colnames(a$acc))))+
+#     labs(title = a$hypothesis_test,
+#          subtitle =paste("Populations:", paste(a$hyp_to_pop, collapse = ", "), collapse = " "),
+#          fill="Accuracy"
+#     )
+# }
+
+
+##a custom corrlot with a many colors 
 acc_corrplot<-function(a, # a list created with accuracyPMP()
                        object="acc" # what should be plotted? acc or TP?
-){
-  
-  ggcorrplot(as.data.frame(a[object]),   #a$acc,
-             outline.col = "black",
-             lab = TRUE)+
-    scale_fill_gradient2(limit = c(0,1),
-                         breaks=seq(0,1,0.1),
-                         low = "blue", high =  "red",
-                         mid = "white",
-                         midpoint = 0.87)+
-    scale_x_continuous(breaks = 1:a$studies)+
-    #  scale_y_discrete(labels= substr(colnames(a$acc), 2, nchar(colnames(a$acc))))+
-    labs(title = a$hypothesis_test,
-         subtitle =paste("Populations:", paste(a$hyp_to_pop, collapse = ", "), collapse = " "),
-         fill="Accuracy"
-    )
-}
-
-
-##a custom corrlot with a lot of scaling 
-acc_corrplot<-function(a, # a list created with accuracyPMP()
-                       object="acc", # what should be plotted? acc or TP?
                    #    b=NULL #optional: another list created with accuracyPMP to plot differences in acc
 ){
   #create the data to plot
@@ -293,7 +293,7 @@ ggplot(data = x, mapping = aes(x=t, y=n, fill=value))+
         legend.key.width=unit(3,"cm"))
 }#end acc_corrplot()
 
-a
+
 TP_corrplot<-function(a# a list created with accuracyPMP() containgin TPRs
                       ){
   i<-0
@@ -352,7 +352,8 @@ TP_corrplot<-function(a# a list created with accuracyPMP() containgin TPRs
   
   
 # print(TPplots)
-  printTPs<-ggarrange(plotlist=TPplots, ncol=1, common.legend = TRUE, legend = "bottom")
+ ggarrange(plotlist=TPplots, ncol=1, common.legend = TRUE, legend = "bottom")
+ 
   # annotate_figure(printTPs, top = text_grob("True positive rates for different MPCTH", 
   #                                       color = "black", face = "bold", hjust = 1.1))
   # 
