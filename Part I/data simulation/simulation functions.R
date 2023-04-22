@@ -179,39 +179,53 @@ run_sim_ln<-function(r2=0.13,
                   seed){
   
   
-  print( paste0("Prep cluster: ",Sys.time()))
+  # print( paste0("Prep cluster: ",Sys.time()))
+  # cl<-makeCluster(ncores)
+  # clusterSetRNGStream(cl, seed)
+  # 
+  # clusterEvalQ(cl, {
+  #   library(MASS)
+  #   library(magrittr)
+  #   library(tidyverse)
+  #   library(BFpack)
+  # })
+  # clusterExport(cl=cl, c("single_sim_ln", "q_glm", "gen_dat", "cormat", "coefs"))
+  # 
+  # clusterExport(cl=cl, varlist=c("n", "r2", "pcor", "ratio_beta", "hypothesis",
+  #                                "p","model"),envir = environment())
+  # 
+  # print(paste0("Start sim: ",Sys.time()))
+  # BF_list<- 
+  #   lapply(1:length(n), function(s){
+  #     print(paste0("Sample size: ",s, ";", Sys.time()))
+  #     t(parSapply(cl, 1:(iterations*studies), function(i){
+  #       single_sim_ln(r2=0.13,
+  #                  pcor=pcor,
+  #                  hypothesis=hypothesis,
+  #                  ratio_beta=ratio_beta,
+  #                  p=p,
+  #                  n = n[s],
+  #                  model=model)
+  #       
+  #     }))
+  #   })
+  # stopCluster(cl)
+  # print(paste0("End sim: ",Sys.time()))
   
-  cl<-makeCluster(ncores)
-  clusterSetRNGStream(cl, seed)
-  
-  clusterEvalQ(cl, {
-    library(MASS)
-    library(magrittr)
-    library(tidyverse)
-    library(BFpack)
-  })
-  clusterExport(cl=cl, c("single_sim_ln", "q_glm", "gen_dat", "cormat", "coefs"))
-  
-  clusterExport(cl=cl, varlist=c("n", "r2", "pcor", "ratio_beta", "hypothesis",
-                                 "p","model"),envir = environment())
-  
-  print(paste0("Start sim: ",Sys.time()))
   BF_list<- 
     lapply(1:length(n), function(s){
       print(paste0("Sample size: ",s, ";", Sys.time()))
-      t(parSapply(cl, 1:(iterations*studies), function(i){
+      t(sapply(1:(iterations*studies), function(i){
         single_sim_ln(r2=0.13,
-                   pcor=pcor,
-                   hypothesis=hypothesis,
-                   ratio_beta=ratio_beta,
-                   p=p,
-                   n = n[s],
-                   model=model)
+                      pcor=pcor,
+                      hypothesis=hypothesis,
+                      ratio_beta=ratio_beta,
+                      p=p,
+                      n = n[s],
+                      model=model)
         
       }))
     })
-  print(paste0("End sim: ",Sys.time()))
-  stopCluster(cl)
   
   BF_list<-lapply(BF_list, function(x) {
     cbind(x,1)
