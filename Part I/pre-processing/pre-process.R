@@ -101,7 +101,29 @@ hypothesis<-attributes(res3par[[1]])$hypothesis
 pop_names<-sapply(res3par, function(x){
   attributes(x)$pop_name
 } )
+r2<-sapply(res3par, function(x){
+  attributes(x)$r2
+} ) %>% unique()
+pcor<-sapply(res3par, function(x){
+  attributes(x)$pcor
+} ) %>% unique()
+p<-sapply(res3par, function(x){
+  attributes(x)$p
+} ) %>% unique()
+ratio_beta<-lapply(res3par, function(x){
+  attributes(x)$ratio_beta
+} ) %>% unique()
 
+att<-list(n=n,
+          studies=studies,
+          iterations=iterations,
+          hypothesis=hypothesis,
+          pop_names=pop_names,
+          r2=r2,
+          pcor=pcor,
+          p=p,
+          ratio_beta=ratio_beta
+          )
 #reshape the inner lists to 4d arrays where [studies, BF_hyp, iter, n],  i.e.
 #   -studies*iterations are split to different dimensions
 #   -levels of n are put into a dimension
@@ -113,13 +135,13 @@ array4d<-lapply(res3par, function(x){
              iterations=iterations)
 })
 
-#save attributes of the resulting arrays 
-#again, they are the same across populations
-att<-attributes(array4d[[1]])
-#remove the attributes about dimensionality, and keep only the attributes relevant to the simulation conditions
-att<-att[names(att)[-grep("dim", names(att))]]
-#remove the "names" attribute
-att<-att[names(att)[-grep("names", names(att))]]
+# #save attributes of the resulting arrays that are to be used for the final data
+# #again, they are the same across populations
+# att<-attributes(array4d[[1]])
+# #remove the attributes about dimensionality, and keep only the attributes relevant to the simulation conditions
+# att<-att[names(att)[-grep("dim", names(att))]]
+# #remove the "names" attribute
+# att<-att[names(att)[-grep("names", names(att))]]
 
 
 #bind the 4d arrays (i.e., populations) along the 5th dim
@@ -161,7 +183,29 @@ hypothesis<-attributes(res2par[[1]])$hypothesis
 pop_names<-sapply(res2par, function(x){
   attributes(x)$pop_name
 } )
+r2<-sapply(res2par, function(x){
+  attributes(x)$r2
+} ) %>% unique()
+pcor<-sapply(res2par, function(x){
+  attributes(x)$pcor
+} ) %>% unique()
+p<-sapply(res2par, function(x){
+  attributes(x)$p
+} ) %>% unique()
+ratio_beta<-lapply(res2par, function(x){
+  attributes(x)$ratio_beta
+} ) %>% unique()
 
+att<-list(n=n,
+          studies=studies,
+          iterations=iterations,
+          hypothesis=hypothesis,
+          pop_names=pop_names,
+          r2=r2,
+          pcor=pcor,
+          p=p,
+          ratio_beta=ratio_beta
+)
 #reshape the inner lists to 4d arrays where [studies, BF_hyp, iter, n],  i.e.
 #   -studies*iterations are split to different dimensions
 #   -levels of n are put into a dimension
@@ -173,13 +217,13 @@ array4d<-lapply(res2par, function(x){
              iterations=iterations)
 })
 
-#save attributes of the resulting arrays 
-#again, they are the same across populations
-att<-attributes(array4d[[1]])
-#remove the attributes about dimensionality, and keep only the attributes relevant to the simulation conditions
-att<-att[names(att)[-grep("dim", names(att))]]
-#remove the "names" attribute
-att<-att[names(att)[-grep("names", names(att))]]
+# #save attributes of the resulting arrays 
+# #again, they are the same across populations
+# att<-attributes(array4d[[1]])
+# #remove the attributes about dimensionality, and keep only the attributes relevant to the simulation conditions
+# att<-att[names(att)[-grep("dim", names(att))]]
+# #remove the "names" attribute
+# att<-att[names(att)[-grep("names", names(att))]]
 
 
 #bind the 4d arrays (i.e., populations) along the 5th dim
@@ -225,7 +269,29 @@ hypothesis<-attributes(res1par[[1]])$hypothesis
 pop_names<-sapply(res1par, function(x){
   attributes(x)$pop_name
 } )
+r2<-sapply(res1par, function(x){
+  attributes(x)$r2
+} ) %>% unique()
+pcor<-sapply(res1par, function(x){
+  attributes(x)$pcor
+} ) %>% unique()
+p<-sapply(res1par, function(x){
+  attributes(x)$p
+} ) %>% unique()
+ratio_beta<-lapply(res1par, function(x){
+  attributes(x)$ratio_beta
+} ) %>% unique()
 
+att<-list(n=n,
+          studies=studies,
+          iterations=iterations,
+          hypothesis=hypothesis,
+          pop_names=pop_names,
+          r2=r2,
+          pcor=pcor,
+          p=p,
+          ratio_beta=ratio_beta
+)
 #reshape the inner lists to 4d arrays where [studies, BF_hyp, iter, n],  i.e.
 #   -studies*iterations are split to different dimensions
 #   -levels of n are put into a dimension
@@ -237,14 +303,14 @@ array4d<-lapply(res1par, function(x){
              iterations=iterations)
 })
 
-#save attributes of the resulting arrays 
-#again, they are the same across populations
-att<-attributes(array4d[[1]])
-#remove the attributes about dimensionality, and keep only the attributes relevant to the simulation conditions
-att<-att[names(att)[-grep("dim", names(att))]]
-#remove the "names" attribute
-att<-att[names(att)[-grep("names", names(att))]]
-
+# #save attributes of the resulting arrays 
+# #again, they are the same across populations
+# att<-attributes(array4d[[1]])
+# #remove the attributes about dimensionality, and keep only the attributes relevant to the simulation conditions
+# att<-att[names(att)[-grep("dim", names(att))]]
+# #remove the "names" attribute
+# att<-att[names(att)[-grep("names", names(att))]]
+# 
 
 #bind the 4d arrays (i.e., populations) along the 5th dim
 BF_bind<-do.call(what = "abind", args=list(array4d, along=5))%>% 
