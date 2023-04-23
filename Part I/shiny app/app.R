@@ -67,14 +67,15 @@ ui<-navbarPage(title = "Bayesian Evidence Synthesis",
                         column(width = 9,
                                fluidRow(column(width = 6,
                                                hyp_UI("hyp_UI1"),
-                                               pop_UI("pop_UI1")
+                                               uiOutput("pops")#,
+                                            #   verbatimTextOutput("test")
                                ),
                                column(width = 6,
                                       hyp_UI("hyp_UI2")))
                                ),
                         column(width = 3,
                                div(style="height:90vh; display:flex;font-size:14px;",
-                                   wellPanel()
+                                   wellPanel(verbatimTextOutput("test"))
                                   )
                               )
                             )
@@ -82,15 +83,49 @@ ui<-navbarPage(title = "Bayesian Evidence Synthesis",
                
                )
 
-server<-function(input, output){
+server<-function(input, output,session){
  hyp_UI1_selection<- hyp_server("hyp_UI1")
-  pop_server("pop_UI1",
-             n_par = hyp_UI1_selection$n_par,
-             hyp_input=hyp_UI1_selection$hyp_input)
-  # gen_plot_server("plot_conditions1")
-  # gen_plot_server("plot_conditions2")
+ 
+ observeEvent(hyp_UI1_selection$hyp_input_r(), {
+   output$pops<-renderUI({
+     
+     # if(is.null(hyp_UI1_selection$hyp_input)){
+     #   return(NULL)
+     #   
+     # }else{
+     do.call(what = "tagList", 
+             args=lapply(hyp_UI1_selection$hyp_input_r(), function(i){
+               pop_UI(paste0("pop_UI",i),
+                      n_par = hyp_UI1_selection$n_par,
+                      hyp_input=i)
+             })
+     )
+     # }
+     
+    })
+   
+ })
+
+   specs<-reactiveValues()
+   observe({
+
+   for(x in hyp_UI1_selection$hyp_input_r()){
+     specs[[x]]<-pop_server(paste0("pop_UI",x))
+   }
+  # specs<-lapply(hyp_UI1_selection$hyp_input_r(), function(i){
+  #   pop_server(paste0("pop_UI",i))
+  # })
+})
+ 
+ # lapply(hyp_UI1_selection$hyp_input_r,function(i){
+ #   pop_server(paste0("pop_UI",i))
+ # })
+ #pop_server(paste0("pop_UI",1))
   
+ output$test<-renderPrint(specs)
 }
+  
+
 
 shinyApp(ui = ui, server = server)
 #run_with_themer(shinyApp(ui = ui, server = server))

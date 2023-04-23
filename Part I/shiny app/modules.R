@@ -120,34 +120,48 @@ hyp_server<-function(id) {
       
    return(list(
                n_par=reactive(input$n_par),
-               hyp_input=reactive(input$hyp_input)
+               hyp_input_r=reactive(input$hyp_input)
                ))
     
   })
   
 }
 
-pop_UI<-function(id) {
+pop_UI<-function(id,n_par, hyp_input) {
   ns <- NS(id)
+  #select dataset based on n_par
+  dat<-reactive(eval(parse(text=paste0("dat",as.numeric(n_par())))))
+  
+  
+    tagList(
+      wellPanel(style="padding-top:0px;margin-top:5px;",
+        tags$strong(paste("Population of ", hyp_input)),
+        sliderTextInput(ns("r2_input"),
+                       "R-squared:",
+                        choices = attributes(dat())$r2
+                     ),
+        sliderTextInput(ns("pcor_input"),
+                        "Correlation between the predictors:",
+                        choices = attributes(dat())$pcor
+        ),
+        sliderTextInput(ns("p_input"),
+                        "Heterogeneity p:",
+                        choices = attributes(dat())$p
+        ),
+        verbatimTextOutput(ns("test"))
 
-  tagList(
-    # sliderTextInput(ns("r2_input"),
-    #                "Select R-squared",
-    #                 choices =
-    #              ),
-    verbatimTextOutput(ns("test"))
-
-  )
+  ))
 }
-pop_server<-function(id,
-                     n_par,
-                     hyp_input){
+pop_server<-function(id){
 
   moduleServer(id, function(input, output, session) {
-
-    output$test<-renderPrint({
-      paste(n_par(),  hyp_input())
-    })
+    
+    return(list(r2=reactive(input$r2_input),
+                pcor=reactive(input$pcor_input),
+                p=reactive(input$p_input)))
+    # output$test<-renderPrint({
+    #   input$r2_input
+    # })
 
   })
 
