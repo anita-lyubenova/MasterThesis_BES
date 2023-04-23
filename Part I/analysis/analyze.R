@@ -89,57 +89,77 @@ source("Part I/analysis/analysis functions.R")
 dimnames(datln)
 
 # RQ1 Median plots ---------------------------------------------------------------------------------
+library(patchwork)
 
+########    h max   ############
+#[to do]
 
-
-datln %>% 
+########    p.86   ############
+mp.86.ic<- datln %>% 
     aggregatePMP(hyp=c("H1","Hc"),
-                 studies=30) %>% 
+                 studies=15) %>% 
     create_median_plot_data(pop="H1_r.13_pcor.3_b321_p.86_linear",
                             n="300") %>% 
-    median_plot()
+    median_plot()+
+  theme(legend.position = "none")+
+  labs(title = NULL)
   
-datln %>% 
+mp.86.iu<-datln %>% 
   aggregatePMP(hyp=c("H1","Hu"),
                studies=15) %>% 
   create_median_plot_data(pop="H1_r.13_pcor.3_b321_p.86_linear",
                           n="300") %>% 
-  median_plot()
-datln %>% 
+  median_plot()+
+  labs(title = NULL)+
+  theme(legend.position = "none")
+
+mp.86.icu<-datln %>% 
   aggregatePMP(hyp=c("H1","Hc","Hu"),
                studies=15) %>% 
   create_median_plot_data(pop="H1_r.13_pcor.3_b321_p.86_linear",
                           n="300") %>% 
-  median_plot()
+  median_plot()+
+  labs(title = NULL)+
+  theme(legend.position = "none")
+
+mp.86<-mp.86.ic/(mp.86.iu+mp.86.icu)
+# 
+# ggsave("Part I/analysis/output/mp.86.png", plot = mp.86, width = 7, height = 4, units = "in", dpi = 300, bg="white")
 
 
-
-
-
-datln %>% 
+########    p.5   ############
+mp.50.ic<- datln %>% 
   aggregatePMP(hyp=c("H1","Hc"),
                studies=15) %>% 
   create_median_plot_data(pop="H1_r.13_pcor.3_b321_p.5_linear",
                           n="300") %>% 
-  median_plot()
+  median_plot()+
+  theme(legend.position = "none")+
+  labs(title = NULL)
 
-datln %>% 
+mp.50.iu<-datln %>% 
   aggregatePMP(hyp=c("H1","Hu"),
-               studies=30) %>% 
+               studies=15) %>% 
   create_median_plot_data(pop="H1_r.13_pcor.3_b321_p.5_linear",
                           n="300") %>% 
-  median_plot()
+  median_plot()+
+  labs(title = NULL)
 
-datln %>% 
+mp.50.icu<-datln %>% 
   aggregatePMP(hyp=c("H1","Hc","Hu"),
-               studies=30) %>% 
+               studies=15) %>% 
   create_median_plot_data(pop="H1_r.13_pcor.3_b321_p.5_linear",
                           n="300") %>% 
-  median_plot()
+  median_plot()+
+  labs(title = NULL)
 
 
 
 
+patch<- mp.86.50<-mp.86.ic/(mp.86.iu+mp.86.icu)+mp.50.ic+(mp.50.iu+mp.50.icu)
+mp.86.50<- patch + plot_annotation(tag_levels = 'A')
+
+ggsave("Part I/analysis/output/mp.86.50.png", plot = mp.86.50, width = 7, height = 8, units = "in", dpi = 300, bg="white")
 
 # RQ2 Tile plots -------------------------------------------------------------------------------
 
