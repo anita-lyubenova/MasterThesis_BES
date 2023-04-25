@@ -90,7 +90,7 @@ res3par<-parLapply(cl,
 stopCluster(cl)
 print(paste0("End sim: ",Sys.time()))
 
-saveRDS(res3par,file="~/simulation/res3par.rds")
+saveRDS(res3par,file="~/simulation/output/res3par.rds")
 
 
 
@@ -154,7 +154,7 @@ res2par<-parLapply(cl,
 stopCluster(cl)
 print(paste0("End sim: ",Sys.time()))
 
-saveRDS(res2par,file="~/simulation/res2par.rds")
+saveRDS(res2par,file="~/simulation/output/res2par.rds")
 
 
 ## 1 par -------------------------
@@ -213,7 +213,7 @@ res1par<-parLapply(cl,
 stopCluster(cl)
 print(paste0("End sim: ",Sys.time()))
 
-saveRDS(res1par,file="~/simulation/res1par.rds")
+saveRDS(res1par,file="~/simulation/output/res1par.rds")
 
 
 

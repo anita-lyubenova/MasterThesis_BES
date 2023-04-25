@@ -1,81 +1,81 @@
 # This scripts combines the simulation files created with the simulate.R script
 # Version 1: every population was saved in  a different rds file
 # Version 2: populations were saved in one list
-################################################################################################## 2
-#                                    ---- Version 1 ----
-################################################################################################## 2
-
-library(dplyr)
-library(abind)
-
-source("Part I/pre-processing/pre-processing functions.R")
-
-#Load files 
-filenames<-list.files("Part I/data simulation/output", pattern = ".rds")
-path<-"Part I/data simulation/output"
-
-varnames<-paste0("BF_pop_", 1:length(filenames))
-
-#load each simulation file (i.e., population), to an object with name specified in the varnames vector
-# the resulting BF_pop_1,BF_pop_2, etc. are lists, where elements correspond to different n,
-# and contain data.frames where [iterations*studies, BF_hyp]
-for(i in 1:length(filenames)){
-  assign(varnames[i],readRDS(paste0(path,"/", filenames[i])))
-}
-
-#Simulation conditions
-# I use only the attributes from one of the populations, because they are the same across populations
-n = attributes(BF_pop_1)$n
-studies<-attributes(BF_pop_1)$studies
-iterations=attributes(BF_pop_1)$iterations
-hypothesis<-attributes(BF_pop_1)$hypothesis
-
-#a vector with population names obtained from the name of the files
-pop_names<-sub("\\.rds.*", "", filenames)  
-
-#reshape the lists to 4d arrays where [studies, BF_hyp, iter, n],  i.e.
-#   -studies*iterations are split to different dimensions
-#   -levels of n are put into a dimension
-for(i in 1:length(pop_names)){
-  assign(pop_names[i],  reshapeBFs(BF_list=eval(parse(text=varnames[i])), # a list, where each element (a dataframe, col=hypotheses, rows=iterations*studies) contains the BFs for a certain sample size n
-                                   n=n,
-                                   studies=studies,
-                                   iterations=iterations)
-         )
-}
-
-#save attributes of the resulting arrays 
-#again, they are the same across populations
-att<-attributes(eval(parse(text=pop_names[1])))
-#remove the attributes about dimensionality, and keep only the attributes relevant to the simulation conditions
-att<-att[names(att)[-grep("dim", names(att))]]
-
-#bind the 4d arrays (i.e., populations) along the 5th dimension of the array
-BF_bind <-do.call(abind, args=list(mget(pop_names), along=5)) %>% 
-  #and reorder the dims such that the structure is [t,BF_hyp, pop, iter,n]
-  aperm(perm=c(1,2,5,3,4)) 
-
-
-#add BFuu = 1
-#First, create an array slice for BFuu
-Hu_array<-array(1, dim = c(studies,
-                           1,
-                           length(filenames),
-                           iterations,
-                           length(n)
-                           ))
-#combine the array slicefor BFuu with the main array
-BF_bind2<-abind(BF_bind, Hu_array, along = 2)
-#give the BFuu slice a name "Hu"
-dimnames(BF_bind2)[[2]]<-c("H1", "Hc", "Hu")
-
-
-attributes(BF_bind2)<-c(attributes(BF_bind2),
-                       att)
-
-#save the complete 5d array
-saveRDS(BF_bind2, "Part I/pre-processing/output/BF_data.rds")
-
+# ################################################################################################## 2
+# #                                    ---- Version 1 ----
+# ################################################################################################## 2
+# 
+# library(dplyr)
+# library(abind)
+# 
+# source("Part I/pre-processing/pre-processing functions.R")
+# 
+# #Load files 
+# filenames<-list.files("Part I/data simulation/output", pattern = ".rds")
+# path<-"Part I/data simulation/output"
+# 
+# varnames<-paste0("BF_pop_", 1:length(filenames))
+# 
+# #load each simulation file (i.e., population), to an object with name specified in the varnames vector
+# # the resulting BF_pop_1,BF_pop_2, etc. are lists, where elements correspond to different n,
+# # and contain data.frames where [iterations*studies, BF_hyp]
+# for(i in 1:length(filenames)){
+#   assign(varnames[i],readRDS(paste0(path,"/", filenames[i])))
+# }
+# 
+# #Simulation conditions
+# # I use only the attributes from one of the populations, because they are the same across populations
+# n = attributes(BF_pop_1)$n
+# studies<-attributes(BF_pop_1)$studies
+# iterations=attributes(BF_pop_1)$iterations
+# hypothesis<-attributes(BF_pop_1)$hypothesis
+# 
+# #a vector with population names obtained from the name of the files
+# pop_names<-sub("\\.rds.*", "", filenames)  
+# 
+# #reshape the lists to 4d arrays where [studies, BF_hyp, iter, n],  i.e.
+# #   -studies*iterations are split to different dimensions
+# #   -levels of n are put into a dimension
+# for(i in 1:length(pop_names)){
+#   assign(pop_names[i],  reshapeBFs(BF_list=eval(parse(text=varnames[i])), # a list, where each element (a dataframe, col=hypotheses, rows=iterations*studies) contains the BFs for a certain sample size n
+#                                    n=n,
+#                                    studies=studies,
+#                                    iterations=iterations)
+#          )
+# }
+# 
+# #save attributes of the resulting arrays 
+# #again, they are the same across populations
+# att<-attributes(eval(parse(text=pop_names[1])))
+# #remove the attributes about dimensionality, and keep only the attributes relevant to the simulation conditions
+# att<-att[names(att)[-grep("dim", names(att))]]
+# 
+# #bind the 4d arrays (i.e., populations) along the 5th dimension of the array
+# BF_bind <-do.call(abind, args=list(mget(pop_names), along=5)) %>% 
+#   #and reorder the dims such that the structure is [t,BF_hyp, pop, iter,n]
+#   aperm(perm=c(1,2,5,3,4)) 
+# 
+# 
+# #add BFuu = 1
+# #First, create an array slice for BFuu
+# Hu_array<-array(1, dim = c(studies,
+#                            1,
+#                            length(filenames),
+#                            iterations,
+#                            length(n)
+#                            ))
+# #combine the array slicefor BFuu with the main array
+# BF_bind2<-abind(BF_bind, Hu_array, along = 2)
+# #give the BFuu slice a name "Hu"
+# dimnames(BF_bind2)[[2]]<-c("H1", "Hc", "Hu")
+# 
+# 
+# attributes(BF_bind2)<-c(attributes(BF_bind2),
+#                        att)
+# 
+# #save the complete 5d array
+# saveRDS(BF_bind2, "Part I/pre-processing/output/BF_data.rds")
+# 
 
 
 ################################################################################################## 2
@@ -85,9 +85,9 @@ saveRDS(BF_bind2, "Part I/pre-processing/output/BF_data.rds")
 library(dplyr)
 library(abind)
 
-source("Part I/pre-processing/pre-processing functions.R")
+source("~/pre-processing/pre-processing functions.R")
 
-res3par<-readRDS(file= "Part I/data simulation/output_lognorm_ShinyApp/res3par.rds")
+res3par<-readRDS(file= "~/simulation/output/res3par.rds")
 
 
 #n_par 3 ----------------------------
@@ -167,11 +167,10 @@ dimnames(BF_bind3)[[2]][length(dimnames(BF_bind3)[[2]])]<-"Hu"
 
 attributes(BF_bind3)<-c(attributes(BF_bind3),
                         att)
-saveRDS(BF_bind3, file="Part I/pre-processing/output_ShinyApp/BF_data_3par.rds")
+saveRDS(BF_bind3, file="~/pre-processing/output/BF_data_3par.rds")
 # n_par 2 ---------------------------------------------
-res2par<-readRDS(file= "Part I/data simulation/output_lognorm_ShinyApp/res2par.rds")
 
-
+res2par<-readRDS(file= "~/simulation/output/res2par.rds")
 
 #Simulation conditions
 # I use only the attributes from one of the populations, because they are the same across populations
@@ -250,12 +249,12 @@ dimnames(BF_bind2)[[2]][length(dimnames(BF_bind2)[[2]])]<-"Hu"
 attributes(BF_bind2)<-c(attributes(BF_bind2),
                         att)
 
-saveRDS(BF_bind2, file="Part I/pre-processing/output_ShinyApp/BF_data_2par.rds")
+saveRDS(BF_bind2, file="~/pre-processing/output/BF_data_2par.rds")
 
 
 #n_par 1 -----------------------------------------
 
-res1par<-readRDS(file= "Part I/data simulation/output_lognorm_ShinyApp/res1par.rds")
+res1par<-readRDS(file= "~/simulation/output//res1par.rds")
 
 
 
@@ -336,4 +335,4 @@ dimnames(BF_bind1)[[2]][length(dimnames(BF_bind1)[[2]])]<-"Hu"
 attributes(BF_bind1)<-c(attributes(BF_bind1),
                         att)
 
-saveRDS(BF_bind1, file="Part I/pre-processing/output_ShinyApp/BF_data_1par.rds")
+saveRDS(BF_bind1, file="~/pre-processing/output/BF_data_1par.rds")
