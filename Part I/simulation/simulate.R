@@ -1,5 +1,5 @@
 #all_hyp<-c(c.01="V1>V2>V3>0",c.50="V1-0.5*V2-V3>0")
-source("Part I/data simulation/simulation functions.R")
+source("~/simulation/simulation functions.R")
 
 # 
 # # Full simulation ---------------------------
@@ -90,9 +90,8 @@ res3par<-parLapply(cl,
 stopCluster(cl)
 print(paste0("End sim: ",Sys.time()))
 
-saveRDS(res3par,file="~/res3par.rds")
-str(res3par)
-res3par[[1]]
+saveRDS(res3par,file="~/simulation/res3par.rds")
+
 
 
 ## 2 par -------------------------
@@ -155,7 +154,7 @@ res2par<-parLapply(cl,
 stopCluster(cl)
 print(paste0("End sim: ",Sys.time()))
 
-saveRDS(res2par,file="~/res2par.rds")
+saveRDS(res2par,file="~/simulation/res2par.rds")
 
 
 ## 1 par -------------------------
@@ -214,7 +213,7 @@ res1par<-parLapply(cl,
 stopCluster(cl)
 print(paste0("End sim: ",Sys.time()))
 
-saveRDS(res1par,file="~/res1par.rds")
+saveRDS(res1par,file="~/simulation/res1par.rds")
 
 
 
@@ -286,7 +285,7 @@ saveRDS(res1par,file="~/res1par.rds")
 # stopCluster(cl)
 # print(paste0("End sim: ",Sys.time()))
 # 
-# saveRDS(res3par,file="~/res3par.rds")
+# saveRDS(res3par,file="~/simulation/res3par.rds")
 # str(res3par)
 # res3par[[1]]
 # 
@@ -355,7 +354,7 @@ saveRDS(res1par,file="~/res1par.rds")
 # stopCluster(cl)
 # print(paste0("End sim: ",Sys.time()))
 # 
-# saveRDS(res2par,file="~/res2par.rds")
+# saveRDS(res2par,file="~/simulation/res2par.rds")
 # 
 # 
 # ## 1 par -------------------------
@@ -414,5 +413,5 @@ saveRDS(res1par,file="~/res1par.rds")
 # stopCluster(cl)
 # print(paste0("End sim: ",Sys.time()))
 # 
-# saveRDS(res1par,file="~/res1par.rds")
+# saveRDS(res1par,file="~/simulation/res1par.rds")
 
