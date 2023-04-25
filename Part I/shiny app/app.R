@@ -106,16 +106,17 @@ server<-function(input, output,session){
    
  })
 
-   specs<-reactiveValues()
-   observe({
-
-   for(x in hyp_UI1_selection$hyp_input_r()){
-     specs[[x]]<-pop_server(paste0("pop_UI",x))
-   }
-  # specs<-lapply(hyp_UI1_selection$hyp_input_r(), function(i){
-  #   pop_server(paste0("pop_UI",i))
-  # })
-})
+   specs<-reactiveValues(A=pop_server(paste0("pop_UI",1)))
+   
+#    observe({
+# 
+#    for(x in hyp_UI1_selection$hyp_input_r()){
+#      specs[[x]]<-pop_server(paste0("pop_UI",x))
+#    }
+#   # specs<-lapply(hyp_UI1_selection$hyp_input_r(), function(i){
+#   #   pop_server(paste0("pop_UI",i))
+#   # })
+# })
  
  # lapply(hyp_UI1_selection$hyp_input_r,function(i){
  #   pop_server(paste0("pop_UI",i))
