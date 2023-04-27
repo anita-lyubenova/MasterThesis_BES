@@ -352,36 +352,65 @@ length(res3par)
 res3par[[1]]
 res3par[[2]]
 
-#Step 1) bind all list elementes with the same attribute pop_name
+#Step 1) bind all list elementes with the same attribute pop_name------------------------
 
 pop_names<-sapply(res3par, function(x){return(attributes(x)$pop_name)}) 
 names(res3par)<-pop_names
 pop_names_u<-unique(pop_names)
 
+res3par1<-lapply(pop_names_u, function(p){
+  rlist::list.rbind(res3par[names(res3par)==p])
+})
+names(res3par1)<-pop_names_u
 
-#n_par 3 ----------------------------
+# res3parl should be the data format of the final and complete HPC data 
+
+#Step 2) nest all sample sizes of a population in an inner list -----------------------
+#get the names of the populations
+pop<-sub(pattern="_n.*", "", pop_names_u)  %>% unique()
+n<-sub(pattern=".*_n", "", pop_names_u)  %>% unique()
+
+res3par2<-lapply(pop, function(s){
+  x<-res3par1[sub(pattern="_n.*", "", names(res3par1))==s]
+  names(x)<-n
+  return(x)
+})
+
+names(res3par2)<-pop
+res3par2[[1]]
+
+# remove the 2 additional hypotheses
+res3par2[[1]][[1]] %>% dimnames()
+
+res3par<-lapply(res3par2, function(x1){
+  x1<-lapply(x1, function(x2){
+    x2<-x2[,c("H2.V1>V2>V3","H2.complement")]
+    colnames(x2)<-c("H1", "Hc")
+    rownames(x2)<-NULL
+    return(x2)
+  })
+  return(x1)
+})
+res3par[[1]][[1]]
+
+#res3par2 should have data format that is processable by the procedure in "Version 2"
+
+
+
+#Step 3) apply pre-processing procedure "Version 2" to res3par2------------
+
 #Simulation conditions
 # I use only the attributes from one of the populations, because they are the same across populations
-n = attributes(res3par[[1]])$n
-studies<-attributes(res3par[[1]])$studies
-iterations=attributes(res3par[[1]])$iterations
-hypothesis<-attributes(res3par[[1]])$hypothesis
+n = n
+studies<-30
+iterations=1000
+hypothesis<-c("V1>V2>V3")
 #all populations
-pop_names<-sapply(res3par, function(x){
-  attributes(x)$pop_name
-} )
-r2<-sapply(res3par, function(x){
-  attributes(x)$r2
-} ) %>% unique()
-pcor<-sapply(res3par, function(x){
-  attributes(x)$pcor
-} ) %>% unique()
-p<-sapply(res3par, function(x){
-  attributes(x)$p
-} ) %>% unique()
-ratio_beta<-lapply(res3par, function(x){
-  attributes(x)$ratio_beta
-} ) %>% unique()
+pop_names<-sub(pattern="_n.*", "", pop_names_u) %>% unique()
+r2<- gsub(".*r(.+)_pcor.*", "\\1", pop_names) %>% unique()
+pcor<-gsub(".*_pcor(.+)_b.*", "\\1", pop_names) %>% unique()
+p<-gsub(pattern = ".*p", "", pop_names) %>% unique()
+ratio_beta<- gsub(".*_b(.+)_p.*", "\\1", pop_names) %>% unique()
 
 att<-list(n=n,
           studies=studies,
@@ -434,29 +463,42 @@ BF_bind3<-abind(BF_bind, Hu_array, along = 2)
 #give the BFuu slice a name "Hu"
 dimnames(BF_bind3)[[2]][length(dimnames(BF_bind3)[[2]])]<-"Hu"
 
-attributes(BF_bind3)<-c(attributes(BF_bind3),
+
+#add population Hu=H1+Hc -----------------------
+
+H1Hc_pop<-array(NA, dim = c(studies,
+                            length(dimnames(BF_bind3)[[2]]), #number of hypotheses
+                           1,
+                           iterations,
+                           length(n)
+))
+t<-1
+for(i in 1:1000){
+  for(t in 1:30){
+    for(s in 1:length(n)){
+      if((t %% 2)==0){
+        #population<-"Hc"
+        population<-"r0.13_pcor0.3_b123_p0" 
+      }else{
+        #population<-"Hi"
+        population<-"r0.13_pcor0.3_b321_p0"
+      }
+      
+      H1Hc_pop[t,,1,i,s]<-BF_bind3[t,,population,i,s]
+    }
+  }
+}
+#combine the array slice with the main array
+BF_bind4<-abind(BF_bind3, H1Hc_pop, along = 3)
+#give the BFuu slice a name "Hu"
+dimnames(BF_bind4)[[3]][length(dimnames(BF_bind4)[[3]])]<-"r0.13_pcor0.3_b321123_p0"
+
+
+attributes(BF_bind4)<-c(attributes(BF_bind4),
                         att)
-saveRDS(BF_bind3, file="Part I/pre-processing/output_ShinyApp/BF_data_3par.rds")
-res3par1<-lapply(pop_names_u, function(p){
-  rlist::list.rbind(res3par[names(res3par)==p])
-})
-names(res3par1)<-pop_names_u
 
-# res3parl should be the data format of the final and complete HPC data 
 
-#Step 2) nest all populations with the same sample size in an inner list
-#(in order to be able to use my pre-processing procedure)
 
-grep()
-n<-sub(pattern=".*_n", "", pop_names_u)  %>% unique()
-
-res3par2<-lapply(n, function(s){
-  list(res3par1[sub(pattern=".*_n", "", names(res3par1))==s])
-})
-names(res3par2)<-n
-
-#res3par2 should have data format that is processable by the procedure in "Version 2"
-
-#Step 3) apply pre-processing procedure "Version 2" to res3par2
+saveRDS(BF_bind4, file="Part I/pre-processing/output/BF_data_3par_hpc.rds")
 
 
