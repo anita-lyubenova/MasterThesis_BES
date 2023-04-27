@@ -1,8 +1,8 @@
-library(ggcorrplot)
+#library(ggcorrplot)
 #library(patchwork)
 library(tidyverse)
-library(gridExtra)
-library(ggpubr)
+# library(gridExtra)
+# library(ggpubr)
 #a function to compute aggregate PMPs for selected hypotheses from the BFs
 aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
                        hyp=c("H1", "Hu"),
@@ -127,7 +127,8 @@ median_plot<-function(x # a list created with create_median_plot_data()
       title=x$pop,
       # title=paste0("MPCTH: ",str_extract(x$pop, "H."),str_split(x$pop, ':', simplify = TRUE)[,2]),
       # subtitle = paste0(x$hypothesis_test, " (MPCTH: ",str_extract(a$pop, "H."),str_split(a$pop, ':', simplify = TRUE)[,2], ")"),
-      subtitle = paste0(x$hypothesis_test, " (n = ",x$n, ")"),
+     # subtitle = paste0(x$hypothesis_test, " (n = ",x$n, ")"),
+     subtitle = x$hypothesis_test,
       x="Number of aggregated studies",
       #x=" ",
       y="Aggregate PMP")+
