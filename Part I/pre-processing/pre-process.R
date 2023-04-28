@@ -377,10 +377,10 @@ res3par2<-lapply(pop, function(s){
 })
 
 names(res3par2)<-pop
-res3par2[[1]]
+
 
 # remove the 2 additional hypotheses
-res3par2[[1]][[1]] %>% dimnames()
+# res3par2[[1]][[1]] %>% dimnames()
 
 res3par<-lapply(res3par2, function(x1){
   x1<-lapply(x1, function(x2){
@@ -391,7 +391,7 @@ res3par<-lapply(res3par2, function(x1){
   })
   return(x1)
 })
-res3par[[1]][[1]]
+
 
 #res3par2 should have data format that is processable by the procedure in "Version 2"
 
@@ -496,8 +496,6 @@ dimnames(BF_bind4)[[3]][length(dimnames(BF_bind4)[[3]])]<-"r0.13_pcor0.3_b321123
 
 attributes(BF_bind4)<-c(attributes(BF_bind4),
                         att)
-
-
 
 saveRDS(BF_bind4, file="Part I/pre-processing/output/BF_data_3par_hpc.rds")
 

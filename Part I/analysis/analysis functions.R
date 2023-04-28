@@ -2,12 +2,22 @@
 #library(patchwork)
 library(tidyverse)
 # library(gridExtra)
-# library(ggpubr)
+ library(ggpubr)
+
 #a function to compute aggregate PMPs for selected hypotheses from the BFs
 aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
                        hyp=c("H1", "Hu"),
-                       studies=10 #number of studies to aggregate over, max 40
+                       studies=10, #number of studies to aggregate over, max 40,
+                       subset=NULL
 ){
+  #subset if specified, while retaining the attributes
+  if(!is.null(subset)){
+    att<-attributes(x)
+    att<-att[names(att)[-grep("dim", names(att))]]
+    x<-eval(parse(text = subset))
+    attributes(x)<-c(attributes(x), att)
+  }
+  
   hyp_index<-substr(hyp,2,2)
   search_terms <- paste0(hyp, collapse = "|")
   BF<-x
@@ -188,9 +198,9 @@ accuracyPMP<-function(listPMP, #list created with aggregatePMP()
   #each variable contains the true classifications for each population
   
   
-  true<-lapply( mget(correct_name), function(x) x/listPMP$iter)
+  true<-lapply( mget(correct_name), function(x) x/listPMP$dim[[4]])
   
-  acc<-eval(parse(text = paste(correct_name, collapse = "+")))/(nrow(tr)*listPMP$iter)
+  acc<-eval(parse(text = paste(correct_name, collapse = "+")))/(nrow(tr)*listPMP$dim[[4]])
   
   list(acc=round(acc, digits = 3),
        TP=true,
@@ -263,12 +273,13 @@ acc_corrplot<-function(a, # a list created with accuracyPMP()
     l<-a[[object]] 
     ld<-data.frame(x=NA,
                    y=1:ncol(l))
+    #for each sample size (row) determine the first t that reaches accuracy =0.87
     for(i in 1:ncol(l)){
       ld[i,"x"]<- suppressWarnings(min(which(l[,i]>=0.865)))
     }
-    ld[ld$x=="Inf",]<-c(nrow(l)-0.3,
-                        ld[ld$x=="Inf",]$y+1
-                                    )
+    ld[ld$x=="Inf",]<-matrix(c(NA,NA,nrow(l)-0.3,
+                        max(ld[ld$x=="Inf",]$y)+1
+                                    ), ncol=2,byrow = TRUE)
     
 
 pal<-c(  "#1344CD"  ,"#481568FF","#A67DC4" ,"#D5984D", "#FDE725FF","#1F968BFF")
@@ -291,7 +302,7 @@ ggplot(data = x, mapping = aes(x=t, y=n, fill=value))+
   labs(title="Accuracy")+
   theme_minimal()+
   theme(legend.position="bottom",
-        legend.key.width=unit(3,"cm"))
+        legend.key.width=unit(2.6,"cm"))
 }#end acc_corrplot()
 
 
@@ -333,7 +344,7 @@ TP_corrplot<-function(a# a list created with accuracyPMP() containgin TPRs
                            limit = c(0, 1),
                            breaks=c(0,0.10,0.20, 0.30, 0.4,0.50,0.60,0.70,0.80, 0.87, 0.95, 1),
                            space = "Lab",
-                           name = "Accuracy",
+                           name = "TPR",
                            values = scales::rescale(c(0,0.5,0.70,0.8,0.87,1))
       )+
       geom_text(mapping = aes(x=t, y=n),
@@ -341,7 +352,8 @@ TP_corrplot<-function(a# a list created with accuracyPMP() containgin TPRs
                 color= names(label.df),  #"white",
                 size = 3)+
       labs(
-          subtitle = paste0("MPCTH: ", names(a$hyp_to_pop)[i]))+
+          subtitle = paste0("MPCTH: ", names(a$hyp_to_pop)[i])
+          )+
       theme_minimal()+
       theme(legend.position="bottom",
             legend.key.width=unit(3,"cm")
@@ -350,10 +362,11 @@ TP_corrplot<-function(a# a list created with accuracyPMP() containgin TPRs
      
     
   } )
+  return(TPplots)
   
-  
-# print(TPplots)
- ggarrange(plotlist=TPplots, ncol=1, common.legend = TRUE, legend = "bottom")
+# print(TPplots)#
+  # wrap_plots(TPplots, ncol=1, guides = "collect")
+  # ggarrange(plotlist=TPplots, ncol=1, common.legend = TRUE, legend = "bottom",labels="AUTO")
  
   # annotate_figure(printTPs, top = text_grob("True positive rates for different MPCTH", 
   #                                       color = "black", face = "bold", hjust = 1.1))
