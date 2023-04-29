@@ -94,6 +94,12 @@ mp.86
 ggsave("Part I/analysis/output/mp.86.png", plot = mp.86, width = 7, height = 4, units = "in", dpi = 300, bg="white")
 
 
+#proportion of PMPs above 0.50 for each H1 and Hu
+icu.mdat<-dat%>% 
+  aggregatePMP(hyp=c("H1","Hc","Hu"),
+               studies=15)
+sum(icu.mdat$PMP[15,"PMPu","r0.13_pcor0.3_b321_p0.86",,"300"]>0.5)/1000
+sum(icu.mdat$PMP[15,"PMP1","r0.13_pcor0.3_b321_p0.86",,"300"]>0.5)/1000
 #   p.5   ----------------------------------------
 mp.50.ic<- dat %>% 
   aggregatePMP(hyp=c("H1","Hc"),
@@ -238,8 +244,8 @@ acc.iu.l<-acc.iu$acc %>%
 diff<-cbind(acc.icu.l,acc.iu.l) %>% 
   mutate(diff=acc.iu-acc.icu,
          color= case_when(acc.icu<=0.865 & acc.iu<=0.865 ~"both <.87",
-                          acc.icu<=0.865 & acc.iu>0.865 ~"only \"H1 vs Hu\">.87",
-                          acc.icu>0.865 & acc.iu>0.865 ~"both >.87"
+                          acc.icu<0.865 & acc.iu>=0.865 ~"only \"H1 vs Hu\" \u2265 .87",
+                          acc.icu>=0.865 & acc.iu>=0.865 ~"both \u2265 .87"
                           )
          )
 
@@ -248,7 +254,7 @@ cols<-c("#CCCCCC", "#EBEBEB",  "#fcfcfc")#"#f9f7f7"
 costplot<-
   ggplot(data = diff, mapping = aes(x=t.icu,
                                             y=n.icu,
-                                            fill=factor(color, levels = c("both <.87", "only \"H1 vs Hu\">.87", "both >.87" ))))+
+                                            fill=factor(color, levels = c("both <.87", "only \"H1 vs Hu\" \u2265 .87", "both \u2265 .87" ))))+
   geom_tile()+#color = "white"
   scale_fill_manual(values=cols,
                     name="Test accuracies")+
@@ -260,7 +266,7 @@ costplot<-
   #           color= names(label.df),  #"white",
   #           size = 2.8,
   #           fontface='bold')+
-  labs(x="t", y="n")+
+  labs(x="Number of aggregated studies", y="Sample size")+
   theme_minimal()+
   theme(legend.position = "top",legend.key=element_blank())+
   guides(fill = guide_legend(label.position = "bottom",

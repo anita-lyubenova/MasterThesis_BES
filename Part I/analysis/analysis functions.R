@@ -299,7 +299,8 @@ ggplot(data = x, mapping = aes(x=t, y=n, fill=value))+
             label = label.df,
             color= names(label.df),  #"white",
             size = 3)+
-  labs(title="Accuracy")+
+  labs(#title="Accuracy",
+       x="Number of aggregated studies", y="Sample size")+
   theme_minimal()+
   theme(legend.position="bottom",
         legend.key.width=unit(2.6,"cm"))
@@ -352,7 +353,9 @@ TP_corrplot<-function(a# a list created with accuracyPMP() containgin TPRs
                 color= names(label.df),  #"white",
                 size = 3)+
       labs(
-          subtitle = paste0("MPCTH: ", names(a$hyp_to_pop)[i])
+          subtitle = paste0("MPCTH: ", names(a$hyp_to_pop)[i]),
+          x="Number of aggregated studies",
+          "Sample size"
           )+
       theme_minimal()+
       theme(legend.position="bottom",
