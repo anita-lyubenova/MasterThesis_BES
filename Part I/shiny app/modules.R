@@ -129,7 +129,6 @@ hyp_server<-function(id) {
 
 pop_UI<-function(id,n_par, hyp_input) {
   ns <- NS(id)
-  
   #select dataset based on n_par
   dat<-reactive(eval(parse(text=paste0("dat",as.numeric(n_par())))))
   
@@ -141,14 +140,14 @@ pop_UI<-function(id,n_par, hyp_input) {
                        "R-squared:",
                         choices = attributes(dat())$r2
                      ),
-        # sliderTextInput(ns("pcor_input"),
-        #                 "Correlation between the predictors:",
-        #                 choices = attributes(dat())$pcor
-        # ),
-        # sliderTextInput(ns("p_input"),
-        #                 "Heterogeneity cv:",
-        #                 choices = attributes(dat())$p
-        # ),
+        sliderTextInput(ns("pcor_input"),
+                        "Correlation between the predictors:",
+                        choices = attributes(dat())$pcor
+        ),
+        sliderTextInput(ns("p_input"),
+                        "Heterogeneity p:",
+                        choices = attributes(dat())$p
+        ),
         verbatimTextOutput(ns("test"))
 
   ))
@@ -156,11 +155,7 @@ pop_UI<-function(id,n_par, hyp_input) {
 pop_server<-function(id){
 
   moduleServer(id, function(input, output, session) {
-    ns <- session$ns
     
-    output$test<-renderPrint(input$r2_input)
-    
-    #return the inputs values of the module in a list
     return(list(r2=reactive(input$r2_input),
                 pcor=reactive(input$pcor_input),
                 p=reactive(input$p_input)))
