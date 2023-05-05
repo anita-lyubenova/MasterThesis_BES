@@ -83,10 +83,10 @@ hyp_UI<-function(id) {
   tagList(
     radioButtons(ns("n_par"), 
                  label="Number of parameters in the hypotheses ",
-                 choiceNames = c("1: $\\beta_{1}$",
+                 choiceNames = c(#"1: $\\beta_{1}$",
                                  "2: $\\beta_1, \\beta_2$",
                                  "3: $\\beta_1, \\beta_2, \\beta_3$"),
-                 choiceValues = c(1, 2, 3),
+                 choiceValues = c( 2, 3),
                  inline = FALSE,
                  selected = 3
     ),
@@ -131,37 +131,53 @@ pop_UI<-function(id,n_par, hyp_input) {
   ns <- NS(id)
   #select dataset based on n_par
   dat<-reactive(eval(parse(text=paste0("dat",as.numeric(n_par())))))
+  #ratio beta choices
+  bs<-reactive({
+    b<-attributes(dat())$ratio_beta
+    b.names<-gsub('', ':', b) %>% 
+      substr(., 2, nchar(.)-1)
+    names(b)<-b.names
+    b
+    })
   
-  
+    
     tagList(
       wellPanel(style="padding-top:0px;margin-top:5px;",
-        tags$strong(paste("Population of ", hyp_input)),
-        sliderTextInput(ns("r2_input"),
-                       "R-squared:",
-                        choices = attributes(dat())$r2
-                     ),
-        sliderTextInput(ns("pcor_input"),
-                        "Correlation between the predictors:",
-                        choices = attributes(dat())$pcor
-        ),
-        sliderTextInput(ns("p_input"),
-                        "Heterogeneity p:",
+        tags$strong(paste("Specify the population of ", hyp_input)),
+        fluidRow(
+          column(width = 3, 
+                 selectInput(ns("r2_input"),
+                             "R-squared:",
+                             choices = attributes(dat())$r2,
+                 )
+                 ),
+          column(width = 3,
+                 selectInput(ns("pcor_input"),
+                             "Rho:",
+                             choices = attributes(dat())$pcor
+                 )
+                 ),
+          column(width = 3,
+        selectInput(ns("p_input"),
+                        "cv:",
                         choices = attributes(dat())$p
+          )
+        ),
+        column(width = 3,
+        selectInput(ns("b_input"),
+                    "Ratio beta:",
+                    choices = bs()
+                    )
+        )
         ),
         verbatimTextOutput(ns("test"))
 
   ))
 }
-pop_server<-function(id,hyp_input){
+pop_server<-function(id){
 
   moduleServer(id, function(input, output, session) {
     
-    # specs<-reactiveValues()
-    # observe({s
-    #   specs$r2<-input$r2_input
-    #   specs$pcor<-input$pcor_input
-    #   specs$p<-input$p_input
-    # })
     output$test<-renderPrint({
      # specs$r2
      # hyp_input
@@ -175,4 +191,16 @@ pop_server<-function(id,hyp_input){
 
   })
 
+}
+
+
+plots_UI<-function(id) {
+  ns <- NS(id)
+  
+  tagList(
+    plotOutput(ns("TP_plot")),
+    plotOutput(ns("acc_plot"))
+    
+    
+  )
 }

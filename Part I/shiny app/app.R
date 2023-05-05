@@ -10,18 +10,18 @@ library(htmltools)
 library(htmlwidgets)
 
 
-dat3<-readRDS("Part I/pre-processing/output_ShinyApp/BF_data_3par.rds")
-dat2<-readRDS("Part I/pre-processing/output_ShinyApp/BF_data_2par.rds")
-dat1<-readRDS("Part I/pre-processing/output_ShinyApp/BF_data_1par.rds")
-source("Part I/shiny app/modules.R")
-source("Part I/shiny app/app functions.R")
-par_to_hyp<-readxl::read_excel("Part I/shiny app/par_to_hyp2.xlsx")
+# dat3<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc_final.rds")
+# dat2<-readRDS("Part I/pre-processing/output_ShinyApp/BF_data_2par.rds")
+# dat1<-readRDS("Part I/pre-processing/output_ShinyApp/BF_data_1par.rds")
+ source("Part I/shiny app/modules.R")
+# source("Part I/shiny app/app functions.R")
+# par_to_hyp<-readxl::read_excel("Part I/shiny app/par_to_hyp2.xlsx")
 
 # dat<-readRDS("BF_data.rds")
 # source("modules.R")
 # source("app functions.R")
 
-
+#bs<-attributes(dat3)$ratio_beta
 
 custom_minty<- bs_theme(
     version = 5,
@@ -86,34 +86,49 @@ ui<-navbarPage(title = "Bayesian Evidence Synthesis",
 server<-function(input, output,session){
  hyp_UI1_selection<- hyp_server("hyp_UI1")
  
+ #rv <- reactiveValues(all_ui = list())
+
+
  observeEvent(hyp_UI1_selection$hyp_input_r(), {
+   
+   # h<-hyp_UI1_selection$hyp_input_r()
+   # 
+   # rv$all_ui[[h[length(h)]]] <- pop_UI(paste0("pop_UI",h[length(h)]),
+   #                                     n_par = hyp_UI1_selection$n_par,
+   #                                     hyp_input=h[length(h)])
+   
    output$pops<-renderUI({
-     
-     # if(is.null(hyp_UI1_selection$hyp_input)){
-     #   return(NULL)
-     #   
-     # }else{
-     do.call(what = "tagList", 
+
+     if(is.null(hyp_UI1_selection$hyp_input)){
+       return(NULL)
+
+     }else{
+     do.call(what = "tagList",
              args=lapply(hyp_UI1_selection$hyp_input_r(), function(i){
                pop_UI(paste0("pop_UI",i),
                       n_par = hyp_UI1_selection$n_par,
                       hyp_input=i)
              })
      )
-     # }
+     }
+     
+     #tagList(rv$all_ui)
      
     })
    
+   
  })
-   #Create a placeholder 
+   #Create a placeholder for the population specifications
    pop_def<-reactiveValues()
+   
+   #save the population specificatins
    observe({
      for(x in hyp_UI1_selection$hyp_input_r()){
        #pop_def[[x]] will be a list with 3 elements, r2, pcor and p
        pop_def[[x]]<-pop_server(paste0("pop_UI",x))
 
      }
-})
+  })
   
  output$test_outer<-renderPrint({
    pop_def[["H1"]]$r2()
