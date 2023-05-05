@@ -30,6 +30,7 @@ custom_minty<- bs_theme(
 
 #bs_theme_preview(theme = custom_minty, with_themer = FALSE)
 
+# UI ------------------------------------------------------------------------------------------------
 ui<-navbarPage(title = "Bayesian Evidence Synthesis",
                theme = custom_minty,
                selected = "Accuracy plots",
@@ -83,47 +84,47 @@ ui<-navbarPage(title = "Bayesian Evidence Synthesis",
                
                )
 
+#SERVER ----------------------------------------------------------
 server<-function(input, output,session){
+  
  hyp_UI1_selection<- hyp_server("hyp_UI1")
  
+ #each time a hypothesis is selected, show a wellPanel with inputs R2, pcor and cv
  observeEvent(hyp_UI1_selection$hyp_input_r(), {
    output$pops<-renderUI({
      
-     # if(is.null(hyp_UI1_selection$hyp_input)){
-     #   return(NULL)
-     #   
-     # }else{
-     do.call(what = "tagList", 
-             args=lapply(hyp_UI1_selection$hyp_input_r(), function(i){
-               pop_UI(paste0("pop_UI",i),
-                      n_par = hyp_UI1_selection$n_par,
-                      hyp_input=i)
-             })
-     )
+     pop_UI(paste0("pop_UI","H1"),
+            n_par = hyp_UI1_selection$n_par,
+            hyp_input=hyp_UI1_selection$hyp_input_r()
+            )
+     # do.call(what = "tagList", 
+     #         args=lapply(hyp_UI1_selection$hyp_input_r(), function(i){
+     #           pop_UI(paste0("pop_UI",i),
+     #                  n_par = hyp_UI1_selection$n_par,
+     #                  hyp_input=i)
+     #         })
+     # )
      # }
      
     })
    
  })
 
-   specs<-reactiveValues(A=pop_server(paste0("pop_UI",1)))
-   
-#    observe({
-# 
-#    for(x in hyp_UI1_selection$hyp_input_r()){
-#      specs[[x]]<-pop_server(paste0("pop_UI",x))
-#    }
-#   # specs<-lapply(hyp_UI1_selection$hyp_input_r(), function(i){
-#   #   pop_server(paste0("pop_UI",i))
-#   # })
-# })
+  # specs<-reactiveValues(A=pop_server(paste0("pop_UI","H1")))
+  #  pop_inputs<-reactiveValues()
+  #  #pop_inputs$a<-pop_server(paste0("pop_UI","H1"))
+  # pop_input_test<-reactive({pop_server(paste0("pop_UI","H1"))$r2})
+  # specs<-lapply(hyp_UI1_selection$hyp_input_r(), function(i){
+  #   pop_server(paste0("pop_UI",i))
+
+
  
  # lapply(hyp_UI1_selection$hyp_input_r,function(i){
  #   pop_server(paste0("pop_UI",i))
  # })
  #pop_server(paste0("pop_UI",1))
   
- output$test<-renderPrint(specs)
+# output$test<-renderPrint(pop_inputs$a)
 }
   
 
