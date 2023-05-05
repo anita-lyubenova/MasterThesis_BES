@@ -106,19 +106,19 @@ create_median_plot_data<-function(listPMP,
   
   #return(df)
 }
-
-
+#colors were selected from a color blind palette
+#colorBlindness::availableColors() %>%  colorBlindness::displayColors()
 
 median_plot<-function(x # a list created with create_median_plot_data()
                       
 ){
   
   pd <- position_dodge(width = 0.4) # set desired dodge width
-  col.H1<-"#7fc97f"
-  col.Hc<-"#fdc086"
+  col.H1<-"#009E73" 
+  col.Hc<-"#E69F00"
   col.Hu<-"black"
   shades::lightness(col.H1, shades::scalefac(0.50))
-  all.colors <-c(H1="#7fc97f", Hc="#fdc086",Hu="black")
+  all.colors <-c(H1="#009E73" , Hc="#E69F00",Hu="black")
   #subset the names of the tested hypoteheses
   hyp<-unlist(str_extract_all(x$hypothesis_test, "H(1|c|u)"))
   sub.colors<-all.colors[names(all.colors) %in% hyp]
@@ -355,7 +355,7 @@ TP_corrplot<-function(a# a list created with accuracyPMP() containgin TPRs
       labs(
           subtitle = paste0("MPCTH: ", names(a$hyp_to_pop)[i]),
           x="Number of aggregated studies",
-          "Sample size"
+          y="Sample size"
           )+
       theme_minimal()+
       theme(legend.position="bottom",
