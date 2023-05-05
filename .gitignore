@@ -7,3 +7,6 @@ Outputs/generate datasets/TRUE_H1.RData
 Outputs/generate datasets/TRUE_Hc.RData
 Part I/pre-processing/output/BF_data.rds
 Part I/data simulation/BES thesis shiny data export.zip
+Part I/simulation/output/res2par_shiny.rds
+Part I/simulation/output/BES thesis shiny data export.zip
+Part I/simulation/output/res3par_shiny.rds
