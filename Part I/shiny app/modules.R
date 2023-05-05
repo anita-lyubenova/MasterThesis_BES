@@ -152,16 +152,26 @@ pop_UI<-function(id,n_par, hyp_input) {
 
   ))
 }
-pop_server<-function(id){
+pop_server<-function(id,hyp_input){
 
   moduleServer(id, function(input, output, session) {
     
+    # specs<-reactiveValues()
+    # observe({s
+    #   specs$r2<-input$r2_input
+    #   specs$pcor<-input$pcor_input
+    #   specs$p<-input$p_input
+    # })
+    output$test<-renderPrint({
+     # specs$r2
+     # hyp_input
+      input$r2_input
+    })
+    # return(specs=specs)
     return(list(r2=reactive(input$r2_input),
                 pcor=reactive(input$pcor_input),
                 p=reactive(input$p_input)))
-    # output$test<-renderPrint({
-    #   input$r2_input
-    # })
+   
 
   })
 

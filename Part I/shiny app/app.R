@@ -75,7 +75,7 @@ ui<-navbarPage(title = "Bayesian Evidence Synthesis",
                                ),
                         column(width = 3,
                                div(style="height:90vh; display:flex;font-size:14px;",
-                                   wellPanel(verbatimTextOutput("test"))
+                                   wellPanel(verbatimTextOutput("test_outer"))
                                   )
                               )
                             )
@@ -105,25 +105,24 @@ server<-function(input, output,session){
     })
    
  })
+   #Create a placeholder 
+   pop_def<-reactiveValues()
+   observe({
+     for(x in hyp_UI1_selection$hyp_input_r()){
+       #pop_def[[x]] will be a list with 3 elements, r2, pcor and p
+       pop_def[[x]]<-pop_server(paste0("pop_UI",x))
 
-   specs<-reactiveValues(A=pop_server(paste0("pop_UI",1)))
-   
-#    observe({
-# 
-#    for(x in hyp_UI1_selection$hyp_input_r()){
-#      specs[[x]]<-pop_server(paste0("pop_UI",x))
-#    }
-#   # specs<-lapply(hyp_UI1_selection$hyp_input_r(), function(i){
-#   #   pop_server(paste0("pop_UI",i))
-#   # })
-# })
- 
- # lapply(hyp_UI1_selection$hyp_input_r,function(i){
- #   pop_server(paste0("pop_UI",i))
- # })
- #pop_server(paste0("pop_UI",1))
+     }
+})
   
- output$test<-renderPrint(specs)
+ output$test_outer<-renderPrint({
+   pop_def[["H1"]]$r2()
+
+   #test_react$r2()
+   #hyp_UI1_selection$hyp_input_r()
+   })
+ 
+ 
 }
   
 
