@@ -2,11 +2,14 @@ library(tidyverse)
 # library(gridExtra)
 library(ggpubr)
 
+removeReactiveValuesName <- function(rv, rm.name) { .subset2(rv, "impl")$.values$remove("name") }
+
 #a function to compute aggregate PMPs for selected hypotheses from the BFs
 aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
                        hyp=c("H1", "Hu"),
                        studies=10, #number of studies to aggregate over, max 40,
-                       subset=NULL
+                       subset=NULL,
+                       pops = c("r0.13_pcor_0.3_b321_p0","r0.13_pcor_0.3_bmixed_p0")
 ){
   #subset if specified, while retaining the attributes
   if(!is.null(subset)){
@@ -15,11 +18,13 @@ aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
     x<-eval(parse(text = subset))
     attributes(x)<-c(attributes(x), att)
   }
+
   
-  hyp_index<-substr(hyp,2,2)
-  search_terms <- paste0(hyp, collapse = "|")
+  #subset the hypotheses and populations of interest
+  ##hyp_index<-substr(hyp,2,2)
+  #search_terms <- paste0(hyp, collapse = "|")
   BF<-x
-  BF<-BF[1:studies,str_subset(dimnames(BF)[[2]], search_terms),,,,drop=FALSE]
+  BF<-BF[1:studies,hyp,pops,,,drop=FALSE]
   
   nom<-aperm(BF, perm=c(1,3,4,5,2))
   denom<-rowSums(nom, dims = 4)
@@ -34,7 +39,7 @@ aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
   }
   
   PMP_t<-aperm(PMP_t, perm = c(1,5,2,3,4))
-  dimnames(PMP_t)[[2]]<-paste0("PMP", c(hyp_index))
+  dimnames(PMP_t)[[2]]<-paste0("PMP_", hyp)
   
   PMP_t<-  rlist::list.append(attributes(x), PMP=PMP_t, hypothesis_test = paste(hyp, collapse = " vs. ")) 
   return(PMP_t)
@@ -163,20 +168,21 @@ median_plot<-function(data, hyp_input){
    
 
 }
-
-
+# hyp<-c("H1.V1>V2>V3>0", "H1.complement")
+# hyp_to_pop<-c(H1="r0.09_pcor0_b321_p0", H1c="r0.09_pcor0_b321_p0" )
 #a function to compute confusion matrix from aggregated PMPs
 accuracyPMP<-function(listPMP, #list created with aggregatePMP()
-                      hyp_to_pop # a named character vector; elements are subset of dimnames(PMP)[[3]]: "TRUE_H0", "TRUE_H1", "TRUE_Hc", "TRUE_Hu", "HETEROG_H1p.1", "HETEROG_H1p.3", "HETEROG_H1p.5", names are the hypotheses for which the populations are true
-                      
+                      hyp_to_pop, # a named character vector; elements are subset of dimnames(PMP)[[3]]: "TRUE_H0", "TRUE_H1", "TRUE_Hc", "TRUE_Hu", "HETEROG_H1p.1", "HETEROG_H1p.3", "HETEROG_H1p.5", names are the hypotheses for which the populations are true
+                      hyp
 ){
   #subset the populations of interest
-  PMP<-listPMP$PMP[,,hyp_to_pop,,]
+ # PMP<-listPMP$PMP[,,hyp_to_pop,,]
+  PMP<-listPMP$PMP
   dim(PMP)
-  hyp_index<-substr(names(hyp_to_pop),2,2)
+  #hyp_index<-substr(names(hyp_to_pop),2,2)
   
   tr<-data.frame(hyp=names(hyp_to_pop),
-                 PMP=paste0("PMP", hyp_index),
+                 PMP=paste0("PMP_", hyp),
                  pop=hyp_to_pop
   )
   # a character vector whose elements are the names of the variables storing the correct classifications for each population
@@ -346,8 +352,6 @@ TP_corrplot<-function(a# a list created with accuracyPMP() containgin TPRs
       theme(legend.position="bottom",
             legend.key.width=unit(3,"cm")
       )
-    
-    
     
   } )
   return(TPplots)

@@ -197,10 +197,12 @@ TPR<-
                              Hu="r0.13_pcor0.3_b321_p0.86"
   )) %>% 
   TP_corrplot()
+
 TPRs<-wrap_plots(TPR, ncol=1)+ 
   plot_annotation(tag_levels = 'A') + 
   plot_layout(guides = 'collect')&
   theme(legend.position='bottom')
+
 TPRs[[1]]
 
 #remove x label

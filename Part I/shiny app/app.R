@@ -8,14 +8,15 @@ library(tidyverse)
 library(highcharter)
 library(htmltools)
 library(htmlwidgets)
-
+library(shinybusy)
+library(patchwork)
 
 # dat3<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc_final.rds")
 # dat2<-readRDS("Part I/pre-processing/output_ShinyApp/BF_data_2par.rds")
 # dat1<-readRDS("Part I/pre-processing/output_ShinyApp/BF_data_1par.rds")
  source("Part I/shiny app/modules.R")
 # source("Part I/shiny app/app functions.R")
-# par_to_hyp<-readxl::read_excel("Part I/shiny app/par_to_hyp2.xlsx")
+par_to_hyp<-readxl::read_excel("Part I/shiny app/par_to_hyp2.xlsx")
 
 # dat<-readRDS("BF_data.rds")
 # source("modules.R")
@@ -67,7 +68,8 @@ ui<-navbarPage(title = "Bayesian Evidence Synthesis",
                         column(width = 9,
                                fluidRow(column(width = 6,
                                                hyp_UI("hyp_UI1"),
-                                               uiOutput("pops")#,
+                                               uiOutput("pops"),
+                                               plots_UI("plots_UI1")
                                             #   verbatimTextOutput("test")
                                ),
                                column(width = 6,
@@ -116,27 +118,30 @@ server<-function(input, output,session){
      
     })
    
-   
  })
-   #Create a placeholder for the population specifications
-   pop_def<-reactiveValues()
-   
+ #Create a placeholder for the population specifications 
+ #unfortunately, every hyp checked even once creates a named element in the pop_def reactive values
+ pop_def<-reactiveValues()
    #save the population specificatins
    observe({
+     
      for(x in hyp_UI1_selection$hyp_input_r()){
        #pop_def[[x]] will be a list with 3 elements, r2, pcor and p
        pop_def[[x]]<-pop_server(paste0("pop_UI",x))
-
      }
   })
   
  output$test_outer<-renderPrint({
-   pop_def[["H1"]]$r2()
-
+   #pop_def[["H1"]]
+   names(pop_def)
    #test_react$r2()
    #hyp_UI1_selection$hyp_input_r()
    })
  
+plots_server("plots_UI1",
+             hyp=hyp_UI1_selection$hyp_input_r,
+             pop_def = pop_def,
+             n_par = hyp_UI1_selection$n_par)
  
 }
   

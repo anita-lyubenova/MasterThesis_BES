@@ -1,5 +1,5 @@
 library(shiny)
-
+source("Part I/shiny app/app functions.R")
 
 gen_plot_UI <- function(id) {
   ns <- NS(id)
@@ -112,7 +112,8 @@ hyp_server<-function(id) {
              checkboxGroupInput(inputId = ns("hyp_input"),
                                 label = "Choose hypotheses to test",
                                 choiceValues = hyps()$label,
-                                choiceNames =lapply(paste0(hyps()$label, ": ",hyps()$hyp_latex), withMathJax)
+                                choiceNames =lapply(paste0(hyps()$label, ": ",hyps()$hyp_latex), withMathJax),
+                                selected = c("H2","H2c", "Hu")
                                 
              ))
     
@@ -137,7 +138,7 @@ pop_UI<-function(id,n_par, hyp_input) {
     b.names<-gsub('', ':', b) %>% 
       substr(., 2, nchar(.)-1)
     names(b)<-b.names
-    b
+    c(b,"mixed")
     })
   
     
@@ -149,18 +150,21 @@ pop_UI<-function(id,n_par, hyp_input) {
                  selectInput(ns("r2_input"),
                              "R-squared:",
                              choices = attributes(dat())$r2,
+                             selected = 0.13
                  )
                  ),
           column(width = 3,
                  selectInput(ns("pcor_input"),
                              "Rho:",
-                             choices = attributes(dat())$pcor
+                             choices = attributes(dat())$pcor,
+                             selected = 0.3
                  )
                  ),
           column(width = 3,
         selectInput(ns("p_input"),
                         "cv:",
-                        choices = attributes(dat())$p
+                        choices = attributes(dat())$p,
+                        selected = 0
           )
         ),
         column(width = 3,
@@ -183,24 +187,109 @@ pop_server<-function(id){
      # hyp_input
       input$r2_input
     })
-    # return(specs=specs)
-    return(list(r2=reactive(input$r2_input),
-                pcor=reactive(input$pcor_input),
-                p=reactive(input$p_input)))
+    pop<-paste0("r", input$r2_input, "_pcor", input$pcor_input, "_b", input$b_input, "_p", input$p_input)
+    return(pop)
+    # return(list(r2=reactive(input$r2_input),
+    #             pcor=reactive(input$pcor_input),
+    #             p=reactive(input$p_input)))
    
 
   })
 
 }
 
-
 plots_UI<-function(id) {
   ns <- NS(id)
   
   tagList(
+    actionButton(ns("go_plot"), "Plot"),
     plotOutput(ns("TP_plot")),
-    plotOutput(ns("acc_plot"))
-    
-    
+    # plotOutput(ns("acc_plot")),
+    verbatimTextOutput(ns("t1")),
+   verbatimTextOutput(ns("t2"))
   )
+}
+
+plots_server<-function(id, hyp_input,pop_def, n_par){
+  
+  moduleServer(id, function(input, output, session) {
+    
+    hyp<-reactive({
+      subset(par_to_hyp, n_par==n_par() & label %in% hyp_input())$dimname
+    })
+    
+    pops<-reactive({
+     sapply(hyp_input(), function(x){ pop_def[[x]] })
+    })
+    
+    hyp_to_pop<-reactive({
+      hp<-sapply(hyp_input(), function(x){ paste0(x,"=","\"",pop_def[[x]],"\"")})
+      hp<-paste0(hp, collapse = ",")
+      hp<-paste0("c(",hp,")")
+      eval(parse(text = hp))
+      
+    })
+    
+    dat<-reactive(eval(parse(text=paste0("dat",as.numeric(n_par())))))
+    
+
+     observeEvent(input$go_plot, {
+       # output$t1<-renderPrint({
+       #   hyp_to_pop()
+       # })
+       
+       # output$t2<-renderPrint({
+       #   TPR<-
+       #     dat()%>%
+       #     aggregatePMP(hyp=hyp(), #hyp(),
+       #                  studies=30,
+       #                  pops=pops() )%>%
+       #              accuracyPMP(hyp_to_pop = hyp_to_pop(),
+       #                          hyp=hyp())
+       #    TPR
+       #   })
+       
+       output$TP_plot<-renderPlot({
+        # show the modal window
+         show_modal_spinner(spin = "circle",
+                            color = "#78C1A9",
+                            text = "It can take a few moments, please wait...",) 
+                 
+         TPR<-
+           dat()%>%
+           aggregatePMP(hyp=hyp(), #hyp(),
+                        studies=30,
+                        pops=pops() )%>%
+           accuracyPMP(hyp_to_pop = hyp_to_pop(),
+                       hyp=hyp()) %>%
+            TP_corrplot()
+           
+
+           TPRs<-wrap_plots(TPR, ncol=1)+
+             plot_annotation(tag_levels = 'A') +
+             plot_layout(guides = 'collect')&
+             theme(legend.position='bottom')
+           
+           #remove x label
+           for(i in c(1,2)){
+             TPRs[[i]]<-TPRs[[i]] + labs(x=NULL)
+           }
+           # TPRs[[1]]<-TPRs[[1]] + labs(subtitle="H1-population")
+           # TPRs[[2]]<-TPRs[[2]] + labs(subtitle="Hc-population")
+           # TPRs[[3]]<-TPRs[[3]] + labs(subtitle="Heterogeneous H1-population with cv = .86")
+       remove_modal_spinner() # remove spinner when done
+           TPRs
+        
+   
+
+        
+
+        })
+
+     })
+   
+    
+    
+  })
+  
 }
