@@ -6,9 +6,9 @@ dat<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc.rds")
 dimnames(dat)[[3]]
 attributes(dat)
 
-###########################  MEDIAN PLOTS #########################################
+#  MEDIAN PLOTS ------------------------------------------------------
 
-# Figure 1: H1+Hc --------------------------------------------------------------
+## Figure 1: H1+Hc --------------------------------------------------------------
 mp.H1Hc.ic<- dat %>% 
   aggregatePMP(hyp=c("H1","Hc"),
                studies=15) %>% 
@@ -59,7 +59,7 @@ mp.H1Hc[[2]]<- mp.H1Hc[[2]]+ theme(legend.position = "none") +labs(x=NULL)
 
 ggsave("Part I/analysis/output/mp.H1Hc_2.png", plot = mp.H1Hc, width = 7, height = 7, units = "in", dpi = 300, bg="white")
 
-# p.86   --------------------------------------------------------------
+## p.86   --------------------------------------------------------------
 mp.86.ic<- dat %>% 
   aggregatePMP(hyp=c("H1","Hc"),
                studies=15) %>% 
@@ -118,7 +118,7 @@ icu.mdat<-dat%>%
                studies=15)
 sum(icu.mdat$PMP[15,"PMPu","r0.13_pcor0.3_b321_p0.86",,"300"]>0.5)/1000
 sum(icu.mdat$PMP[15,"PMP1","r0.13_pcor0.3_b321_p0.86",,"300"]>0.5)/1000
-#   p.5   ----------------------------------------
+##   p.5   ----------------------------------------
 mp.50.ic<- dat %>% 
   aggregatePMP(hyp=c("H1","Hc"),
                studies=15) %>% 
@@ -166,7 +166,7 @@ mp.50[[2]]<- mp.H1Hc[[2]]+ theme(legend.position = "none") +labs(x=NULL)
 mp.50
 
 mp.86+mp.50
-#Figure 2 -----------------------------
+##Figure 2 -----------------------------
 f2<-wrap_plots(mp.86.ic, mp.86.iu, mp.86.icu,mp.50.ic, mp.50.iu, mp.50.icu, ncol = 2, byrow=FALSE)+ 
   plot_annotation(tag_levels = 'A') + #add labels A, B, C ...
   plot_layout(guides = 'collect')& #only one legend
@@ -181,7 +181,7 @@ for(i in c(1,2,4,5)){
 }
 ggsave("Part I/analysis/output/f2.png", plot = f2, width = 7, height = 5.7, units = "in", dpi = 300, bg="white")
 
-###########################  TPR   #########################################
+#  TPR   ------------------------------------------
 #
 dimnames(dat)[[3]]
 dimnames(dat[,,,,-c(1,3,11)])
@@ -337,3 +337,34 @@ costplot<-
 costplot  
 ggsave("Part I/analysis/output/costplot2.png", plot = costplot, width = 7, height = 3, units = "in", dpi = 300, bg="white")
 
+# Final hpc data--------------------------------------------
+dat3<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc_final.rds")
+source("Part I/analysis/analysis functions.R")
+att<-attributes(dat3)
+att<-att[names(att)[-grep("dim", names(att))]]
+dimnames(dat3)[[2]]
+
+dat3s<-dat3[,c("H2.V1>V2>V3","H2.complement","Hu"),c("r0.13_pcor0.3_b321_p0","r0.13_pcor0.3_b123_p0","r0.13_pcor0.3_b321_p0.86","r0.13_pcor0.3_b321_p0.5","r0.13_pcor0.3_bmixed_p0"),,-c(1,3,11)]
+dimnames(dat3s)[[2]]<-c("H1", "Hc", "Hu")
+attributes(dat3s)<-c(attributes(dat3s), att)
+
+accplot<-dat3s %>% 
+  aggregatePMP(hyp=c("H1","Hc","Hu"),
+               studies=30
+              # subset = "dat3[,,,,-c(1,3,11)]"
+              ) %>% 
+  accuracyPMP(hyp_to_pop = c(H1="r0.13_pcor0.3_b321_p0",
+                             Hc="r0.13_pcor0.3_b123_p0",
+                             Hu="r0.13_pcor0.3_b321_p0.86"
+  )) %>% 
+  acc_corrplot(object = "acc")
+accplot
+a<-dat3s %>% 
+  aggregatePMP(hyp=c("H1","Hc","Hu"),
+               studies=30
+               # subset = "dat3[,,,,-c(1,3,11)]"
+  ) %>% 
+  accuracyPMP(hyp_to_pop = c(H1="r0.13_pcor0.3_b321_p0",
+                             Hc="r0.13_pcor0.3_b123_p0",
+                             Hu="r0.13_pcor0.3_b321_p0.86"
+  ))

@@ -277,9 +277,9 @@ acc_corrplot<-function(a, # a list created with accuracyPMP()
     for(i in 1:ncol(l)){
       ld[i,"x"]<- suppressWarnings(min(which(l[,i]>=0.865)))
     }
-    ld[ld$x=="Inf",]<-matrix(c(NA,NA,nrow(l)-0.3,
-                        max(ld[ld$x=="Inf",]$y)+1
-                                    ), ncol=2,byrow = TRUE)
+    ld[ld$x=="Inf",]<-matrix(c(rep(c(NA,NA), times=sum(ld$x=="Inf")-1),
+                               nrow(l)-0.3,max(ld[ld$x=="Inf",]$y)+1
+                          ), ncol=2,byrow = TRUE)
     
 
 pal<-c(  "#1344CD"  ,"#481568FF","#A67DC4" ,"#D5984D", "#FDE725FF","#1F968BFF")
@@ -294,7 +294,7 @@ ggplot(data = x, mapping = aes(x=t, y=n, fill=value))+
                        values = scales::rescale(c(0,0.5,0.70,0.8,0.87,1))
   )+
   geom_point(data = ld[unique(ld$y),], mapping = aes(x=x, y=y), inherit.aes = FALSE)+
-  geom_step(data = ld, mapping = aes(x=x, y=y), inherit.aes = FALSE)+
+  geom_step(data = ld[!duplicated(ld$x),], mapping = aes(x=x, y=y), inherit.aes = FALSE)+
   geom_text(mapping = aes(x=t, y=n),
             label = label.df,
             color= names(label.df),  #"white",
