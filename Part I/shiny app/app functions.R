@@ -252,8 +252,8 @@ acc_corrplot<-function(a, # a list created with accuracyPMP()
   q[-c(1,nrow(q)),]<-NA
   label.df<-
     reshape2::melt(q)%>%
-    mutate(color=case_when(value<=.65 ~ "white",
-                           value>=.56~ "black"
+    mutate(color=case_when(value<.65 ~ "white",
+                           value>=.65~ "black"
     )) %>%
     pull(value,color) %>%
     round(.,digits=2) %>%
@@ -269,8 +269,8 @@ acc_corrplot<-function(a, # a list created with accuracyPMP()
   for(i in 1:ncol(l)){
     ld[i,"x"]<- suppressWarnings(min(which(l[,i]>=0.865)))
   }
-  ld[ld$x=="Inf",]<-matrix(c(NA,NA,nrow(l)-0.3,
-                             max(ld[ld$x=="Inf",]$y)+1
+  ld[ld$x=="Inf",]<-matrix(c(rep(c(NA,NA), times=sum(ld$x=="Inf")-1),
+                             nrow(l)-0.3,max(ld[ld$x=="Inf",]$y)+1
   ), ncol=2,byrow = TRUE)
   
   
@@ -285,8 +285,8 @@ acc_corrplot<-function(a, # a list created with accuracyPMP()
                          name = "Accuracy",
                          values = scales::rescale(c(0,0.5,0.70,0.8,0.87,1))
     )+
-    geom_point(data = ld[unique(ld$y),], mapping = aes(x=x, y=y), inherit.aes = FALSE)+
-    geom_step(data = ld, mapping = aes(x=x, y=y), inherit.aes = FALSE)+
+    geom_point(data = ld[unique(ld$y),], mapping = aes(x=x, y=y), inherit.aes = FALSE)+#
+    geom_step(data = ld[!duplicated(ld$x),], mapping = aes(x=x, y=y), inherit.aes = FALSE)+
     geom_text(mapping = aes(x=t, y=n),
               label = label.df,
               color= names(label.df),  #"white",
@@ -295,7 +295,8 @@ acc_corrplot<-function(a, # a list created with accuracyPMP()
       x="Number of aggregated studies", y="Sample size")+
     theme_minimal()+
     theme(legend.position="bottom",
-          legend.key.width=unit(2.6,"cm"))
+          legend.key.width=unit(2.6,"cm")
+          )
 }#end acc_corrplot()
 
 TP_corrplot<-function(a# a list created with accuracyPMP() containgin TPRs

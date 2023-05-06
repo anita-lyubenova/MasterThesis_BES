@@ -143,50 +143,45 @@ pop_UI<-function(id,n_par, hyp_input) {
   
     
     tagList(
-      wellPanel(style="padding-top:0px;margin-top:5px;",
+      wellPanel(style="padding-top:0px;margin-top:5px;margin-right:10%;",
         tags$strong(paste("Specify the population of ", hyp_input)),
         fluidRow(
+          column(width = 3,
+                 selectInput(ns("b_input"),
+                             "Ratio beta:",
+                             choices = bs()
+                 )
+          ),
+          column(width = 3,
+                 selectInput(ns("p_input"),
+                             "cv:",
+                             choices = attributes(dat())$p,
+                             selected = 0
+                 )
+          ),
           column(width = 3, 
                  selectInput(ns("r2_input"),
                              "R-squared:",
                              choices = attributes(dat())$r2,
                              selected = 0.13
                  )
-                 ),
+          ) ,
           column(width = 3,
                  selectInput(ns("pcor_input"),
                              "Rho:",
                              choices = attributes(dat())$pcor,
                              selected = 0.3
                  )
-                 ),
-          column(width = 3,
-        selectInput(ns("p_input"),
-                        "cv:",
-                        choices = attributes(dat())$p,
-                        selected = 0
-          )
-        ),
-        column(width = 3,
-        selectInput(ns("b_input"),
-                    "Ratio beta:",
-                    choices = bs()
-                    )
+                 )
+          
         )
-        ),
-        verbatimTextOutput(ns("test"))
 
   ))
 }
 pop_server<-function(id){
 
   moduleServer(id, function(input, output, session) {
-    
-    output$test<-renderPrint({
-     # specs$r2
-     # hyp_input
-      input$r2_input
-    })
+
     pop<-paste0("r", input$r2_input, "_pcor", input$pcor_input, "_b", input$b_input, "_p", input$p_input)
     return(pop)
     # return(list(r2=reactive(input$r2_input),
@@ -202,11 +197,13 @@ plots_UI<-function(id) {
   ns <- NS(id)
   
   tagList(
-    actionButton(ns("go_plot"), "Plot"),
-    plotOutput(ns("TP_plot")),
-    # plotOutput(ns("acc_plot")),
-    verbatimTextOutput(ns("t1")),
-   verbatimTextOutput(ns("t2"))
+    actionButton(ns("go_plot"), "Plot", width = "250px", style="margin-top:15px;"),
+    h4("True positve rates (TPR)"),
+    plotOutput(ns("TP_plot"), height = 700, width = 700),
+    h4("Accuracy"),
+    plotOutput(ns("acc_plot"), height = 250, width = 700),
+    #verbatimTextOutput(ns("t1")),
+   # verbatimTextOutput(ns("t2"))
   )
 }
 
@@ -232,12 +229,6 @@ plots_server<-function(id, hyp_input,pop_def, n_par){
     
     dat<-reactive(eval(parse(text=paste0("dat",as.numeric(n_par())))))
     
-
-     observeEvent(input$go_plot, {
-       # output$t1<-renderPrint({
-       #   hyp_to_pop()
-       # })
-       
        # output$t2<-renderPrint({
        #   TPR<-
        #     dat()%>%
@@ -248,47 +239,54 @@ plots_server<-function(id, hyp_input,pop_def, n_par){
        #                          hyp=hyp())
        #    TPR
        #   })
-       
-       output$TP_plot<-renderPlot({
-        # show the modal window
-         show_modal_spinner(spin = "circle",
-                            color = "#78C1A9",
-                            text = "It can take a few moments, please wait...",) 
-                 
-         TPR<-
-           dat()%>%
-           aggregatePMP(hyp=hyp(), #hyp(),
-                        studies=30,
-                        pops=pops() )%>%
-           accuracyPMP(hyp_to_pop = hyp_to_pop(),
-                       hyp=hyp()) %>%
-            TP_corrplot()
-           
-
-           TPRs<-wrap_plots(TPR, ncol=1)+
-             plot_annotation(tag_levels = 'A') +
-             plot_layout(guides = 'collect')&
-             theme(legend.position='bottom')
-           
-           #remove x label
-           for(i in c(1,2)){
-             TPRs[[i]]<-TPRs[[i]] + labs(x=NULL)
-           }
-           # TPRs[[1]]<-TPRs[[1]] + labs(subtitle="H1-population")
-           # TPRs[[2]]<-TPRs[[2]] + labs(subtitle="Hc-population")
-           # TPRs[[3]]<-TPRs[[3]] + labs(subtitle="Heterogeneous H1-population with cv = .86")
-       remove_modal_spinner() # remove spinner when done
-           TPRs
-        
-   
-
-        
-
-        })
-
-     })
-   
     
+    classif_data<-eventReactive(input$go_plot,{
+      # show the modal window
+      show_modal_spinner(spin = "circle",
+                         color = "#78C1A9",
+                         text = NULL)
+      
+      dat()%>%
+        aggregatePMP(hyp=hyp(), #hyp(),
+                     studies=30,
+                     pops=pops() )%>%
+        accuracyPMP(hyp_to_pop = hyp_to_pop(),
+                    hyp=hyp())
+    })
+    # output$t1<-renderPrint({
+    #   classif_data()
+    # })
+    # 
+    TPRs<-eventReactive(classif_data(),{
+      
+      TPR<-classif_data()%>%
+          TP_corrplot()
+      
+      
+      TPRs<-wrap_plots(TPR, ncol=1)+
+        plot_annotation(tag_levels = 'A') +
+        plot_layout(guides = 'collect')&
+        theme(legend.position='bottom'
+              # legend.key.height = unit(3.3,"cm"),
+              # legend.key.width = unit(0.5,"cm")
+        )
+      
+      for(i in 1:length(pops())){
+        TPRs[[i]]<-TPRs[[i]] + labs(subtitle = paste0(hyp()[i], ": ",pops()[i]))
+      }
+
+      remove_modal_spinner() # remove spinner when done
+      
+      TPRs
+    })
+    
+    output$TP_plot<-renderPlot( TPRs() )
+    
+    accs<-eventReactive(input$go_plot,{
+      classif_data() %>% 
+        acc_corrplot(object = "acc")
+    })
+    output$acc_plot<-renderPlot( accs() )
     
   })
   

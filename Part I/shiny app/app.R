@@ -65,7 +65,7 @@ ui<-navbarPage(title = "Bayesian Evidence Synthesis",
                         
                         withMathJax(),
                         fluidRow(
-                        column(width = 9,
+                        column(width = 12,
                                fluidRow(column(width = 6,
                                                hyp_UI("hyp_UI1"),
                                                uiOutput("pops"),
@@ -74,12 +74,13 @@ ui<-navbarPage(title = "Bayesian Evidence Synthesis",
                                ),
                                column(width = 6,
                                       hyp_UI("hyp_UI2")))
-                               ),
-                        column(width = 3,
-                               div(style="height:90vh; display:flex;font-size:14px;",
-                                   wellPanel(verbatimTextOutput("test_outer"))
-                                  )
-                              )
+                               )
+                        # ,
+                        # column(width = 3,
+                        #        div(style="height:90vh; display:flex;font-size:14px;",
+                        #            wellPanel(verbatimTextOutput("test_outer"))
+                        #           )
+                        #       )
                             )
                         )
                
