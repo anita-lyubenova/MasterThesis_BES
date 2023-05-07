@@ -14,6 +14,7 @@ library(ggpubr)
 # PMP_t %>% dim()
 # ############################################# TEMP
 
+
 #a function to compute aggregate PMPs for selected hypotheses from the BFs
 aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
                        hyp=c("H1", "Hu"),
