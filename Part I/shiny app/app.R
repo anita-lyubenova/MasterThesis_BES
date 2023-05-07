@@ -12,12 +12,8 @@ library(shinybusy)
 library(patchwork)
 
 
- # dat3<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc_final_mixed.rds")
- # dat2<-readRDS("Part I/pre-processing/output_ShinyApp/BF_data_2par.rds")
- # attributes(dat2)$ratio_beta<-sapply(attributes(dat2)$ratio_beta, function(x){
- #   paste0(x, collapse = "")
- # })
- 
+# dat3<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc_final_mixed.rds")
+# dat2<-readRDS("Part I/pre-processing/output_ShinyApp/BF_data_2par.rds")
 # dat1<-readRDS("Part I/pre-processing/output_ShinyApp/BF_data_1par.rds")
  source("Part I/shiny app/modules.R")
 # source("Part I/shiny app/app functions.R")

@@ -307,11 +307,12 @@ med_plot_UI <- function(id) {
     ),
     actionButton(inputId = ns("go_med_plot"), "Plot", width = "250px"),
     #plotOutput(outputId = ns("median_plot")),
-    highchartOutput(outputId = ns("median_plot")),
-    verbatimTextOutput(ns("t1"))
+    highchartOutput(outputId = ns("median_plot"))
+   # verbatimTextOutput(ns("t1"))
     
   )
 }
+
 
 med_plot_server<-function(id, hyp_input,pop_def, n_par){
   
@@ -326,35 +327,35 @@ med_plot_server<-function(id, hyp_input,pop_def, n_par){
     
     
     median_plot_data<-eventReactive(input$go_med_plot,{
-      # # show the modal window
-      # show_modal_spinner(spin = "circle",
-      #                    color = "#78C1A9",
-      #                    text = NULL)
+      # show the modal window
+      show_modal_spinner(spin = "circle",
+                         color = "#78C1A9",
+                         text = NULL)
 
       dat()%>%
         aggregatePMP(hyp=hyp(), #hyp(),
                      studies=30,
                      pops = pop_def()
-                     )#%>%
-        # create_median_plot_data(pop=pop_def(),
-        #                         n=input$N_input,
-        #                         hyp=hyp())
+                     ) %>%
+        create_median_plot_data(pop=pop_def(),
+                                n=input$N_input,
+                                hyp=hyp())
     })
-    output$t1<-renderPrint({
-      pop_def()
-    })
-
-    
-    # med_plot<-eventReactive(median_plot_data(),{
-    # 
-    #   d<-median_plot_data()%>%
-    #     median_plot(hyp_input=hyp())
-    #    
-    #   #remove_modal_spinner()
-    #   d
+    # output$t1<-renderPrint({
+    #   median_plot_data()
     # })
 
-    #output$median_plot<-renderHighchart( med_plot() )
+    
+    med_plot<-eventReactive(median_plot_data(),{
+
+      d<-median_plot_data()%>%
+        median_plot(hyp_input=hyp())
+       
+      remove_modal_spinner()
+      d
+    })
+
+    output$median_plot<-renderHighchart( med_plot() )
 
 
 
