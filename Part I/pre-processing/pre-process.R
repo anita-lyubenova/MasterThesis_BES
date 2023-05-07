@@ -620,54 +620,68 @@ BF_bind3<-abind(BF_bind, Hu_array, along = 2)
 dimnames(BF_bind3)[[2]][length(dimnames(BF_bind3)[[2]])]<-"Hu"
 
 
-###add population Hu=H1+Hc -----------------------
+###add mixed population H1+Hc -----------------------
 
-H1Hc_pop<-array(NA, dim = c(studies,
+mixed_pop<-array(NA, dim = c(studies,
                             length(dimnames(BF_bind3)[[2]]), #number of hypotheses
-                            1,
+                            3*3*6,
                             iterations,
                             length(n)
 ))
-t<-1
-y<-1
-z<-1
-j<-1
-for(i in 1:1000){ # iterations
-  for(t in 1:30){ # studies
-    for(s in 1:length(n)){ #sample size
-      for(y in r2){
-        for(z in pcor){
-          for(j in p){
-            pop_form<- grep(paste0("r",y), pop_names, value = TRUE) 
-            pop_form<-pop_form[gsub(".*pcor(.+)_b.*", "\\1", pop_form)==z]
-            pop_form<-pop_form[sub(".*_p", "", pop_form)==j]  
-            
-            if((t %% 2)==0){
-              #population<-"Hc"
-              population<-pop_form[2]
-            }else{
-              #population<-"Hi"
-              population<-pop_form[1]
-            }
-            
-            H1Hc_pop[t,,1,i,s]<-BF_bind3[t,,population,i,s]
+dimnames(mixed_pop)[[3]]<-1:(3*3*6)
+dim(mixed_pop)
+# i<-1
+# s<-1
+# t<-1
+# y<-0.09
+# z<-0
+# j<-0
+# x<-1
+x=0
+for(y in r2){
+  for(z in pcor){
+
+       x=x+1
+       print(paste0(" | y: ",y, " | z: ",z, "||", x , "starts: ",Sys.time()))
+        for(i in 1:1000){ # iterations
+          for(t in 1:30){ # studies
+            for(s in 1:length(n)){ #sample size
+
+             # print(paste0(" | s: ", s))
+             # print(paste0("i: ",i," | t: ",t," | s: ", s," | y: ",y, " | z: ",z, " | j: ",j ))
+              pop_form<- grep(paste0("r",y), pop_names, value = TRUE) 
+              pop_form<-pop_form[gsub(".*pcor(.+)_b.*", "\\1", pop_form)==z]
+              pop_form<-pop_form[sub(".*_p", "", pop_form)==0]  
+              
+              if((t %% 2)==0){
+                #population<-"Hc" b123
+                population<-pop_form[2]
+              }else{
+                #population<-"Hi" b321
+                population<-pop_form[1]
+              }
+              
+              mixed_pop[t,,x,i,s]<-BF_bind3[t,,population,i,s]
+
+              dimnames(mixed_pop)[[3]][x]<-sub("_b.*_p", "_bmixed_p", pop_form[1])
+          
+                
+           
           }
         }
-      }
+      
 
     }
   }
 }
-
+mixed_pop[,,1:9,,] %>% dim
 #combine the array slice with the main arrays
-BF_bind4<-abind(BF_bind3, H1Hc_pop, along = 3)
-#give the mixed population a name
-dimnames(BF_bind4)[[3]][length(dimnames(BF_bind4)[[3]])]<-"r0.13_pcor0.3_bmixed_p0"
+BF_bind4<-abind(BF_bind3, mixed_pop[,,1:9,,], along = 3)
 
 
 attributes(BF_bind4)<-c(attributes(BF_bind4),
                         att)
 
-saveRDS(BF_bind4, file="Part I/pre-processing/output/BF_data_3par_hpc_final.rds")
+saveRDS(BF_bind4, file="Part I/pre-processing/output/BF_data_3par_hpc_final_mixed.rds")
 
 
