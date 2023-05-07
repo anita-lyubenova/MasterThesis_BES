@@ -11,7 +11,7 @@ library(htmlwidgets)
 library(shinybusy)
 library(patchwork)
 
- dat3<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc_final_mixed.rds")
+ # dat3<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc_final_mixed.rds")
 # dat2<-readRDS("Part I/pre-processing/output_ShinyApp/BF_data_2par.rds")
 # dat1<-readRDS("Part I/pre-processing/output_ShinyApp/BF_data_1par.rds")
  source("Part I/shiny app/modules.R")
@@ -60,20 +60,44 @@ ui<-navbarPage(title = "Bayesian Evidence Synthesis",
                               </script >
                               ")),
                tabPanel("Home"),
-               tabPanel("PMP distribution plots"),
+               tabPanel("PMP distribution plots",
+                        withMathJax(),
+                        fluidRow(
+                          column(width = 12,
+                                 fluidRow(
+                                   column(width = 6,
+                                                 hyp_UI("hyp_UI1_med"),
+                                                 uiOutput("pop1")
+                                              #   med_plots_UI("plots_UI1_med")
+                                                 #   verbatimTextOutput("test")
+                                   ),
+                                   column(width = 6,
+                                          hyp_UI("hyp_UI2_med"),
+                                          uiOutput("pop2")
+                                        #  med_plots_UI("med_plots_UI2")
+                                          #   verbatimTextOutput("test")
+                                          )
+                                   )
+                          )
+                        )
+                        ),
                tabPanel("Accuracy plots",
                         
                         withMathJax(),
                         fluidRow(
                         column(width = 12,
                                fluidRow(column(width = 6,
-                                               hyp_UI("hyp_UI1"),
-                                               uiOutput("pops"),
-                                               plots_UI("plots_UI1")
+                                               hyp_UI("hyp_UI1_acc"),
+                                               uiOutput("pops1_acc"),
+                                               plots_UI("plots_UI1_acc")
                                             #   verbatimTextOutput("test")
                                ),
                                column(width = 6,
-                                      hyp_UI("hyp_UI2")))
+                                      hyp_UI("hyp_UI2_acc"),
+                                      uiOutput("pops2_acc"),
+                                      plots_UI("plots_UI2_acc")
+                                      )
+                               )
                                )
                         # ,
                         # column(width = 3,
@@ -87,63 +111,93 @@ ui<-navbarPage(title = "Bayesian Evidence Synthesis",
                )
 
 server<-function(input, output,session){
- hyp_UI1_selection<- hyp_server("hyp_UI1")
+
+# Tab Accuracy: Panel 1 --------------------------------
+ hyp_UI1_acc_selection<- hyp_server("hyp_UI1_acc")
  
- #rv <- reactiveValues(all_ui = list())
-
-
- observeEvent(hyp_UI1_selection$hyp_input_r(), {
+ observeEvent(hyp_UI1_acc_selection$hyp_input_r(), {
    
-   # h<-hyp_UI1_selection$hyp_input_r()
-   # 
-   # rv$all_ui[[h[length(h)]]] <- pop_UI(paste0("pop_UI",h[length(h)]),
-   #                                     n_par = hyp_UI1_selection$n_par,
-   #                                     hyp_input=h[length(h)])
-   
-   output$pops<-renderUI({
+   output$pops1_acc<-renderUI({
 
-     if(is.null(hyp_UI1_selection$hyp_input)){
+     if(is.null(hyp_UI1_acc_selection$hyp_input)){
        return(NULL)
 
      }else{
      do.call(what = "tagList",
-             args=lapply(hyp_UI1_selection$hyp_input_r(), function(i){
-               pop_UI(paste0("pop_UI",i),
-                      n_par = hyp_UI1_selection$n_par,
+             args=lapply(hyp_UI1_acc_selection$hyp_input_r(), function(i){
+               pop_UI(paste0("pop_UI1_acc",i),
+                      n_par = hyp_UI1_acc_selection$n_par,
                       hyp_input=i)
              })
-     )
+       )
      }
-     
-     #tagList(rv$all_ui)
-     
     })
-   
  })
+ 
  #Create a placeholder for the population specifications 
- #unfortunately, every hyp checked even once creates a named element in the pop_def reactive values
- pop_def<-reactiveValues()
+ #unfortunately, every hyp checked even once creates a named element in the pop_def1 reactive values
+ pop_def1<-reactiveValues()
    #save the population specificatins
    observe({
-     
-     for(x in hyp_UI1_selection$hyp_input_r()){
-       #pop_def[[x]] will be a list with 3 elements, r2, pcor and p
-       pop_def[[x]]<-pop_server(paste0("pop_UI",x))
+     for(x in hyp_UI1_acc_selection$hyp_input_r()){
+       #pop_def1[[x]] will be a list with 3 elements, r2, pcor and p
+       pop_def1[[x]]<-pop_server(paste0("pop_UI1_acc",x))
      }
   })
   
  output$test_outer<-renderPrint({
-   #pop_def[["H1"]]
-   names(pop_def)
-   #test_react$r2()
-   #hyp_UI1_selection$hyp_input_r()
+   names(pop_def1)
    })
  
-plots_server("plots_UI1",
-             hyp=hyp_UI1_selection$hyp_input_r,
-             pop_def = pop_def,
-             n_par = hyp_UI1_selection$n_par)
+plots_server("plots_UI1_acc",
+             hyp=hyp_UI1_acc_selection$hyp_input_r,
+             pop_def = pop_def1,
+             n_par = hyp_UI1_acc_selection$n_par)
  
+
+# Tab Accuracy: Panel 2 --------------------------------
+hyp_UI2_acc_selection<- hyp_server("hyp_UI2_acc")
+observeEvent(hyp_UI2_acc_selection$hyp_input_r(), {
+  
+  output$pops2_acc<-renderUI({
+    
+    if(is.null(hyp_UI2_acc_selection$hyp_input)){
+      return(NULL)
+      
+    }else{
+      do.call(what = "tagList",
+              args=lapply(hyp_UI2_acc_selection$hyp_input_r(), function(i){
+                pop_UI(paste0("pop_UI2_acc",i),
+                       n_par = hyp_UI2_acc_selection$n_par,
+                       hyp_input=i)
+              })
+      )
+    }
+  })
+})
+
+#Create a placeholder for the population specifications 
+#unfortunately, every hyp checked even once creates a named element in the pop_def1 reactive values
+pop_def2<-reactiveValues()
+#save the population specificatins
+observe({
+  for(x in hyp_UI2_acc_selection$hyp_input_r()){
+    #pop_def2[[x]] will be a list with 3 elements, r2, pcor and p
+    pop_def2[[x]]<-pop_server(paste0("pop_UI2_acc",x))
+  }
+})
+
+output$test_outer<-renderPrint({
+  names(pop_def2)
+})
+
+plots_server("plots_UI2_acc",
+             hyp=hyp_UI2_acc_selection$hyp_input_r,
+             pop_def = pop_def2,
+             n_par = hyp_UI2_acc_selection$n_par)
+
+
+
 }
   
 
