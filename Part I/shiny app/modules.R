@@ -78,21 +78,6 @@ gen_plot_server <- function(id) { #later on PMP shoudl be reactive
 }
 
 
-med_plot_UI <- function(id) {
-  ns <- NS(id)
-  
-  tagList(
-    sliderTextInput(ns("pcor_input"),
-                    "Choose sample size:",
-                    choices =  c("15" , "25" , "35" , "50",  "75" , "100", "150", "200", "300", "500", "800"),
-                    selected = "300"
-                    ),
-    actionButton(inputId = ns("go"), "Plot"),
-    highchartOutput(outputId = ns("median_plot")),
-    verbatimTextOutput(ns("test"))
-    
-  )
-}
 
 hyp_UI<-function(id) {
   ns <- NS(id)
@@ -145,7 +130,7 @@ hyp_server<-function(id) {
   
 }
 
-pop_UI<-function(id,n_par, hyp_input) {
+pop_UI<-function(id,n_par, hyp_input=NULL) {
   ns <- NS(id)
   #select dataset based on n_par
   dat<-reactive(eval(parse(text=paste0("dat",as.numeric(n_par())))))
@@ -161,7 +146,7 @@ pop_UI<-function(id,n_par, hyp_input) {
     
     tagList(
       wellPanel(style="padding-top:0px;margin-top:5px;margin-right:10%;",
-        tags$strong(paste("Specify the population of ", hyp_input)),
+        tags$strong(paste("Specify the population ", hyp_input)),
         fluidRow(
           column(width = 3,
                  selectInput(ns("b_input"),
@@ -306,5 +291,74 @@ plots_server<-function(id, hyp_input,pop_def, n_par){
     output$acc_plot<-renderPlot( accs() )
     
   })
+  
+}
+
+
+med_plot_UI <- function(id) {
+  ns <- NS(id)
+  
+  tagList(
+    sliderTextInput(ns("N_input"),
+                    "Choose sample size:",
+                    choices =  c("15" , "25" , "35" , "50",  "75" , "100", "150", "200", "300", "500", "800"),
+                    selected = "300",
+                    width="60%"
+    ),
+    actionButton(inputId = ns("go_med_plot"), "Plot", width = "250px"),
+    #plotOutput(outputId = ns("median_plot")),
+    highchartOutput(outputId = ns("median_plot"))
+   # verbatimTextOutput(ns("t1"))
+    
+  )
+}
+
+
+med_plot_server<-function(id, hyp_input,pop_def, n_par){
+  
+  moduleServer(id, function(input, output, session) {
+    
+    hyp<-reactive({
+      subset(par_to_hyp, n_par==n_par() & label %in% hyp_input())$dimname
+    })
+    
+    
+    dat<-reactive(eval(parse(text=paste0("dat",as.numeric(n_par())))))
+    
+    
+    median_plot_data<-eventReactive(input$go_med_plot,{
+      # show the modal window
+      show_modal_spinner(spin = "circle",
+                         color = "#78C1A9",
+                         text = NULL)
+
+      dat()%>%
+        aggregatePMP(hyp=hyp(), #hyp(),
+                     studies=30,
+                     pops = pop_def()
+                     ) %>%
+        create_median_plot_data(pop=pop_def(),
+                                n=input$N_input,
+                                hyp=hyp())
+    })
+    # output$t1<-renderPrint({
+    #   median_plot_data()
+    # })
+
+    
+    med_plot<-eventReactive(median_plot_data(),{
+
+      d<-median_plot_data()%>%
+        median_plot(hyp_input=hyp())
+       
+      remove_modal_spinner()
+      d
+    })
+
+    output$median_plot<-renderHighchart( med_plot() )
+
+
+
+   })
   
 }

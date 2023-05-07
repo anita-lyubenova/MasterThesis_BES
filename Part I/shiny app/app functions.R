@@ -1,15 +1,25 @@
 library(tidyverse)
 # library(gridExtra)
 library(ggpubr)
-
-removeReactiveValuesName <- function(rv, rm.name) { .subset2(rv, "impl")$.values$remove("name") }
+# 
+# ############################################# TEMP
+# BF<-dat3
+# hyp<-c("H2.V1>V2>V3" ,  "H2.complement", "Hu"  )
+# pops = c("r0.13_pcor0.3_b321_p0") #,"r0.13_pcor0.3_bmixed_p0"
+# studies=10
+# BF %>% dimnames()
+# BF %>% dim
+# nom_t %>% dimnames()
+# nom_t %>% dim() %>% length()
+# PMP_t %>% dim()
+# ############################################# TEMP
 
 #a function to compute aggregate PMPs for selected hypotheses from the BFs
 aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
                        hyp=c("H1", "Hu"),
                        studies=10, #number of studies to aggregate over, max 40,
                        subset=NULL,
-                       pops = c("r0.13_pcor_0.3_b321_p0","r0.13_pcor_0.3_bmixed_p0")
+                       pops = c("r0.13_pcor0.3_b321_p0","r0.13_pcor0.3_bmixed_p0")
 ){
   #subset if specified, while retaining the attributes
   if(!is.null(subset)){
@@ -33,11 +43,11 @@ aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
   #placeholder for tha aggregated PMPs
   PMP_t<-PMP_perm
   for(t in 2:studies){ #the PMPs of the first study remain the same, thus iterate from t=2
-    nom_t<-PMP_t[t-1,,,,]*nom[t,,,,]#multiply the previous PMPs with the current BFs
-    denom_t<-rowSums(nom_t, dims=3)
+    nom_t<-PMP_t[t-1,,,,,drop=FALSE]*nom[t,,,,,drop=FALSE]#multiply the previous PMPs with the current BFs
+    denom_t<-rowSums(nom_t, dims=length(dim(nom_t))-1) #sum the last dimension
     PMP_t[t,,,,]<-nom_t/replicate(length(hyp), denom_t)
   }
-  
+
   PMP_t<-aperm(PMP_t, perm = c(1,5,2,3,4))
   dimnames(PMP_t)[[2]]<-paste0("PMP_", hyp)
   
@@ -97,28 +107,6 @@ create_plot_data<-function(aggrPMP){
   
   return(df)
 }
-# ###### temp ######
-# load("RRrepo/workspaces/PMPs/PMP_H1TRUE.RData")
-# PMP=PMP_H1TRUE_eqES
-# 
-# hyp_input<-c("i", "c", "u")
-# N_input<-2
-# 
-# names(PMP)[1:4]
-# 
-# PMP[[paste0(hyp_input, collapse = "")]][,,,,N_input]
-# 
-# 
-# #PMP[["ic"]][,,,,5]
-# 
-# data<-PMP[[paste0(hyp_input, collapse = "")]][,,,,N_input]
-# 
-# ###### temp #########
- # PMP=PMP_H1TRUE
- # hyp_input<-c("i", "c", "u", "0")
- # N_input<-2
- # data<-PMP[[paste0(hyp_input, collapse = "")]][,,1,,N_input]
-
 
 median_plot<-function(data, hyp_input){
   
@@ -365,3 +353,132 @@ TP_corrplot<-function(a# a list created with accuracyPMP() containgin TPRs
   #                                       color = "black", face = "bold", hjust = 1.1))
   # 
 }#end TP_corrplot
+
+
+
+###########
+create_median_plot_data<-function(listPMP,
+                                  pop,
+                                  n,
+                                  hyp){ 
+  aggrPMP<-listPMP$PMP[,,pop,,n]
+  
+  medians<-apply(aggrPMP,c(1,2),median)%>% 
+    as.data.frame() %>% 
+    rownames_to_column(var="t") %>% 
+    pivot_longer(cols = dimnames(aggrPMP)[[2]],
+                 names_to = "Hypothesis",
+                 values_to = "median_aggrPMP") %>%
+    mutate(Hypothesis=as.factor(Hypothesis),
+           t=factor(t, levels = unique(t))
+    )
+  
+  #lower bounds of the aggregate values per hypothesis h per study number t
+  lbs<-apply(aggrPMP,c(1,2),function(x) quantile(x,probs=c(0.025))) %>% 
+    as.data.frame() %>% 
+    rownames_to_column(var="t") %>% 
+    pivot_longer(cols = dimnames(aggrPMP)[[2]],
+                 names_to = "Hypothesis",
+                 values_to = "lb_aggrPMP") %>%
+    mutate(Hypothesis=as.factor(Hypothesis),
+           t=factor(t, levels = unique(t))
+    )  
+  
+  ubs<-apply(aggrPMP,c(1,2),function(x) quantile(x,probs=c(0.975))) %>% 
+    as.data.frame() %>% 
+    rownames_to_column(var="t") %>% 
+    pivot_longer(cols = dimnames(aggrPMP)[[2]],
+                 names_to = "Hypothesis",
+                 values_to = "ub_aggrPMP") %>%
+    mutate(Hypothesis=as.factor(Hypothesis),
+           t=factor(t, levels = unique(t))
+    )  
+  all.colors <-colorBlindness::availableColors()
+  all.colors<-all.colors[c(1,2,4,3,5:8)]
+  
+  df<-left_join(medians, lbs, by=c("t", "Hypothesis")) %>%
+    left_join(., ubs, by=c("t", "Hypothesis")) %>% 
+    as.data.frame()
+  df$color<-all.colors[1:length(hyp)]
+  df$name<-hyp
+
+  
+  list(plot_data=df,
+       pop=pop,
+       n=n,
+       r2=listPMP$r2,
+       pcor=listPMP$pcor,
+       hypothesis=listPMP$hypothesis,
+       hypothesis_test=listPMP$hypothesis_test,
+       iter=listPMP$iter,
+       studies=listPMP$studies
+  )
+  
+  #return(df)
+}
+#colors were selected from a color blind palette
+#colorBlindness::availableColors() %>%  colorBlindness::displayColors()
+
+#################################### TEMP
+# hyp_input<-c("H2.V1>V2>V3" ,  "H2.complement", "Hu"  )
+# pops = c("r0.13_pcor0.3_b321_p0") #,"r0.13_pcor0.3_bmixed_p0"
+# studies=10
+# data<-dat3 %>% 
+#   aggregatePMP(hyp=hyp_input,
+#                studies=15) %>% 
+#   create_median_plot_data(pop="r0.13_pcor0.3_bmixed_p0",
+#                           n="300")
+# #################################### TEMP
+# plot_data$color<-c(  "#009E73" , "#E69F00","#000000"  )
+# plot_data$name<-hyp_input
+####################
+median_plot<-function(data, hyp_input){
+ 
+  
+  plot_data<-data$plot_data
+  
+  plot_data%>%
+    hchart("scatter",
+           hcaes(x=t, y=median_aggrPMP,
+                 group=factor(Hypothesis,levels = unique(Hypothesis))
+           ),
+           color=plot_data$color[1:length(hyp_input)],
+           name=plot_data$name[1:length(hyp_input)],
+           pointPlacement=c(-0.15,0,0.15),
+           id=c("a", "b", "c") #letters[1:length(unique(plot_data$Hypothesis))]
+    )%>%
+    hc_tooltip(enabled=TRUE,
+               valueDecimals=2)%>%
+    hc_yAxis(labels=list(enabled=TRUE),
+             #reversed=TRUE,
+             title=list(text="Aggregated PMPs"),
+             gridLineWidth=0)%>%
+    hc_xAxis(labels=list(style=list(color="black", fontSize="12px")),
+             title=list(text="Number of aggregated studies")
+             # opposite=TRUE
+    )%>%
+    hc_legend(enabled=TRUE,
+              verticalAlign = "bottom",
+              align="left",
+              title=list(text="Hypotheses"
+              )) %>% 
+    hc_title(text="Variation of aggregate PMPs for each hypothesis across iterations",
+             align="left") %>% 
+    hc_subtitle(text=data$hypothesis_test,#paste(paste0("H",hyp_input), collapse = " vs. ")
+                align="left") %>% 
+    hc_add_series(
+      plot_data,
+      "errorbar", 
+      hcaes(y = median_aggrPMP, x = t, low = lb_aggrPMP, high = ub_aggrPMP,
+            group = factor(Hypothesis,levels = unique(Hypothesis))
+      ),
+      color=plot_data$color[1:length(hyp_input)],
+      linkedTo =c("a", "b", "c"), letters[1:length(unique(plot_data$Hypothesis))],
+      enableMouseTracking = TRUE,
+      showInLegend = FALSE,
+      grouping=TRUE,
+      groupPadding=0.3
+    ) 
+  
+  
+}
