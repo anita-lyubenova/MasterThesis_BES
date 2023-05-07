@@ -1,6 +1,6 @@
 
 #source("Part I/shiny app/app functions.R")
-source("app functions.R")
+
 
 
 hyp_UI<-function(id) {
@@ -16,7 +16,14 @@ hyp_UI<-function(id) {
     #              inline = FALSE,
     #              selected = 3
     # ),
-    uiOutput(ns("hyp_uiOutput"))
+   # uiOutput(ns("hyp_uiOutput"))
+    checkboxGroupInput(inputId = ns("hyp_input"),
+                       label = "Choose hypotheses to test",
+                       choiceValues = par_to_hyp$label,
+                       choiceNames =lapply(paste0(par_to_hyp$label, ": ",par_to_hyp$hyp_latex), withMathJax),
+                       selected = c("H2","H2c", "Hu")
+                       
+    )
     
   )
 }
@@ -25,25 +32,25 @@ hyp_server<-function(id) {
 
   moduleServer(id, function(input, output, session) {
     
-  hyps<-reactive({
-      subset(par_to_hyp, select = c("label", "hyp_latex"))
-  
-  })
-     
-  output$hyp_uiOutput<-renderUI({
-    ns <- session$ns
-    
-  tags$div(
-             h4(),
-             checkboxGroupInput(inputId = ns("hyp_input"),
-                                label = "Choose hypotheses to test",
-                                choiceValues = hyps()$label,
-                                choiceNames =lapply(paste0(hyps()$label, ": ",hyps()$hyp_latex), withMathJax),
-                                selected = c("H2","H2c", "Hu")
-                                
-             ))
-    
-      })
+  # hyps<-reactive({
+  #     subset(par_to_hyp, select = c("label", "hyp_latex"))
+  # 
+  # })
+  #    
+  # output$hyp_uiOutput<-renderUI({
+  #   ns <- session$ns
+  #   
+  # tags$div(
+  #            h4(),
+  #            checkboxGroupInput(inputId = ns("hyp_input"),
+  #                               label = "Choose hypotheses to test",
+  #                               choiceValues = hyps()$label,
+  #                               choiceNames =lapply(paste0(hyps()$label, ": ",hyps()$hyp_latex), withMathJax),
+  #                               selected = c("H2","H2c", "Hu")
+  #                               
+  #            ))
+  #   
+  #     })
       
    return(list(
                #n_par=reactive(input$n_par),
@@ -58,10 +65,10 @@ pop_UI<-function(id, hyp_input=NULL) {
   ns <- NS(id)
   #select dataset based on n_par
   #dat<-reactive(eval(parse(text=paste0("dat",as.numeric(n_par())))))
-  dat<-reactive(dat3)
+ # dat<-reactive(dat3)
   #ratio beta choices
   bs<-reactive({
-    b<-attributes(dat())$ratio_beta
+    b<-attributes(dat3)$ratio_beta
     b.names<-gsub('', ':', b) %>% 
       substr(., 2, nchar(.)-1)
     names(b)<-b.names
@@ -82,21 +89,21 @@ pop_UI<-function(id, hyp_input=NULL) {
           column(width = 3,
                  selectInput(ns("p_input"),
                              "cv:",
-                             choices = attributes(dat())$p,
+                             choices = attributes(dat3)$p,
                              selected = 0
                  )
           ),
           column(width = 3, 
                  selectInput(ns("r2_input"),
                              "R-squared:",
-                             choices = attributes(dat())$r2,
+                             choices = attributes(dat3)$r2,
                              selected = 0.13
                  )
           ) ,
           column(width = 3,
                  selectInput(ns("pcor_input"),
                              "Rho:",
-                             choices = attributes(dat())$pcor,
+                             choices = attributes(dat3)$pcor,
                              selected = 0.3
                  )
                  )
@@ -154,11 +161,11 @@ plots_server<-function(id, hyp_input,pop_def){
       
     })
     
-    dat<-reactive(dat3)
+   # dat<-reactive(dat3)
     
        # output$t2<-renderPrint({
        #   TPR<-
-       #     dat()%>%
+       #     dat3%>%
        #     aggregatePMP(hyp=hyp(), #hyp(),
        #                  studies=30,
        #                  pops=pops() )%>%
@@ -173,7 +180,7 @@ plots_server<-function(id, hyp_input,pop_def){
                          color = "#78C1A9",
                          text = NULL)
       
-      dat()%>%
+      dat3%>%
         aggregatePMP(hyp=hyp(), #hyp(),
                      studies=30,
                      pops=pops() )%>%
@@ -248,7 +255,7 @@ med_plot_server<-function(id, hyp_input,pop_def){
     })
     
     
-    dat<-reactive(dat3)
+   # dat<-reactive(dat3)
     
     
     median_plot_data<-eventReactive(input$go_med_plot,{
@@ -257,7 +264,7 @@ med_plot_server<-function(id, hyp_input,pop_def){
       #                    color = "#78C1A9",
       #                    text = NULL)
 
-      dat()%>%
+      dat3%>%
         aggregatePMP(hyp=hyp(), #hyp(),
                      studies=30,
                      pops = pop_def()

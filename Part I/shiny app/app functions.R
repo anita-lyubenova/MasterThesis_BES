@@ -476,7 +476,7 @@ median_plot<-function(data, hyp_input){
             group = factor(Hypothesis,levels = unique(Hypothesis))
       ),
       color=plot_data$color[1:length(hyp_input)],
-      linkedTo =letters[1:length(unique(plot_data$Hypothesis))], ,
+      linkedTo =letters[1:length(unique(plot_data$Hypothesis))],
       enableMouseTracking = TRUE,
       showInLegend = FALSE,
       grouping=TRUE,
