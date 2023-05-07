@@ -1,10 +1,21 @@
 library(patchwork)
 source("Part I/analysis/analysis functions.R")
+#LOAD DATA ----------------------------------------------------
 dat<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc.rds")
-
 #populations
 dimnames(dat)[[3]]
 attributes(dat)
+
+#Final hpc data
+dat3<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc_final_mixed.rds")
+#save the attributes to re-append after subsetting
+att<-attributes(dat3)
+att<-att[names(att)[-grep("dim", names(att))]]
+
+#subset the data to only include conditions that were reported in the paper
+dat<-dat3[,c("H2.V1>V2>V3","H2.complement","Hu"),c("r0.13_pcor0.3_b321_p0","r0.13_pcor0.3_b123_p0","r0.13_pcor0.3_b321_p0.86","r0.13_pcor0.3_b321_p0.5","r0.13_pcor0.3_bmixed_p0"),,-c(1,3,11)]
+dimnames(dat)[[2]]<-c("H1", "Hc", "Hu")
+attributes(dat)<-c(attributes(dat), att)
 
 #  MEDIAN PLOTS ------------------------------------------------------
 
@@ -12,7 +23,7 @@ attributes(dat)
 mp.H1Hc.ic<- dat %>% 
   aggregatePMP(hyp=c("H1","Hc"),
                studies=15) %>% 
-  create_median_plot_data(pop="r0.13_pcor0.3_b321123_p0",
+  create_median_plot_data(pop="r0.13_pcor0.3_bmixed_p0",
                           n="300") %>% 
   median_plot()+
   theme(legend.position = "none")+
@@ -21,7 +32,7 @@ mp.H1Hc.ic<- dat %>%
 mp.H1Hc.iu<- dat %>% 
   aggregatePMP(hyp=c("H1","Hu"),
                studies=15) %>% 
-  create_median_plot_data(pop="r0.13_pcor0.3_b321123_p0",
+  create_median_plot_data(pop="r0.13_pcor0.3_bmixed_p0",
                           n="300") %>% 
   median_plot()+
   theme(legend.position = "none")+
@@ -30,7 +41,7 @@ mp.H1Hc.iu<- dat %>%
 mp.H1Hc.icu<- dat %>% 
   aggregatePMP(hyp=c("H1","Hc","Hu"),
                studies=15) %>% 
-  create_median_plot_data(pop="r0.13_pcor0.3_b321123_p0",
+  create_median_plot_data(pop="r0.13_pcor0.3_bmixed_p0",
                           n="300") %>% 
   median_plot()+
   theme(legend.position = "none")+
@@ -57,7 +68,7 @@ mp.H1Hc<-wrap_plots(mp.H1Hc.ic, mp.H1Hc.iu, mp.H1Hc.icu, ncol = 1)+
 mp.H1Hc[[1]]<-mp.H1Hc[[1]]+ theme(legend.position = "none") +labs(x=NULL)
 mp.H1Hc[[2]]<- mp.H1Hc[[2]]+ theme(legend.position = "none") +labs(x=NULL)
 
-ggsave("Part I/analysis/output/mp.H1Hc_2.png", plot = mp.H1Hc, width = 7, height = 7, units = "in", dpi = 300, bg="white")
+ggsave("Part I/analysis/output/mp.H1Hc_final.png", plot = mp.H1Hc, width = 7, height = 7, units = "in", dpi = 300, bg="white")
 
 ## p.86   --------------------------------------------------------------
 mp.86.ic<- dat %>% 
@@ -179,19 +190,20 @@ f2[[4]]<-f2[[4]]+labs(title = "cv = .50")+
 for(i in c(1,2,4,5)){
   f2[[i]]<-f2[[i]]+ theme(legend.position = "none") +labs(x=NULL)
 }
-ggsave("Part I/analysis/output/f2.png", plot = f2, width = 7, height = 5.7, units = "in", dpi = 300, bg="white")
+ggsave("Part I/analysis/output/f2_final.png", plot = f2, width = 7, height = 5.7, units = "in", dpi = 300, bg="white")
 
 #  TPR   ------------------------------------------
 #
-dimnames(dat)[[3]]
+dimnames(dat)[[5]]
 dimnames(dat[,,,,-c(1,3,11)])
 
 
 TPR<-
   dat%>% 
   aggregatePMP(hyp=c("H1","Hc","Hu"),
-               studies=30,
-               subset = "dat[,,,,-c(1,3,11)]") %>% 
+               studies=30
+            #   subset = "dat[,,,,-c(1,3,11)]"
+               ) %>% 
   accuracyPMP(hyp_to_pop = c(H1="r0.13_pcor0.3_b321_p0",
                              Hc="r0.13_pcor0.3_b123_p0",
                              Hu="r0.13_pcor0.3_b321_p0.86"
@@ -213,37 +225,31 @@ TPRs[[1]]<-TPRs[[1]] + labs(subtitle="H1-population")
 TPRs[[2]]<-TPRs[[2]] + labs(subtitle="Hc-population")
 TPRs[[3]]<-TPRs[[3]] + labs(subtitle="Heterogeneous H1-population with cv = .86")
 
-ggsave("Part I/analysis/output/TPRs2.png", plot = TPRs, width = 8, height = 8, units = "in", dpi = 300, bg="white")
+ggsave("Part I/analysis/output/TPRs2_final.png", plot = TPRs, width = 8, height = 8, units = "in", dpi = 300, bg="white")
 
 ###########################  ACCURACY   #########################################
-#
-a<-dat %>% 
-  aggregatePMP(hyp=c("H1","Hc","Hu"),
-               studies=30,
-               subset = "dat[,,,,-c(1,3,11)]") %>% 
-  accuracyPMP(hyp_to_pop = c(H1="r0.13_pcor0.3_b321_p0",
-                             Hc="r0.13_pcor0.3_b123_p0",
-                             Hu="r0.13_pcor0.3_b321_p0.86"
-  ))
+
 
 accplot<-dat %>% 
   aggregatePMP(hyp=c("H1","Hc","Hu"),
-               studies=30,
-               subset = "dat[,,,,-c(1,3,11)]") %>% 
+               studies=30
+               #subset = "dat[,,,,-c(1,3,11)]"
+               ) %>% 
   accuracyPMP(hyp_to_pop = c(H1="r0.13_pcor0.3_b321_p0",
                              Hc="r0.13_pcor0.3_b123_p0",
                              Hu="r0.13_pcor0.3_b321_p0.86"
   )) %>% 
   acc_corrplot(object = "acc")
 accplot
-ggsave("Part I/analysis/output/accplot.png", plot = accplot, width = 7, height = 3, units = "in", dpi = 300, bg="white")
+ggsave("Part I/analysis/output/accplot_final.png", plot = accplot, width = 7, height = 3, units = "in", dpi = 300, bg="white")
 
 
 ###########################   COSTS   #############################################
 acc.iu<-dat %>% 
   aggregatePMP(hyp=c("H1","Hu"),
                studies=30,
-               subset = "dat[,,,,-c(1,3,11)]") %>% 
+               #subset = "dat[,,,,-c(1,3,11)]"
+               ) %>% 
   accuracyPMP(hyp_to_pop = c(H1="r0.13_pcor0.3_b321_p0",
                              Hu="r0.13_pcor0.3_b123_p0",
                              Hu="r0.13_pcor0.3_b321_p0.86"
@@ -251,13 +257,15 @@ acc.iu<-dat %>%
 acc.icu<-dat %>% 
   aggregatePMP(hyp=c("H1","Hc","Hu"),
                studies=30,
-               subset = "dat[,,,,-c(1,3,11)]") %>% 
+             #  subset = "dat[,,,,-c(1,3,11)]"
+               ) %>% 
   accuracyPMP(hyp_to_pop = c(H1="r0.13_pcor0.3_b321_p0",
                              Hc="r0.13_pcor0.3_b123_p0",
                              Hu="r0.13_pcor0.3_b321_p0.86"
   ))
+acc.icu$acc
 
-
+acc.iu$acc
 #create text labels only for t=1 and t=30
 q <-acc.iu$acc-acc.icu$acc
 q[-c(1,nrow(q)),]<-NA
@@ -292,17 +300,17 @@ acc.iu.l<-acc.iu$acc %>%
          t.iu=factor(t.iu)
   )
 
-
+th<-0.87
 diff<-cbind(acc.icu.l,acc.iu.l) %>% 
   mutate(diff=acc.iu-acc.icu,
-         color= case_when(acc.icu<=0.865 & acc.iu<=0.865 ~"both <.87",
-                          acc.icu<0.865 & acc.iu>=0.865 ~"only conjoint < .87",
-                          acc.icu>=0.865 & acc.iu>=0.865 ~"both \u2265 .87"
+         color= case_when(acc.icu<=th & acc.iu<=th ~"both <.87",
+                          acc.icu<th & acc.iu>=th ~"only conjoint < .87",
+                          acc.icu>=th & acc.iu>=th ~"both \u2265 .87"
                           )
          )
 
-cols<-c("#CCCCCC", "#EBEBEB",  "#fcfcfc")#"#f9f7f7"
-cols<-colorspace::darken(cols, amount=0.1)
+# cols<-c("#CCCCCC", "#EBEBEB",  "#fcfcfc")#"#f9f7f7"
+# cols<-colorspace::darken(cols, amount=0.1)
 
 cols<-c("#8F8F8F", "#BBBBBB",  "#E0E0E0")
 costplot<-
@@ -335,10 +343,15 @@ costplot<-
                              order=2)
          )
 costplot  
-ggsave("Part I/analysis/output/costplot2.png", plot = costplot, width = 7, height = 3, units = "in", dpi = 300, bg="white")
+
+#largest difference:
+diff$diff %>% max
+diff[diff$diff>0.12,]
+ggsave("Part I/analysis/output/costplot2_final.png", plot = costplot, width = 7, height = 3, units = "in", dpi = 300, bg="white")
 
 # Final hpc data--------------------------------------------
-dat3<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc_final.rds")
+dat3<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc_final_mixed.rds")
+
 source("Part I/analysis/analysis functions.R")
 att<-attributes(dat3)
 att<-att[names(att)[-grep("dim", names(att))]]
@@ -359,12 +372,15 @@ accplot<-dat3s %>%
   )) %>% 
   acc_corrplot(object = "acc")
 accplot
-a<-dat3s %>% 
+
+TPR<-dat3s %>% 
   aggregatePMP(hyp=c("H1","Hc","Hu"),
                studies=30
                # subset = "dat3[,,,,-c(1,3,11)]"
   ) %>% 
   accuracyPMP(hyp_to_pop = c(H1="r0.13_pcor0.3_b321_p0",
                              Hc="r0.13_pcor0.3_b123_p0",
-                             Hu="r0.13_pcor0.3_b321_p0.86"
-  ))
+                             Hu="r0.13_pcor0.3_bmixed_p0"
+  )) %>% 
+  TP_corrplot()
+TPR
