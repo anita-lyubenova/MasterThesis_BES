@@ -12,12 +12,18 @@ library(shinybusy)
 library(patchwork)
 
 
-# dat3<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc_final_mixed.rds")
+
 # dat2<-readRDS("Part I/pre-processing/output_ShinyApp/BF_data_2par.rds")
 # dat1<-readRDS("Part I/pre-processing/output_ShinyApp/BF_data_1par.rds")
- source("Part I/shiny app/modules.R")
-# source("Part I/shiny app/app functions.R")
-par_to_hyp<-readxl::read_excel("Part I/shiny app/par_to_hyp2.xlsx")
+
+# dat3<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc_final_mixed.rds")
+# source("Part I/shiny app/modules.R")
+# par_to_hyp<-readxl::read_excel("Part I/shiny app/par_to_hyp3.xlsx")
+
+#upload paths
+dat3<-readRDS("data/BF_data_3par_hpc_final_mixed.rds")
+par_to_hyp<-readxl::read_excel("par_to_hyp3.xlsx")
+source("modules.R")
 
 # dat<-readRDS("BF_data.rds")
 # source("modules.R")
@@ -62,10 +68,11 @@ ui<-navbarPage(title = "Bayesian Evidence Synthesis",
                               ")),
                tabPanel("Home",
                         
-                        h3(style="margin-left:80px; margin-top:100px;color:#78C1A9;","Bayesian Evidence Synthesis: The Value of The Unconstrained Hypothesis"),
+                        h3(style="margin-left:80px; margin-top:100px;color:#78C1A9;width:50%;",
+                           "Bayesian Evidence Synthesis:",tags$br(),"The Value of The Unconstrained Hypothesis"),
                         
-                        div(style="width:50%;margin-top:30px; margin-left:80px;",
-                            tags$p("THis Shiny App provides additional simulation conditions to those 
+                        div(style="width:40%;margin-top:30px; margin-left:80px;",
+                            tags$p("This Shiny App provides additional simulation conditions to those 
                                presented in Lyubenova ((2023)). Bayesian Evidence Synthesis: The 
                                Value of the Unconstrained Hypothesis. Two different types of plots
                                can be obtained in the tabs \"PMP distribution plots\" and \"Accuracy plots\".
@@ -129,7 +136,7 @@ server<-function(input, output,session){
   observeEvent(hyp_UI1_med_selection$hyp_input_r(), {
     output$pop1_med<-renderUI({
       pop_UI("pop_UI1_med",
-             n_par = hyp_UI1_med_selection$n_par,
+             #n_par = hyp_UI1_med_selection$n_par,
              hyp_input=NULL
              )
     })
@@ -141,8 +148,9 @@ server<-function(input, output,session){
 
   med_plot_server("plot_UI1_med",
                hyp=hyp_UI1_med_selection$hyp_input_r,
-               pop_def = pop_def1_med,
-               n_par = hyp_UI1_med_selection$n_par)
+               pop_def = pop_def1_med
+             #  n_par = hyp_UI1_med_selection$n_par
+             )
 
   
   # Tab PMPs: Panel 2 --------------------------------
@@ -151,7 +159,7 @@ server<-function(input, output,session){
   observeEvent(hyp_UI2_med_selection$hyp_input_r(), {
     output$pop2_med<-renderUI({
       pop_UI("pop_UI2_med",
-             n_par = hyp_UI2_med_selection$n_par,
+           #  n_par = hyp_UI2_med_selection$n_par,
              hyp_input=NULL
       )
     })
@@ -163,8 +171,9 @@ server<-function(input, output,session){
 
   med_plot_server("plot_UI2_med",
                   hyp=hyp_UI2_med_selection$hyp_input_r,
-                  pop_def = pop_def2_med,
-                  n_par = hyp_UI2_med_selection$n_par)
+                  pop_def = pop_def2_med
+                 # n_par = hyp_UI2_med_selection$n_par
+                  )
 
   
   # output$test_outer<-renderPrint(hyp_UI1_med_selection$n_par())
@@ -183,7 +192,7 @@ server<-function(input, output,session){
      do.call(what = "tagList",
              args=lapply(hyp_UI1_acc_selection$hyp_input_r(), function(i){
                pop_UI(paste0("pop_UI1_acc",i),
-                      n_par = hyp_UI1_acc_selection$n_par,
+                     # n_par = hyp_UI1_acc_selection$n_par,
                       hyp_input=i)
              })
        )
@@ -205,8 +214,9 @@ server<-function(input, output,session){
  
 plots_server("plots_UI1_acc",
              hyp=hyp_UI1_acc_selection$hyp_input_r,
-             pop_def = pop_def1,
-             n_par = hyp_UI1_acc_selection$n_par)
+             pop_def = pop_def1
+           #  n_par = hyp_UI1_acc_selection$n_par
+           )
  
 
 # Tab Accuracy: Panel 2 --------------------------------
@@ -222,7 +232,7 @@ observeEvent(hyp_UI2_acc_selection$hyp_input_r(), {
       do.call(what = "tagList",
               args=lapply(hyp_UI2_acc_selection$hyp_input_r(), function(i){
                 pop_UI(paste0("pop_UI2_acc",i),
-                       n_par = hyp_UI2_acc_selection$n_par,
+                      # n_par = hyp_UI2_acc_selection$n_par,
                        hyp_input=i)
               })
       )
@@ -244,8 +254,9 @@ observe({
 
 plots_server("plots_UI2_acc",
              hyp=hyp_UI2_acc_selection$hyp_input_r,
-             pop_def = pop_def2,
-             n_par = hyp_UI2_acc_selection$n_par)
+             pop_def = pop_def2
+            # n_par = hyp_UI2_acc_selection$n_par
+             )
 
 
 

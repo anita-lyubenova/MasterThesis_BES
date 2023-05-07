@@ -3,10 +3,13 @@ library(tidyverse)
 library(ggpubr)
 # 
 # ############################################# TEMP
-# BF<-dat3
-# hyp<-c("H2.V1>V2>V3" ,  "H2.complement", "Hu"  )
-# pops = c("r0.13_pcor0.3_b321_p0") #,"r0.13_pcor0.3_bmixed_p0"
-# studies=10
+BF<-dat3
+hyp<-c("H2.V1>V2>V3" , "Hu"  )
+ pops = c("r0.13_pcor0.3_b321_p0") #,"r0.13_pcor0.3_bmixed_p0"
+ studies=10
+
+
+
 # BF %>% dimnames()
 # BF %>% dim
 # nom_t %>% dimnames()
@@ -444,8 +447,8 @@ median_plot<-function(data, hyp_input){
            ),
            color=plot_data$color[1:length(hyp_input)],
            name=plot_data$name[1:length(hyp_input)],
-           pointPlacement=c(-0.15,0,0.15),
-           id=c("a", "b", "c") #letters[1:length(unique(plot_data$Hypothesis))]
+           #pointPlacement=c(-0.15,0.15),
+           id=letters[1:length(unique(plot_data$Hypothesis))] #letters[1:length(unique(plot_data$Hypothesis))]
     )%>%
     hc_tooltip(enabled=TRUE,
                valueDecimals=2)%>%
@@ -473,7 +476,7 @@ median_plot<-function(data, hyp_input){
             group = factor(Hypothesis,levels = unique(Hypothesis))
       ),
       color=plot_data$color[1:length(hyp_input)],
-      linkedTo =c("a", "b", "c"), letters[1:length(unique(plot_data$Hypothesis))],
+      linkedTo =letters[1:length(unique(plot_data$Hypothesis))], ,
       enableMouseTracking = TRUE,
       showInLegend = FALSE,
       grouping=TRUE,
