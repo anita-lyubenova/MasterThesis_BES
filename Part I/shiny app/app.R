@@ -67,14 +67,14 @@ ui<-navbarPage(title = "Bayesian Evidence Synthesis",
                                  fluidRow(
                                    column(width = 6,
                                                  hyp_UI("hyp_UI1_med"),
-                                                 uiOutput("pop1")
-                                              #   med_plots_UI("plots_UI1_med")
+                                                 uiOutput("pop1_med"),
+                                                 med_plot_UI("plot_UI1_med")
                                                  #   verbatimTextOutput("test")
                                    ),
                                    column(width = 6,
                                           hyp_UI("hyp_UI2_med"),
-                                          uiOutput("pop2")
-                                        #  med_plots_UI("med_plots_UI2")
+                                          uiOutput("pop2_med"),
+                                          med_plot_UI("plot_UI1_med")
                                           #   verbatimTextOutput("test")
                                           )
                                    )
@@ -111,6 +111,14 @@ ui<-navbarPage(title = "Bayesian Evidence Synthesis",
                )
 
 server<-function(input, output,session){
+# Tab PMPs: Panel 1 --------------------------------
+  hyp_UI1_med_selection<- hyp_server("hyp_UI1_med")
+  observeEvent(hyp_UI1_med_selection$hyp_input_r(), {
+    output$pop1_med<-renderUI({
+      pop_UI("pop_UI1_med")
+    })
+  })
+  
 
 # Tab Accuracy: Panel 1 --------------------------------
  hyp_UI1_acc_selection<- hyp_server("hyp_UI1_acc")
@@ -119,7 +127,7 @@ server<-function(input, output,session){
    
    output$pops1_acc<-renderUI({
 
-     if(is.null(hyp_UI1_acc_selection$hyp_input)){
+     if(is.null(hyp_UI1_acc_selection$hyp_input_r())){
        return(NULL)
 
      }else{

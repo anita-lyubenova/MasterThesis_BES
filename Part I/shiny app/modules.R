@@ -77,6 +77,23 @@ gen_plot_server <- function(id) { #later on PMP shoudl be reactive
 
 }
 
+
+med_plot_UI <- function(id) {
+  ns <- NS(id)
+  
+  tagList(
+    sliderTextInput(ns("pcor_input"),
+                    "Choose sample size:",
+                    choices =  c("15" , "25" , "35" , "50",  "75" , "100", "150", "200", "300", "500", "800"),
+                    selected = "300"
+                    ),
+    actionButton(inputId = ns("go"), "Plot"),
+    highchartOutput(outputId = ns("median_plot")),
+    verbatimTextOutput(ns("test"))
+    
+  )
+}
+
 hyp_UI<-function(id) {
   ns <- NS(id)
   
