@@ -177,6 +177,26 @@ mp.50[[2]]<- mp.H1Hc[[2]]+ theme(legend.position = "none") +labs(x=NULL)
 mp.50
 
 mp.86+mp.50
+
+#proportion of PMPs above 0.50 for each H1 and Hu
+ic.mdat.5<-dat%>% 
+  aggregatePMP(hyp=c("H1","Hc"),
+               studies=4)
+sum(ic.mdat.5$PMP[4,"PMP1","r0.13_pcor0.3_b321_p0.5",,"300"]>0.5)/1000
+
+icu.mdat.5<-dat%>% 
+  aggregatePMP(hyp=c("H1","Hc", "Hu"),
+               studies=15)
+
+sum(icu.mdat.5$PMP[4,"PMP1","r0.13_pcor0.3_b321_p0.5",,"300"]>0.5)/1000
+median(icu.mdat.5$PMP[4,"PMP1","r0.13_pcor0.3_b321_p0.5",,"300"])
+
+iu.mdat.5<-dat%>% 
+  aggregatePMP(hyp=c("H1", "Hu"),
+               studies=15)
+
+sum(iu.mdat.5$PMP[4,"PMP1","r0.13_pcor0.3_b321_p0.5",,"300"]>0.5)/1000
+median(iu.mdat.5$PMP[4,"PMP1","r0.13_pcor0.3_b321_p0.5",,"300"])
 ##Figure 2 -----------------------------
 f2<-wrap_plots(mp.86.ic, mp.86.iu, mp.86.icu,mp.50.ic, mp.50.iu, mp.50.icu, ncol = 2, byrow=FALSE)+ 
   plot_annotation(tag_levels = 'A') + #add labels A, B, C ...
