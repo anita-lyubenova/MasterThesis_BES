@@ -1,5 +1,79 @@
 library(patchwork)
 source("Part I/analysis/analysis functions.R")
+
+# PRELIMINARY -----------------------------------------------------------------
+## Prop studies originatin from H1 (METHODS - Table 1, rows 4 & 5, last column)
+source("simulation/simulation functions.R")
+
+### cv=0.86 -----------------------------
+set.seed(123)
+r2=0.13
+pcor=0.3
+ratio_beta<-c(3,2,1)
+p<-0.86
+n.studies=10000
+#sample new ratios from a log-normal distribution  
+#with mean = ratio, and sd=p*ratio
+m<-ratio_beta
+s=p*ratio_beta
+# in order to draw from a log-normal dist with these mean and sd
+# the location and shape parameters must be reparametrized
+#https://msalganik.wordpress.com/2017/01/21/making-sense-of-the-rlnorm-function-in-r/comment-page-1/
+location <- log(m^2 / sqrt(s^2 + m^2))
+shape <- sqrt(log(1 + (s^2 / m^2)))
+
+betas<-c()
+
+for(i in 1:n.studies){
+  new_ratio<-c()
+  for(r in 1:length(ratio_beta)){
+    new_ratio[r]<-rlnorm(n=1, location[r], shape[r])
+  }
+  
+  betas<-rbind(betas,coefs(r2, new_ratio, cormat(pcor, length(new_ratio)), "normal"))
+}
+
+H1.true<-sapply(1:nrow(betas), function(i){
+  betas[i,1]> betas[i,2] & betas[i,2] > betas[i,3]
+})
+sum(H1.true)/n.studies
+
+
+
+### cv = 0.50 ------------------------
+set.seed(123)
+r2=0.13
+pcor=0.3
+ratio_beta<-c(3,2,1)
+p<-0.50
+n.studies=10000
+#sample new ratios from a log-normal distribution  
+#with mean = ratio, and sd=p*ratio
+m<-ratio_beta
+s=p*ratio_beta
+# in order to draw from a log-normal dist with these mean and sd
+# the location and shape parameters must be reparametrized
+#https://msalganik.wordpress.com/2017/01/21/making-sense-of-the-rlnorm-function-in-r/comment-page-1/
+location <- log(m^2 / sqrt(s^2 + m^2))
+shape <- sqrt(log(1 + (s^2 / m^2)))
+
+betas<-c()
+
+for(i in 1:n.studies){
+  new_ratio<-c()
+  for(r in 1:length(ratio_beta)){
+    new_ratio[r]<-rlnorm(n=1, location[r], shape[r])
+  }
+  
+  betas<-rbind(betas,coefs(r2, new_ratio, cormat(pcor, length(new_ratio)), "normal"))
+}
+
+H1.true<-sapply(1:nrow(betas), function(i){
+  betas[i,1]> betas[i,2] & betas[i,2] > betas[i,3]
+})
+sum(H1.true)/n.studies
+
+
 #LOAD DATA ----------------------------------------------------
 dat<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc.rds")
 #populations
