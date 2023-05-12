@@ -1,6 +1,15 @@
-#all_hyp<-c(c.01="V1>V2>V3>0",c.50="V1-0.5*V2-V3>0")
-source("simulation/simulation functions.R")
+#This scripts simulates data used in the thesis and the shiny app
 
+#CAUTION: long computation times!
+#The script was run on a high-performace computer with 46 cores and ran for approx. 4 days
+#If you intend to run the script adjust the number of cores to a desired number (variable "ncores")
+
+#OUTPUT 'res3par' : a list where each element uses a single combination of the conditions r2 x pcor x ratio_beta x p x n:  
+#         - there are 1188 combinations/elements in total
+#         - each element is a dataframe with 30 000 rows (studies*iter) and 6 columns (3 hypotheses and their complements);
+#         -each value in the dataframe is a Bayes factor of a hypothesis against the unconstrained hypothesis
+
+source("simulation/simulation functions.R")
 
 ## 3 par ------------------------------------
 #parallelize the outermost loop
@@ -13,17 +22,10 @@ ratio_beta<-c("c(3,2,1)",
 studies=30
 iter=1000
 
-length(r2)*length(pcor)*length(p)*length(n)*length(ratio_beta)*length(studies)*length(iter)
-# 792*3/60
-# 1584/20
+#create combinations of conditions
 cond<-expand.grid(r2,pcor,p, ratio_beta, n) %>% 
   rename(r2=Var1, pcor=Var2, p=Var3, ratio_beta=Var4,n=Var5) %>% 
   mutate(pop_name=paste0("r", r2, "_pcor", pcor,"_b",readr::parse_number(as.character(ratio_beta)), "_p", p, "_n",n))
-# 
-# 
-# cond<-expand.grid(r2,pcor,p, ratio_beta, n,1:(length(studies)*length(iter))) %>% 
-#   rename(r2=Var1, pcor=Var2, p=Var3, ratio_beta=Var4,n=Var5, rep=Var6) %>% 
-#   mutate(pop_name=paste0("r", r2, "_pcor", pcor,"_b",readr::parse_number(as.character(ratio_beta)), "_p", p, "_n",n))
 
 ncores<-46
 seed=3000
@@ -84,6 +86,7 @@ attributes(res3par)<-list(hypothesis=c(c.01="V1>V2>V3>0", c.13="V1>V2>V3",  c.31
                           n=n)
 
 saveRDS(res3par,file="simulation/output/res3par_shiny.rds")
+
 # ## 2 par -------------------------
 # #parallelize the outermost loop
 r2<-c(0.09,0.13,0.4)
@@ -95,9 +98,7 @@ ratio_beta<-c("c(3,2,1)",
 studies=30
 iter=1000
 
-length(r2)*length(pcor)*length(p)*length(n)*length(ratio_beta)*length(studies)*length(iter)
-# 792*3/60
-# 1584/20
+
 cond<-expand.grid(r2,pcor,p, ratio_beta, n) %>%
   rename(r2=Var1, pcor=Var2, p=Var3, ratio_beta=Var4,n=Var5) %>%
   mutate(pop_name=paste0("r", r2, "_pcor", pcor,"_b",readr::parse_number(as.character(ratio_beta)), "_p", p, "_n",n))
