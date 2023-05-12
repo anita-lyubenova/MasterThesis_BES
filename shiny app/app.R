@@ -12,16 +12,16 @@ library(shinybusy)
 library(patchwork)
 
 
-# dat2<-readRDS("Part I/pre-processing/output_ShinyApp/BF_data_2par.rds")
-# dat1<-readRDS("Part I/pre-processing/output_ShinyApp/BF_data_1par.rds")
+# dat2<-readRDS("pre-processing/output_ShinyApp/BF_data_2par.rds")
+# dat1<-readRDS("pre-processing/output_ShinyApp/BF_data_1par.rds")
 
-# dat3<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc_final_mixed.rds")
-# source("Part I/shiny app/modules.R")
-# par_to_hyp<-readxl::read_excel("Part I/shiny app/par_to_hyp3.xlsx")
+# source("shiny app/modules.R")
+ dat3<-readRDS("pre-processing/output/BF_data_3par_hpc_final_mixed.rds")
+ par_to_hyp<-readxl::read_excel("shiny app/par_to_hyp3.xlsx")
 
 #upload paths
-dat3<-readRDS("BF_data_3par_hpc_final_mixed.rds")
-par_to_hyp<-readxl::read_excel("par_to_hyp3.xlsx")
+##dat3<-readRDS("BF_data_3par_hpc_final_mixed.rds")
+#par_to_hyp<-readxl::read_excel("par_to_hyp3.xlsx")
 #source("app functions.R")
 #source("modules.R")
 
