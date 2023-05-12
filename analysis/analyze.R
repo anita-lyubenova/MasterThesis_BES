@@ -1,5 +1,5 @@
 library(patchwork)
-source("Part I/analysis/analysis functions.R")
+source("analysis/analysis functions.R")
 
 # PRELIMINARY -----------------------------------------------------------------
 ## Prop studies originatin from H1 (METHODS - Table 1, rows 4 & 5, last column)
@@ -75,13 +75,13 @@ sum(H1.true)/n.studies
 
 
 #LOAD DATA ----------------------------------------------------
-dat<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc.rds")
+dat<-readRDS("pre-processing/output/BF_data_3par_hpc.rds")
 #populations
 dimnames(dat)[[3]]
 attributes(dat)
 
 #Final hpc data
-dat3<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc_final_mixed.rds")
+dat3<-readRDS("pre-processing/output/BF_data_3par_hpc_final_mixed.rds")
 #save the attributes to re-append after subsetting
 att<-attributes(dat3)
 att<-att[names(att)[-grep("dim", names(att))]]
@@ -120,7 +120,7 @@ mp.H1Hc.icu<- dat %>%
   median_plot()+
   theme(legend.position = "none")+
   labs(title = NULL)
-#ggsave("Part I/analysis/output/mp.H1Hc.icu.png", plot = mp.H1Hc.icu, width = 7, height = 2.6, units = "in", dpi = 300, bg="white")
+#ggsave("analysis/output/mp.H1Hc.icu.png", plot = mp.H1Hc.icu, width = 7, height = 2.6, units = "in", dpi = 300, bg="white")
 # mp.H1Hc<-mp.H1Hc.ic/(mp.H1Hc.iu+mp.H1Hc.icu)+ 
 #   plot_annotation(tag_levels = 'A') + 
 #   plot_layout(guides = 'collect')&
@@ -132,7 +132,7 @@ mp.H1Hc.icu<- dat %>%
 # mp.H1Hc[[2]][[2]] <- mp.H1Hc[[2]][[2]] +labs(y=NULL)
 # mp.H1Hc
 # 
-# ggsave("Part I/analysis/output/mp.H1Hc.png", plot = mp.H1Hc, width = 7, height = 4, units = "in", dpi = 300, bg="white")
+# ggsave("analysis/output/mp.H1Hc.png", plot = mp.H1Hc, width = 7, height = 4, units = "in", dpi = 300, bg="white")
 
 mp.H1Hc<-wrap_plots(mp.H1Hc.ic, mp.H1Hc.iu, mp.H1Hc.icu, ncol = 1)+ 
   plot_annotation(tag_levels = 'A') + 
@@ -142,7 +142,7 @@ mp.H1Hc<-wrap_plots(mp.H1Hc.ic, mp.H1Hc.iu, mp.H1Hc.icu, ncol = 1)+
 mp.H1Hc[[1]]<-mp.H1Hc[[1]]+ theme(legend.position = "none") +labs(x=NULL)
 mp.H1Hc[[2]]<- mp.H1Hc[[2]]+ theme(legend.position = "none") +labs(x=NULL)
 
-ggsave("Part I/analysis/output/mp.H1Hc_final.png", plot = mp.H1Hc, width = 7, height = 7, units = "in", dpi = 300, bg="white")
+ggsave("analysis/output/mp.H1Hc_final.png", plot = mp.H1Hc, width = 7, height = 7, units = "in", dpi = 300, bg="white")
 
 ## p.86   --------------------------------------------------------------
 mp.86.ic<- dat %>% 
@@ -184,7 +184,7 @@ mp.86.icu<-dat%>%
 # mp.86[[2]][[2]] <- mp.86[[2]][[2]] +labs(y=NULL)
 # mp.86
 # 
-# ggsave("Part I/analysis/output/mp.86.png", plot = mp.86, width = 7, height = 4, units = "in", dpi = 300, bg="white")
+# ggsave("analysis/output/mp.86.png", plot = mp.86, width = 7, height = 4, units = "in", dpi = 300, bg="white")
 
 mp.86<-wrap_plots(mp.86.ic, mp.86.iu, mp.86.icu, ncol = 1)+ 
   plot_annotation(tag_levels = 'A') + 
@@ -239,7 +239,7 @@ mp.50.icu<-dat %>%
 # mp.50[[1]]<-mp.50[[1]]+ theme(legend.position = "none")
 # mp.50[[2]][[1]] <- mp.50[[2]][[1]]+ theme(legend.position = "none")
 # mp.50[[2]][[2]] <- mp.50[[2]][[2]] +labs(y=NULL)
-# ggsave("Part I/analysis/output/mp.50.png", plot = mp.50, width = 7, height = 4, units = "in", dpi = 300, bg="white")
+# ggsave("analysis/output/mp.50.png", plot = mp.50, width = 7, height = 4, units = "in", dpi = 300, bg="white")
 
 mp.50<-wrap_plots(mp.50.ic, mp.50.iu, mp.50.icu, ncol = 1)+ 
   plot_annotation(tag_levels = 'A') + 
@@ -284,7 +284,7 @@ f2[[4]]<-f2[[4]]+labs(title = "cv = .50")+
 for(i in c(1,2,4,5)){
   f2[[i]]<-f2[[i]]+ theme(legend.position = "none") +labs(x=NULL)
 }
-ggsave("Part I/analysis/output/f2_final.png", plot = f2, width = 7, height = 5.7, units = "in", dpi = 300, bg="white")
+ggsave("analysis/output/f2_final.png", plot = f2, width = 7, height = 5.7, units = "in", dpi = 300, bg="white")
 
 #  TPR   ------------------------------------------
 #
@@ -319,7 +319,7 @@ TPRs[[1]]<-TPRs[[1]] + labs(subtitle="H1-population")
 TPRs[[2]]<-TPRs[[2]] + labs(subtitle="Hc-population")
 TPRs[[3]]<-TPRs[[3]] + labs(subtitle="Heterogeneous H1-population with cv = .86")
 
-ggsave("Part I/analysis/output/TPRs2_final.png", plot = TPRs, width = 8, height = 8, units = "in", dpi = 300, bg="white")
+ggsave("analysis/output/TPRs2_final.png", plot = TPRs, width = 8, height = 8, units = "in", dpi = 300, bg="white")
 
 
 #for presentation
@@ -330,7 +330,7 @@ TPRs_pres<-wrap_plots(TPR, ncol=1)+
         legend.key.height=unit(3, 'cm'),
         legend.key.width=unit(0.5, 'cm'))
 TPRs_pres
-ggsave("Part I/analysis/output/TPRs2_pres.png", plot = TPRs_pres, width = 8, height = 8, units = "in", dpi = 300, bg="white")
+ggsave("analysis/output/TPRs2_pres.png", plot = TPRs_pres, width = 8, height = 8, units = "in", dpi = 300, bg="white")
 
 
 ###########################  ACCURACY   #########################################
@@ -347,7 +347,7 @@ accplot<-dat %>%
   )) %>% 
   acc_corrplot(object = "acc")
 accplot
-ggsave("Part I/analysis/output/accplot_final.png", plot = accplot, width = 7, height = 3, units = "in", dpi = 300, bg="white")
+ggsave("analysis/output/accplot_final.png", plot = accplot, width = 7, height = 3, units = "in", dpi = 300, bg="white")
 
 
 ###########################   COSTS   #############################################
@@ -453,12 +453,12 @@ costplot
 #largest difference:
 diff$diff %>% max
 diff[diff$diff>0.12,]
-ggsave("Part I/analysis/output/costplot2_final.png", plot = costplot, width = 7, height = 3, units = "in", dpi = 300, bg="white")
+ggsave("analysis/output/costplot2_final.png", plot = costplot, width = 7, height = 3, units = "in", dpi = 300, bg="white")
 
 # Final hpc data--------------------------------------------
-dat3<-readRDS("Part I/pre-processing/output/BF_data_3par_hpc_final_mixed.rds")
+dat3<-readRDS("pre-processing/output/BF_data_3par_hpc_final_mixed.rds")
 
-source("Part I/analysis/analysis functions.R")
+source("analysis/analysis functions.R")
 att<-attributes(dat3)
 att<-att[names(att)[-grep("dim", names(att))]]
 dimnames(dat3)[[2]]
