@@ -46,7 +46,7 @@ mp.H1Hc.icu<- dat %>%
   median_plot()+
   theme(legend.position = "none")+
   labs(title = NULL)
-
+#ggsave("Part I/analysis/output/mp.H1Hc.icu.png", plot = mp.H1Hc.icu, width = 7, height = 2.6, units = "in", dpi = 300, bg="white")
 # mp.H1Hc<-mp.H1Hc.ic/(mp.H1Hc.iu+mp.H1Hc.icu)+ 
 #   plot_annotation(tag_levels = 'A') + 
 #   plot_layout(guides = 'collect')&
@@ -246,6 +246,18 @@ TPRs[[2]]<-TPRs[[2]] + labs(subtitle="Hc-population")
 TPRs[[3]]<-TPRs[[3]] + labs(subtitle="Heterogeneous H1-population with cv = .86")
 
 ggsave("Part I/analysis/output/TPRs2_final.png", plot = TPRs, width = 8, height = 8, units = "in", dpi = 300, bg="white")
+
+
+#for presentation
+TPRs_pres<-wrap_plots(TPR, ncol=1)+ 
+  plot_annotation(tag_levels = 'A') + 
+  plot_layout(guides = 'collect')&
+  theme(legend.position='right',
+        legend.key.height=unit(3, 'cm'),
+        legend.key.width=unit(0.5, 'cm'))
+TPRs_pres
+ggsave("Part I/analysis/output/TPRs2_pres.png", plot = TPRs_pres, width = 8, height = 8, units = "in", dpi = 300, bg="white")
+
 
 ###########################  ACCURACY   #########################################
 
