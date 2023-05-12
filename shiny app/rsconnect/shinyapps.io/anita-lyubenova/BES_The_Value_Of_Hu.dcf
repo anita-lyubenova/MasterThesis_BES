@@ -1,0 +1,14 @@
+name: BES_The_Value_Of_Hu
+title: BES_The_Value_Of_Hu
+username:
+account: anita-lyubenova
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 9049149
+bundleId: 7186307
+url: https://anita-lyubenova.shinyapps.io/BES_The_Value_Of_Hu/
+when: 1683499812.94777
+lastSyncTime: 1683499812.94782
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: app functions.R|draft.R|modules.R

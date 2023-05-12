@@ -33,3 +33,4 @@ simulation/output/res2par_shiny.rds
 simulation/output/res3par_shiny.rds
 pre-processing/output/BF_data_3par_hpc_final_mixed.rds
 pre-processing/output/BF_data_2par_hpc_final_mixed.rds
+shiny app/BF_data_3par_hpc_final_mixed.rds
