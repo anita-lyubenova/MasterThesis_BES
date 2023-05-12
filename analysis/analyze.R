@@ -1,9 +1,10 @@
+#This script creates all figures in the main text of the manuscript
+# and parts of Table 1 (rows 4 & 5, last column)
 library(patchwork)
 source("analysis/analysis functions.R")
 
-# PRELIMINARY -----------------------------------------------------------------
-## Prop studies originatin from H1 (METHODS - Table 1, rows 4 & 5, last column)
-source("simulation/simulation functions.R")
+# TABLE 1 -----------------------------------------------------------------
+## Prop studies originating from H1 (METHODS - Table 1, rows 4 & 5, last column)
 
 ### cv=0.86 -----------------------------
 set.seed(123)
@@ -75,10 +76,6 @@ sum(H1.true)/n.studies
 
 
 #LOAD DATA ----------------------------------------------------
-dat<-readRDS("pre-processing/output/BF_data_3par_hpc.rds")
-#populations
-dimnames(dat)[[3]]
-attributes(dat)
 
 #Final hpc data
 dat3<-readRDS("pre-processing/output/BF_data_3par_hpc_final_mixed.rds")
@@ -171,19 +168,7 @@ mp.86.icu<-dat%>%
   median_plot()+
   labs(title = NULL)+
   theme(legend.position = "none")
-# 
-# 
-# mp.86<-mp.86.ic/(mp.86.iu+mp.86.icu)+ 
-#   plot_annotation(tag_levels = 'A') + 
-#   plot_layout(guides = 'collect')&
-#   theme(legend.position='bottom')
-# 
-# #fix legends
-# mp.86[[1]]<-mp.86[[1]]+ theme(legend.position = "none")
-# mp.86[[2]][[1]] <- mp.86[[2]][[1]]+ theme(legend.position = "none")
-# mp.86[[2]][[2]] <- mp.86[[2]][[2]] +labs(y=NULL)
-# mp.86
-# 
+
 # ggsave("analysis/output/mp.86.png", plot = mp.86, width = 7, height = 4, units = "in", dpi = 300, bg="white")
 
 mp.86<-wrap_plots(mp.86.ic, mp.86.iu, mp.86.icu, ncol = 1)+ 
@@ -230,21 +215,12 @@ mp.50.icu<-dat %>%
   median_plot()+
   labs(title = NULL)
 
-# mp.50<-mp.50.ic/(mp.50.iu+mp.50.icu)+ 
-#   plot_annotation(tag_levels = 'A') + 
-#   plot_layout(guides = 'collect')&
-#   theme(legend.position='bottom')
-# 
-# #fix legends
-# mp.50[[1]]<-mp.50[[1]]+ theme(legend.position = "none")
-# mp.50[[2]][[1]] <- mp.50[[2]][[1]]+ theme(legend.position = "none")
-# mp.50[[2]][[2]] <- mp.50[[2]][[2]] +labs(y=NULL)
-# ggsave("analysis/output/mp.50.png", plot = mp.50, width = 7, height = 4, units = "in", dpi = 300, bg="white")
 
 mp.50<-wrap_plots(mp.50.ic, mp.50.iu, mp.50.icu, ncol = 1)+ 
   plot_annotation(tag_levels = 'A') + 
   plot_layout(guides = 'collect')&
   theme(legend.position='bottom')
+
 #fix legends
 mp.50[[1]]<-mp.H1Hc[[1]]+ theme(legend.position = "none") +labs(x=NULL)
 mp.50[[2]]<- mp.H1Hc[[2]]+ theme(legend.position = "none") +labs(x=NULL)
@@ -271,6 +247,7 @@ iu.mdat.5<-dat%>%
 
 sum(iu.mdat.5$PMP[4,"PMP1","r0.13_pcor0.3_b321_p0.5",,"300"]>0.5)/1000
 median(iu.mdat.5$PMP[4,"PMP1","r0.13_pcor0.3_b321_p0.5",,"300"])
+
 ##Figure 2 -----------------------------
 f2<-wrap_plots(mp.86.ic, mp.86.iu, mp.86.icu,mp.50.ic, mp.50.iu, mp.50.icu, ncol = 2, byrow=FALSE)+ 
   plot_annotation(tag_levels = 'A') + #add labels A, B, C ...
@@ -286,7 +263,7 @@ for(i in c(1,2,4,5)){
 }
 ggsave("analysis/output/f2_final.png", plot = f2, width = 7, height = 5.7, units = "in", dpi = 300, bg="white")
 
-#  TPR   ------------------------------------------
+#  TPRs   ------------------------------------------
 #
 dimnames(dat)[[5]]
 dimnames(dat[,,,,-c(1,3,11)])
@@ -350,7 +327,8 @@ accplot
 ggsave("analysis/output/accplot_final.png", plot = accplot, width = 7, height = 3, units = "in", dpi = 300, bg="white")
 
 
-###########################   COSTS   #############################################
+###########################   DIFFERENCE IN ACCURACIES   #############################################
+#Comparison between simple unconstrained testing and conjoint testing
 acc.iu<-dat %>% 
   aggregatePMP(hyp=c("H1","Hu"),
                studies=30,
@@ -455,38 +433,3 @@ diff$diff %>% max
 diff[diff$diff>0.12,]
 ggsave("analysis/output/costplot2_final.png", plot = costplot, width = 7, height = 3, units = "in", dpi = 300, bg="white")
 
-# Final hpc data--------------------------------------------
-dat3<-readRDS("pre-processing/output/BF_data_3par_hpc_final_mixed.rds")
-
-source("analysis/analysis functions.R")
-att<-attributes(dat3)
-att<-att[names(att)[-grep("dim", names(att))]]
-dimnames(dat3)[[2]]
-
-dat3s<-dat3[,c("H2.V1>V2>V3","H2.complement","Hu"),c("r0.13_pcor0.3_b321_p0","r0.13_pcor0.3_b123_p0","r0.13_pcor0.3_b321_p0.86","r0.13_pcor0.3_b321_p0.5","r0.13_pcor0.3_bmixed_p0"),,-c(1,3,11)]
-dimnames(dat3s)[[2]]<-c("H1", "Hc", "Hu")
-attributes(dat3s)<-c(attributes(dat3s), att)
-
-accplot<-dat3s %>% 
-  aggregatePMP(hyp=c("H1","Hc","Hu"),
-               studies=30
-              # subset = "dat3[,,,,-c(1,3,11)]"
-              ) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="r0.13_pcor0.3_b321_p0",
-                             Hc="r0.13_pcor0.3_b123_p0",
-                             Hu="r0.13_pcor0.3_b321_p0.86"
-  )) %>% 
-  acc_corrplot(object = "acc")
-accplot
-
-TPR<-dat3s %>% 
-  aggregatePMP(hyp=c("H1","Hc","Hu"),
-               studies=30
-               # subset = "dat3[,,,,-c(1,3,11)]"
-  ) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="r0.13_pcor0.3_b321_p0",
-                             Hc="r0.13_pcor0.3_b123_p0",
-                             Hu="r0.13_pcor0.3_bmixed_p0"
-  )) %>% 
-  TP_corrplot()
-TPR
