@@ -1,7 +1,10 @@
 # Bayesian Evidence Synthesis: The Value of the Unconstrained Hypothesis
 This repository contains all code and results of the simulations reported in the manuscript, as well as the code for the shiny app. The folder and file is presented in the chart below.
 The study was approved by the Ethical Review Board of the Faculty of Social and Behavioural Sciences of Utrecht University (protocol number 22-1864).
-![Readme file flowchart](https://github.com/anita-lyubenova/MasterThesis_BES/assets/84072376/d94bbcdc-580e-4c4d-9c6a-b551bf2f844f)
+![Readme file flowchart](https://github.com/anita-lyubenova/MasterThesis_BES/assets/84072376/d94bbcdc-580e-4c4d-9c6a-b551bf2f844f)    
+
+Because some files were too big to upload to GitHub, they can be found here: https://drive.google.com/drive/folders/1ISqBOKSSl3Uyv2ZA4o4DPCUtASiH1HD9?usp=share_link
+
 
 
 # Machine and Package Info
