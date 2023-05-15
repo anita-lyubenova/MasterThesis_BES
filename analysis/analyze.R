@@ -139,7 +139,7 @@ mp.H1Hc<-wrap_plots(mp.H1Hc.ic, mp.H1Hc.iu, mp.H1Hc.icu, ncol = 1)+
 mp.H1Hc[[1]]<-mp.H1Hc[[1]]+ theme(legend.position = "none") +labs(x=NULL)
 mp.H1Hc[[2]]<- mp.H1Hc[[2]]+ theme(legend.position = "none") +labs(x=NULL)
 
-ggsave("analysis/output/mp.H1Hc_final.png", plot = mp.H1Hc, width = 7, height = 7, units = "in", dpi = 300, bg="white")
+ggsave("analysis/output/Figure 1.png", plot = mp.H1Hc, width = 7, height = 7, units = "in", dpi = 300, bg="white")
 
 ## p.86   --------------------------------------------------------------
 mp.86.ic<- dat %>% 
@@ -261,7 +261,7 @@ f2[[4]]<-f2[[4]]+labs(title = "cv = .50")+
 for(i in c(1,2,4,5)){
   f2[[i]]<-f2[[i]]+ theme(legend.position = "none") +labs(x=NULL)
 }
-ggsave("analysis/output/f2_final.png", plot = f2, width = 7, height = 5.7, units = "in", dpi = 300, bg="white")
+ggsave("analysis/output/Figure 2.png", plot = f2, width = 7, height = 5.7, units = "in", dpi = 300, bg="white")
 
 #  TPRs   ------------------------------------------
 #
@@ -296,7 +296,7 @@ TPRs[[1]]<-TPRs[[1]] + labs(subtitle="H1-population")
 TPRs[[2]]<-TPRs[[2]] + labs(subtitle="Hc-population")
 TPRs[[3]]<-TPRs[[3]] + labs(subtitle="Heterogeneous H1-population with cv = .86")
 
-ggsave("analysis/output/TPRs2_final.png", plot = TPRs, width = 8, height = 8, units = "in", dpi = 300, bg="white")
+ggsave("analysis/output/Figure 3.png", plot = TPRs, width = 8, height = 8, units = "in", dpi = 300, bg="white")
 
 
 #for presentation
@@ -324,7 +324,7 @@ accplot<-dat %>%
   )) %>% 
   acc_corrplot(object = "acc")
 accplot
-ggsave("analysis/output/accplot_final.png", plot = accplot, width = 7, height = 3, units = "in", dpi = 300, bg="white")
+ggsave("analysis/output/Figure 4.png", plot = accplot, width = 7, height = 3, units = "in", dpi = 300, bg="white")
 
 
 ###########################   DIFFERENCE IN ACCURACIES   #############################################
@@ -431,5 +431,5 @@ costplot
 #largest difference:
 diff$diff %>% max
 diff[diff$diff>0.12,]
-ggsave("analysis/output/costplot2_final.png", plot = costplot, width = 7, height = 3, units = "in", dpi = 300, bg="white")
+ggsave("analysis/output/Figure 5.png", plot = costplot, width = 7, height = 3, units = "in", dpi = 300, bg="white")
 
