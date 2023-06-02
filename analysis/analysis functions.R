@@ -158,26 +158,22 @@ median_plot<-function(x # a list created with create_median_plot_data()
 
 
 
-#a function to compute confusion matrix from aggregated PMPs
+#a function to compute True positive rates from aggregated PMPs
 accuracyPMP<-function(listPMP, #list created with aggregatePMP()
                       hyp_to_pop # a named character vector; elements are subset of dimnames(PMP)[[3]]: "TRUE_H0", "TRUE_H1", "TRUE_Hc", "TRUE_Hu", "HETEROG_H1p.1", "HETEROG_H1p.3", "HETEROG_H1p.5", names are the hypotheses for which the populations are true
                       
 ){
   #subset the populations of interest
   PMP<-listPMP$PMP[,,hyp_to_pop,,]
-  dim(PMP)
+  dimnames(PMP)
   hyp_index<-substr(names(hyp_to_pop),2,2)
   
   tr<-data.frame(hyp=names(hyp_to_pop),
                  PMP=paste0("PMP", hyp_index),
                  pop=hyp_to_pop
   )
-  # a character vector whose elements are the names of the variables storing the correct classifications for each population
-  correct_name<-paste0("c", tr$pop)
   
-  #a loop that computes the true classifications for each population and stores it into the respective variables
-  for(h in 1:nrow(tr)){
-    
+  correct_count<-lapply(1:nrow(tr), function(h){
     #a character string that specifies which comparison should be made
     # the comparison yields TRUE if is the PMPs of the true Hypothesis of the current population [h] are larger than the remaining PMPs
     comp<- paste(paste0("PMP[,tr$PMP[h],tr$pop[h],,,drop=FALSE] > ",
@@ -188,22 +184,16 @@ accuracyPMP<-function(listPMP, #list created with aggregatePMP()
     correct_logical<-eval(parse(text = comp))
     
     #compute the number of correct classifications by summing the TRUE values
-    correct_count<-rowSums(aperm(correct_logical, c(1,2,3,5,4)), dims = 4)[,,,,drop=TRUE]
-    
-    #store the number of correct classifications in the respective variable
-    assign(correct_name[h], correct_count)
-  } 
-  #the result of the loop are variables with names specified in correct_name
-  #there is a variable for each population 
-  #each variable contains the true classifications for each population
+    rowSums(aperm(correct_logical, c(1,2,3,5,4)), dims = 4)[,,,,drop=TRUE]
+  })
   
+  correct_prop<-lapply(correct_count, function(x) x/listPMP$dim[[4]])
+  names(correct_prop)<-paste0("c", tr$pop)
   
-  true<-lapply( mget(correct_name), function(x) x/listPMP$dim[[4]])
-  
-  acc<-eval(parse(text = paste(correct_name, collapse = "+")))/(nrow(tr)*listPMP$dim[[4]])
+  acc<-Reduce('+', correct_count)/(nrow(tr)*listPMP$dim[[4]])
   
   list(acc=round(acc, digits = 3),
-       TP=true,
+       TP=correct_prop,
        r2=listPMP$r2,
        pcor=listPMP$pcor,
        hypothesis=listPMP$hypothesis,

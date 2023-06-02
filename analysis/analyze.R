@@ -87,7 +87,7 @@ att<-att[names(att)[-grep("dim", names(att))]]
 dat<-dat3[,c("H2.V1>V2>V3","H2.complement","Hu"),c("r0.13_pcor0.3_b321_p0","r0.13_pcor0.3_b123_p0","r0.13_pcor0.3_b321_p0.86","r0.13_pcor0.3_b321_p0.5","r0.13_pcor0.3_bmixed_p0"),,-c(1,3,11)]
 dimnames(dat)[[2]]<-c("H1", "Hc", "Hu")
 attributes(dat)<-c(attributes(dat), att)
-
+remove(dat3)
 #  MEDIAN PLOTS ------------------------------------------------------
 
 ## Figure 1: H1+Hc --------------------------------------------------------------
