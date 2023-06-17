@@ -1,4 +1,4 @@
-source("Part I/data simulation/simulation functions.R")
+source("other files/Part I/data simulation/simulation functions.R")
 
 # H1_r.13_pcor.3_b321_p0_linear ---------------------------------------------------------------------------------
 
