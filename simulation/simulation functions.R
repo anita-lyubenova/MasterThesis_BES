@@ -4,7 +4,6 @@ library(magrittr)
 library(MASS)
 #library(mvtnorm)
 #library(bain)
-library(parallel)
 # library(ggplot2)
 # library(ggstatsplot)
 # library(plotly)
@@ -41,13 +40,14 @@ coefs <- function(r2, ratio, rho, model = c("normal", "logit", "probit")) {
   sqrt(var_y / sum(ratio %*% t(ratio) * rho)) * ratio
 }
 
-gen_dat <- function(beta_mu,beta_tau, n
+gen_dat <- function(beta_mu,
+                    beta_tau,
+                    n
                     ){
   
   b<-rnorm(1, beta_mu, beta_tau)
   r2<-b^2
   
-  print(b)
   # generate predictors X
   X<-rnorm(n,0,1)
   
@@ -59,53 +59,44 @@ gen_dat <- function(beta_mu,beta_tau, n
 
 }
 
-gen_dat(0.3,0.3,300000)
-
-
-#a function to simulate lm model according to certain simulation conditions
-single_sim<-function(r2,  # R-squared of the regression model
-                     pcor,  # correlation between the predictors
-                     ratio_beta,  # a numeric vector with the true beta parameters (or the means of the mvnorm dist, if they are sampled);
-                     # Sigma_beta,  # variance covariance matrix of the (true) regression parameters - can be used to induce heterogeneity
-                     p=0.6829787, #the proportion of the effect size used to determine the SD of the parameters: SD=propSD*betas, 70% is a wide distribution (REF)
-                     hypothesis=c( "V1>V2>V3"),
-                     n,  #sample size 
-                     model  #linear, logistic or probit regression
-){
-  #n.hyp<-length(unlist(strsplit(hypothesis, ";")))
-  n.hyp<-1 # for now I'd limit the user to only testing a single hypothesis
-  
-  #sample new ratios from a normal distribution
-  new_ratio<-mvrnorm(1,mu=ratio_beta, Sigma=diag(p*ratio_beta))
-  #resample every time any of the sampled values is negative (because for hte simulation conditions the ratios must be positive)
-  while(any(new_ratio<0)) {
-    new_ratio<-mvrnorm(1,mu=ratio_beta, Sigma=diag(p*ratio_beta))
-  }
-  
-  betas<-coefs(r2, new_ratio, cormat(pcor, length(new_ratio)), "normal")
-  
-  #obtain lm object
-  lm.mod<-gen_dat(r2=r2,
-                  betas=betas,
-                  rho=cormat(pcor, length(betas)),
-                  n=n,
-                  model="normal") %>% 
-    lm(Y~., data=.)
-  
-  varnames<-paste0("H", 1:length(hypothesis))
-  
-  for(h in 1:length(varnames)){
-    
-    assign(varnames[h],  BF(lm.mod, hypothesis=hypothesis[h], complement=TRUE)$BFtable_confirmatory %>%
-             as.data.frame() %>% 
-             rownames_to_column() %>% 
-             pull(var=BF, name = rowname)
-           )
-  }
-  
-  BFs<-unlist(mget(varnames))
-  return(BFs)
+obtain_BF<-function(data){
+  lm(Y~X, data=data) %>% 
+    BF(hypothesis=hypothesis, complement=TRUE)%$%BFtable_confirmatory %>%
+    as.data.frame() %>% 
+    rownames_to_column() %>% 
+    pull(var=BF, name = rowname) %>% 
+    setNames(c("H1", "Hc")) %>% 
+    return()
 }
+
+#a function to simulate a matrix with dim [studies*iter, 2] 
+sim_t_x_i<-function(beta_mu,
+                     beta_tau,
+                     n,  #sample size
+                     hypothesis=c( "X>0"),
+                    studies=5,
+                    iterations=10
+){
+
+  
+  sapply(1:(iterations*studies), function(i){
+    gen_dat(beta_mu,
+            beta_tau,
+            n) %>% 
+      obtain_BF()
+    
+  }) %>% 
+    t() %>% 
+    return()
+}
+
+sim_t_x_i(beta_mu,
+          beta_tau,
+          n,  #sample size
+          hypothesis=c( "X>0"),
+          studies=5,
+          iterations=10
+)
 
 
 #a function to simulate lm model according to certain simulation conditions
@@ -140,25 +131,18 @@ single_sim_ln<-function(r2,  # R-squared of the regression model
   betas<-coefs(r2, new_ratio, cormat(pcor, length(new_ratio)), "normal")
   
   #obtain lm object
-  lm.mod<-gen_dat(r2=r2,
+  BFs<-gen_dat(r2=r2,
                   betas=betas,
                   rho=cormat(pcor, length(betas)),
                   n=n,
                   model="normal") %>% 
-    lm(Y~., data=.)
+    lm(Y~., data=.) %>% 
+    BF(hypothesis=hypothesis, complement=TRUE)$BFtable_confirmatory %>%
+    as.data.frame() %>% 
+    rownames_to_column() %>% 
+    pull(var=BF, name = rowname) %>% 
+    setNames(c("H1", "Hc"))
   
-  varnames<-paste0("H", 1:length(hypothesis))
-  
-  for(h in 1:length(varnames)){
-    
-    assign(varnames[h],  BF(lm.mod, hypothesis=hypothesis[h], complement=TRUE)$BFtable_confirmatory %>%
-             as.data.frame() %>% 
-             rownames_to_column() %>% 
-             pull(var=BF, name = rowname)
-    )
-  }
-  
-  BFs<-unlist(mget(varnames))
   return(BFs)
 }
 
