@@ -41,28 +41,25 @@ coefs <- function(r2, ratio, rho, model = c("normal", "logit", "probit")) {
   sqrt(var_y / sum(ratio %*% t(ratio) * rho)) * ratio
 }
 
-gen_dat <- function(r2, betas, rho, n, model = c("normal", "logit", "probit"), 
-                    mutate_args = NULL, select_args = quos(everything())) {
+gen_dat <- function(beta_mu,beta_tau, n
+                    ){
+  
+  b<-rnorm(1, beta_mu, beta_tau)
+  r2<-b^2
+  
+  print(b)
   # generate predictors X
-  X <- mvrnorm(n, mu = rep(0, length(betas)), Sigma = rho)
+  X<-rnorm(n,0,1)
   
   # generate outcome variable Y
-  if (model == "normal") {
-    Y <- X %*% betas + rnorm(n = n, mean = 0, sd = sqrt(1 - r2))
-  }
-  if (model == "logit") {
-    Y <- rbinom(n, 1, 1 / (1 + exp(-(X %*% betas))))
-  }
-  if (model == "probit") {
-    Y <- rbinom(n, 1, pnorm(X %*% betas))
-  }
+  Y<-X*b + rnorm(n, 0, sd=sqrt(1-r2))
   # output data
-  bind_cols(X = as.data.frame(X), Y = Y) #%>%
-    # mutate(!!!mutate_args) %>%
-    # select(!!!select_args)
+  bind_cols(X = as.data.frame(X),
+            Y = Y) 
+
 }
 
-q_glm <- quietly(glm)
+gen_dat(0.3,0.3,300000)
 
 
 #a function to simulate lm model according to certain simulation conditions
