@@ -2,7 +2,7 @@ library(readxl)
 library(dplyr)
 library(psych)
 library(ggplot2)
-library(plotly)
+
 
 #list all sheets
 all.sheets<-excel_sheets("simulation planning/data/Linden & Honekopp main results.xlsx")
@@ -137,3 +137,22 @@ dist_n
 
 ggsave("simulation planning/output/hist_n.png", plot = dist_n, width = 4, height = 2.5, units = "in", dpi = 300, bg="white")
 
+# Tau ---------------------------------------------------------------
+
+dat$T %>% hist
+tau_hist<-dat %>% 
+  ggplot()+
+  geom_histogram(aes(x=T),
+                 binwidth = 0.025, fill = "gray", color = scales::muted("gray"))+
+  scale_x_continuous(breaks = seq(0,1,0.05))+
+  scale_y_continuous(breaks = seq(0,15,1))+
+  theme_minimal()
+
+# Cohens D ----------------------------------------------------
+D_hist<-dat %>% 
+  ggplot()+
+  geom_histogram(aes(x=d),
+                 binwidth = 0.1,fill = "gray", color = scales::muted("gray"))+
+   scale_x_continuous(breaks = seq(-1.5,2.5,0.1))+
+   scale_y_continuous(breaks = seq(0,17,1))+
+  theme_minimal()
