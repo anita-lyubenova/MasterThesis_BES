@@ -78,27 +78,21 @@ sum(H1.true)/n.studies
 #LOAD DATA ----------------------------------------------------
 
 #Final hpc data
-dat3<-readRDS("pre-processing/output/BF_data_3par_hpc_final_mixed.rds")
-#save the attributes to re-append after subsetting
-att<-attributes(dat3)
-att<-att[names(att)[-grep("dim", names(att))]]
-
-#subset the data to only include conditions that were reported in the paper
-dat<-dat3[,c("H2.V1>V2>V3","H2.complement","Hu"),c("r0.13_pcor0.3_b321_p0","r0.13_pcor0.3_b123_p0","r0.13_pcor0.3_b321_p0.86","r0.13_pcor0.3_b321_p0.5","r0.13_pcor0.3_bmixed_p0"),,-c(1,3,11)]
-dimnames(dat)[[2]]<-c("H1", "Hc", "Hu")
-attributes(dat)<-c(attributes(dat), att)
-remove(dat3)
+dat<-readRDS("pre-processing/output/BF_data_1par.rds")
+dimnames(dat)[[3]]
+pops<-dimnames(dat)[[3]]
+dat[,,pops[14],1,9]
 #  MEDIAN PLOTS ------------------------------------------------------
 
 ## Figure 1: H1+Hc --------------------------------------------------------------
 mp.H1Hc.ic<- dat %>% 
   aggregatePMP(hyp=c("H1","Hc"),
                studies=15) %>% 
-  create_median_plot_data(pop="r0.13_pcor0.3_bmixed_p0",
+  create_median_plot_data(pop="beta_mu0.3_beta_tau0.15",
                           n="300") %>% 
-  median_plot()+
-  theme(legend.position = "none")+
-  labs(title = NULL)
+  median_plot()#+
+  # theme(legend.position = "none")+
+  # labs(title = NULL)
 
 mp.H1Hc.iu<- dat %>% 
   aggregatePMP(hyp=c("H1","Hu"),
