@@ -11,13 +11,15 @@
 
 source("simulation/simulation functions.R")
 library(parallel)
-## 3 par ------------------------------------
+## 1 par ------------------------------------
+
+remove(res1par)
 #parallelize the outermost loop
 beta_mu=c(-0.2,0,0.3)
-beta_tau<-c(0.15, 0.3, 0.45, 0.75)
+beta_tau<-c(0,0.15, 0.3, 0.45, 0.75)
 n = c(15,25,35,50,75,100,150,200,300)
-studies=5
-iter=10
+studies=60
+iter=1000
 hypothesis="X>0"
 
 #create combinations of conditions
@@ -53,8 +55,8 @@ res1par<-parLapply(cl,
                                        cond$beta_tau,
                                        cond$n, 
                                        hypothesis="X>0",
-                                       studies=5,
-                                       iterations=10
+                                       studies=studies,
+                                       iterations=iter
                      )
                      
                      attributes(listel)$pop_name<-cond[i,"pop_name"]
@@ -80,3 +82,4 @@ attributes(res1par)<-list(hypothesis=hypothesis,
 saveRDS(res1par,file="simulation/output/res1par.rds")
 
 
+res1par[1:10]
