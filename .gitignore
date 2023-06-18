@@ -35,3 +35,5 @@ pre-processing/output/BF_data_3par_hpc_final_mixed.rds
 pre-processing/output/BF_data_2par_hpc_final_mixed.rds
 shiny app/BF_data_3par_hpc_final_mixed.rds
 simulation/output/res1par.rds
+pre-processing/output/BF_data_1par.rds
+simulation/output/res1par.rds
