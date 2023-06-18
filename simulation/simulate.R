@@ -51,9 +51,9 @@ res1par<-parLapply(cl,
                    1:nrow(cond),
                    function(i){
                      
-                     listel<-sim_t_x_i(cond$beta_mu,
-                                       cond$beta_tau,
-                                       cond$n, 
+                     listel<-sim_t_x_i(cond$beta_mu[i],
+                                       cond$beta_tau[i],
+                                       cond$n[i], 
                                        hypothesis="X>0",
                                        studies=studies,
                                        iterations=iter
