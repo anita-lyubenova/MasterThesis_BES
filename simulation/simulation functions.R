@@ -65,10 +65,10 @@ obtain_BF<-function(N,delta,hypotheses="d>0"){
        # setNames(c("H1", "Hc")) %>%
         return()
 }
-delta=0.3
-tau=0.2
-study_delta<-rnorm(1,delta,tau)
-obtain_BF(100,0.3,hypotheses="d>0")
+# delta=0.3
+# tau=0.2
+# study_delta<-rnorm(1,delta,tau)
+# obtain_BF(100,0.3,hypotheses="d>0")
 
 #a function to simulate a matrix with dim [studies*iter, 2]
 sim_t_x_i<-function(delta,
@@ -89,6 +89,14 @@ sim_t_x_i<-function(delta,
     return()
 }
 
+# sim_t_x_i(delta=0.3,
+#                     tau=0.13,
+#                     N=40,  #sample size
+#                     hypothesis=c( "d>0"),
+#                     studies=5,
+#                     iterations=10
+# )
+  
 # gen_dat <- function(beta_mu,
 #                     beta_tau,
 #                     n
