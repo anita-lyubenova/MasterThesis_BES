@@ -13,12 +13,12 @@ source("simulation/simulation functions.R")
 library(parallel)
 ## 1 par ------------------------------------
 
-remove(res1par)
+remove(BFresults)
 #parallelize the outermost loop
 delta=c(-0.1,0,0.2,0.5)
 tau<-c(0,0.15, 0.3, 0.45)
 n = c(25,35,50,75,100,150,200,300)
-studies=5
+studies=4
 iter=10
 hypothesis="d>0"
 
@@ -47,7 +47,7 @@ clusterExport(cl=cl, varlist=c("cond","hypothesis", "seed", "iter", "studies"),e
 
 print(paste0("Start sim: ",Sys.time()))
 
-res1par<-parLapply(cl,
+BFresults<-parLapply(cl,
                    1:nrow(cond),
                    function(i){
                      
@@ -67,10 +67,10 @@ res1par<-parLapply(cl,
 stopCluster(cl)
 print(paste0("End sim: ",Sys.time()))
 
-nams<- sapply(res1par,function(x) return(attributes(x)$pop_name))
-names(res1par)<-nams
+nams<- sapply(BFresults,function(x) return(attributes(x)$pop_name))
+names(BFresults)<-nams
 
-attributes(res1par)<-list(hypothesis=hypothesis,
+attributes(BFresults)<-list(hypothesis=hypothesis,
                           complexity=0.5,
                           beta_mu=beta_mu,
                           beta_tau=beta_tau,
@@ -79,7 +79,7 @@ attributes(res1par)<-list(hypothesis=hypothesis,
                           studies=studies,
                           n=n)
 
-saveRDS(res1par,file="simulation/output/res.rds")
+saveRDS(BFresults,file="simulation/output/BFresults.rds")
 
 
-res1par[1:10]
+BFresults[1:10]
