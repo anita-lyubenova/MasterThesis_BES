@@ -78,21 +78,22 @@ sum(H1.true)/n.studies
 #LOAD DATA ----------------------------------------------------
 
 #Final hpc data
-dat<-readRDS("pre-processing/output/BF_data_1par.rds")
+dat<-readRDS("pre-processing/output/processed_data.rds")
 dimnames(dat)[[3]]
 pops<-dimnames(dat)[[3]]
-dat[,,pops[14],1,9]
+dat[,,pops[14],1,1]
 #  MEDIAN PLOTS ------------------------------------------------------
 
 ## Figure 1: H1+Hc --------------------------------------------------------------
 mp.H1Hc.ic<- dat %>% 
   aggregatePMP(hyp=c("H1","Hc"),
-               studies=15) %>% 
-  create_median_plot_data(pop="beta_mu0.3_beta_tau0.15",
-                          n="300") %>% 
+               studies=30) %>% 
+  create_median_plot_data(pop="delta0_tau0.45",
+                          n="200") %>% 
   median_plot()#+
   # theme(legend.position = "none")+
   # labs(title = NULL)
+mp.H1Hc.ic
 
 mp.H1Hc.iu<- dat %>% 
   aggregatePMP(hyp=c("H1","Hu"),
@@ -269,9 +270,9 @@ TPR<-
                studies=30
             #   subset = "dat[,,,,-c(1,3,11)]"
                ) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="r0.13_pcor0.3_b321_p0",
-                             Hc="r0.13_pcor0.3_b123_p0",
-                             Hu="r0.13_pcor0.3_b321_p0.86"
+  accuracyPMP(hyp_to_pop = c(H1="delta0.2_tau0",
+                             Hc="delta-0.1_tau0",
+                             Hu="delta0.2_tau0.45"
   )) %>% 
   TP_corrplot()
 
@@ -312,9 +313,9 @@ accplot<-dat %>%
                studies=30
                #subset = "dat[,,,,-c(1,3,11)]"
                ) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="r0.13_pcor0.3_b321_p0",
-                             Hc="r0.13_pcor0.3_b123_p0",
-                             Hu="r0.13_pcor0.3_b321_p0.86"
+  accuracyPMP(hyp_to_pop = c(H1="delta0.2_tau0",
+                             Hc="delta-0.1_tau0",
+                             Hu="delta0.2_tau0.45"
   )) %>% 
   acc_corrplot(object = "acc")
 accplot
@@ -325,21 +326,20 @@ ggsave("analysis/output/Figure 4.png", plot = accplot, width = 7, height = 3, un
 #Comparison between simple unconstrained testing and conjoint testing
 acc.iu<-dat %>% 
   aggregatePMP(hyp=c("H1","Hu"),
-               studies=30,
-               #subset = "dat[,,,,-c(1,3,11)]"
+               studies=30
                ) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="r0.13_pcor0.3_b321_p0",
-                             Hu="r0.13_pcor0.3_b123_p0",
-                             Hu="r0.13_pcor0.3_b321_p0.86"
+  accuracyPMP(hyp_to_pop = c(H1="delta0.2_tau0",
+                             Hc="delta-0.1_tau0",
+                             Hu="delta0.2_tau0.45"
   ))
 acc.icu<-dat %>% 
   aggregatePMP(hyp=c("H1","Hc","Hu"),
                studies=30,
              #  subset = "dat[,,,,-c(1,3,11)]"
                ) %>% 
-  accuracyPMP(hyp_to_pop = c(H1="r0.13_pcor0.3_b321_p0",
-                             Hc="r0.13_pcor0.3_b123_p0",
-                             Hu="r0.13_pcor0.3_b321_p0.86"
+  accuracyPMP(hyp_to_pop = c(H1="delta0.2_tau0",
+                             Hc="delta-0.1_tau0",
+                             Hu="delta0.2_tau0.45"
   ))
 acc.icu$acc
 
