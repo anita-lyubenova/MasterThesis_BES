@@ -15,17 +15,17 @@ library(parallel)
 
 remove(res1par)
 #parallelize the outermost loop
-beta_mu=c(-0.2,0,0.3)
-beta_tau<-c(0,0.15, 0.3, 0.45, 0.75)
-n = c(15,25,35,50,75,100,150,200,300)
-studies=60
-iter=1000
-hypothesis="X>0"
+delta=c(-0.1,0,0.2,0.5)
+tau<-c(0,0.15, 0.3, 0.45)
+n = c(25,35,50,75,100,150,200,300)
+studies=5
+iter=10
+hypothesis="d>0"
 
 #create combinations of conditions
-cond<-expand.grid(beta_mu,beta_tau, n) %>% 
-  rename(beta_mu=Var1, beta_tau=Var2, n=Var3) %>% 
-  mutate(pop_name=paste0("beta_mu", beta_mu, "_beta_tau", beta_tau,"_b","_n",n))
+cond<-expand.grid(delta,tau, n) %>% 
+  rename(delta=Var1, tau=Var2, n=Var3) %>% 
+  mutate(pop_name=paste0("delta", delta, "_tau", tau,"_n",n))
 
 ncores<-7
 seed=1000
@@ -41,7 +41,7 @@ clusterEvalQ(cl, {
   library(tidyverse)
   library(BFpack)
 })
-clusterExport(cl=cl, c("obtain_BF", "gen_dat","sim_t_x_i"))
+clusterExport(cl=cl, c("compute_var","obtain_BF", "generate_d","get_bain","sim_t_x_i"))
 
 clusterExport(cl=cl, varlist=c("cond","hypothesis", "seed", "iter", "studies"),envir = environment())
 
@@ -51,8 +51,8 @@ res1par<-parLapply(cl,
                    1:nrow(cond),
                    function(i){
                      
-                     listel<-sim_t_x_i(cond$beta_mu[i],
-                                       cond$beta_tau[i],
+                     listel<-sim_t_x_i(cond$delta[i],
+                                       cond$tau[i],
                                        cond$n[i], 
                                        hypothesis="X>0",
                                        studies=studies,
@@ -79,7 +79,7 @@ attributes(res1par)<-list(hypothesis=hypothesis,
                           studies=studies,
                           n=n)
 
-saveRDS(res1par,file="simulation/output/res1par.rds")
+saveRDS(res1par,file="simulation/output/res.rds")
 
 
 res1par[1:10]
