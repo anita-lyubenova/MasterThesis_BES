@@ -17,56 +17,127 @@ library(MASS)
 library(BFpack)
 # library(Rcpp)
 # library(RcppArmadillo)
-
-gen_dat <- function(beta_mu,
-                    beta_tau,
-                    n
-                    ){
+generate_d <- function(N, delta){
   
-  b<-rnorm(1, beta_mu, beta_tau)
-  r2<-b^2
+  # generate control group summary statistics
+  Y_C <- rnorm(n = N / 2, mean = 0, sd = 1)
+  ybar_C <- mean(Y_C)
+  sd_C <- sd(Y_C)
   
-  # generate predictors X
-  X<-rnorm(n,0,1)
+  # generate treatment group summary statistics
+  Y_T <- rnorm(n = N / 2, mean = delta, sd = 1)
+  ybar_T <- mean(Y_T)
+  sd_T <- sd(Y_T)
   
-  # generate outcome variable Y
-  Y<-X*b + rnorm(n, 0, sd=sqrt(1-r2))
-  # output data
-  bind_cols(X = as.data.frame(X),
-            Y = Y) 
-
+  # calculate Cohen's d
+  sd_pool <- sqrt((sd_C^2 + sd_T^2) / 2)
+  d <- (ybar_T - ybar_C) / sd_pool
+  
+  return(d)
 }
 
-obtain_BF<-function(data){
-  lm(Y~X, data=data) %>% 
-    BF(hypothesis=hypothesis, complement=TRUE)%$%BFtable_confirmatory %>%
-    as.data.frame() %>% 
-    rownames_to_column() %>% 
-    pull(var=BF, name = rowname) %>% 
-    setNames(c("H1", "Hc")) %>% 
-    return()
+
+# calculate variance of Cohen's d 
+compute_var <- function(N, d){
+  4 / N + d^2 / (2 * (N - 2))
 }
 
-#a function to simulate a matrix with dim [studies*iter, 2] 
-sim_t_x_i<-function(beta_mu,
-                     beta_tau,
-                     n,  #sample size
-                     hypothesis=c( "X>0"),
+
+# obtain a bain object, including Bayes factors and 
+# posterior model probabilities (PMPs)              
+get_bain <- function(d, var, N, hypotheses){
+  names(d) <- "d"
+  bain_list <- bain(d,
+                    hypotheses,
+                    n = N,
+                    Sigma = var) 
+  return(bain_list$fit)
+}
+
+
+obtain_BF<-function(N,delta,hypotheses="d>0"){
+  d<-generate_d(N, delta) 
+  var<-compute_var(N, d)
+  get_bain(d, var, N, hypotheses) %>% # %$% BF.u %>%
+        as.data.frame() %>%
+        rownames_to_column() %>%
+        pull(var=BF.u, name = rowname) %>%
+       # setNames(c("H1", "Hc")) %>%
+        return()
+}
+delta=0.3
+tau=0.2
+study_delta<-rnorm(1,delta,tau)
+obtain_BF(100,0.3,hypotheses="d>0")
+
+#a function to simulate a matrix with dim [studies*iter, 2]
+sim_t_x_i<-function(delta,
+                    tau,
+                    N,  #sample size
+                    hypothesis=c( "d>0"),
                     studies=5,
                     iterations=10
 ){
 
-  
-  sapply(1:(iterations*studies), function(i){
-    gen_dat(beta_mu,
-            beta_tau,
-            n) %>% 
-      obtain_BF()
-    
-  }) %>% 
-    t() %>% 
+
+  sapply(1:(iterations*studies), function(j){
+    study_delta<-rnorm(1,delta,tau)
+    obtain_BF(N,study_delta,hypotheses="d>0")
+
+  }) %>%
+    t() %>%
     return()
 }
+
+# gen_dat <- function(beta_mu,
+#                     beta_tau,
+#                     n
+#                     ){
+#   
+#   b<-rnorm(1, beta_mu, beta_tau)
+#   r2<-b^2
+#   
+#   # generate predictors X
+#   X<-rnorm(n,0,1)
+#   
+#   # generate outcome variable Y
+#   Y<-X*b + rnorm(n, 0, sd=sqrt(1-r2))
+#   # output data
+#   bind_cols(X = as.data.frame(X),
+#             Y = Y) 
+# 
+# }
+# 
+# obtain_BF<-function(data){
+#   lm(Y~X, data=data) %>% 
+#     BF(hypothesis=hypothesis, complement=TRUE)%$%BFtable_confirmatory %>%
+#     as.data.frame() %>% 
+#     rownames_to_column() %>% 
+#     pull(var=BF, name = rowname) %>% 
+#     setNames(c("H1", "Hc")) %>% 
+#     return()
+# }
+# 
+# #a function to simulate a matrix with dim [studies*iter, 2] 
+# sim_t_x_i<-function(beta_mu,
+#                      beta_tau,
+#                      n,  #sample size
+#                      hypothesis=c( "X>0"),
+#                     studies=5,
+#                     iterations=10
+# ){
+# 
+#   
+#   sapply(1:(iterations*studies), function(i){
+#     gen_dat(beta_mu,
+#             beta_tau,
+#             n) %>% 
+#       obtain_BF()
+#     
+#   }) %>% 
+#     t() %>% 
+#     return()
+# }
 
 # 
 # #a function to simulate lm model according to certain simulation conditions
