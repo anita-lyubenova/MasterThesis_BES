@@ -25,10 +25,11 @@ mix_pops<-function(pops, # a character vector of populations to mix
     listi<-lapply(1:iter, function(i){
       l<-lapply(1:length(pops), function(p){
         x<-dat[sample(1:st, size = probs[p]*st),,pops[p],i, s]
-        rownames(x)<-rep(pops[p], times=nrow(x))
+        #rownames(x)<-rep(pops[p], times=nrow(x))
         return(x)
       })
       df<-rlist::list.rbind(l)
+      df<-df[order(as.numeric(rownames(df))),]
     })
     arri<-abind(listi, along = 3)
     dim(arri)<-c(30,3,1,1000)
@@ -39,7 +40,8 @@ mix_pops<-function(pops, # a character vector of populations to mix
   
   dimnames(arrn)<-list(dimnames(data)[[1]],
                        dimnames(data)[[2]],
-                       paste0("m_", paste0(pops, collapse = "*")),
+                       #paste0("m_", paste0(pops, collapse = "*")),
+                       "mixed",
                        dimnames(data)[[4]],
                        dimnames(data)[[5]]
   )
@@ -203,6 +205,90 @@ median_plot<-function(x # a list created with create_median_plot_data()
 }
 
 
+#a wrapper function to create a median plot for complement testing
+compl_medplot<-function(data, #processed data created with pre-processing.R
+                         studies, #number of studies to aggregate
+                         population,
+                         n # sample size as a string 
+){
+  data %>% 
+    aggregatePMP(hyp=c("H1","Hc"),
+                 studies=studies) %>% 
+    create_median_plot_data(pop=population,
+                            n=n) %>% 
+    median_plot()
+}
+
+
+
+#a wrapper function to create a median plot for unconstrained testing
+unconstr_medplot<-function(data, #processed data created with pre-processing.R
+                         studies, #number of studies to aggregate
+                         population,
+                         n # sample size as a string 
+){
+  data %>% 
+    aggregatePMP(hyp=c("H1","Hu"),
+                 studies=studies) %>% 
+    create_median_plot_data(pop=population,
+                            n=n) %>% 
+    median_plot()
+}
+
+#a wrapper function to create a median plot for conjoint testing
+conj_medplot<-function(data, #processed data created with pre-processing.R
+                           studies, #number of studies to aggregate
+                           population,
+                           n # sample size as a string 
+){
+  data %>% 
+    aggregatePMP(hyp=c("H1","Hc","Hu"),
+                 studies=studies) %>% 
+    create_median_plot_data(pop=population,
+                            n=n) %>% 
+    median_plot()
+}
+
+# a wrapper function to create median plots for complement, unconstrained and conjoint testing 
+# for a specific population
+comparison_medplot<-function(data,
+                             studies,
+                             population,
+                             n){
+  ic<-data %>% 
+    compl_medplot(
+      studies = studies,
+      population = population,
+      n="300")+
+    theme(legend.position = "none")+
+    labs(title = NULL)
+  
+  iu<-data %>% 
+    unconstr_medplot(
+      studies = studies,
+      population = population,
+      n="300")+
+    theme(legend.position = "none")+
+    labs(title = NULL)
+  
+  icu<-data %>% 
+    conj_medplot(
+      studies = studies,
+      population = population,
+      n="300")+
+    labs(title = NULL)
+  
+  mp<-wrap_plots(ic, iu, icu, ncol = 1)+ 
+    plot_annotation(tag_levels = 'A') + 
+    plot_layout(guides = 'collect')&
+    theme(legend.position='bottom')
+  
+  #fix legends
+  mp[[1]]<-mp[[1]]+ theme(legend.position = "none") +labs(x=NULL)
+  mp[[2]]<- mp[[2]]+ theme(legend.position = "none") +labs(x=NULL)
+  
+  return(mp)
+}
 
 #a function to compute True positive rates from aggregated PMPs
 accuracyPMP<-function(listPMP, #list created with aggregatePMP()
@@ -254,39 +340,6 @@ accuracyPMP<-function(listPMP, #list created with aggregatePMP()
   
 }
 
-#a wrapper function to create a median plot for complement testing
-compl_med_plot<-function(data, #processed data created with pre-processing.R
-                         studies, #number of studies to aggregate
-                         population,
-                         n # sample size as a string 
-){
-  data %>% 
-    aggregatePMP(hyp=c("H1","Hc"),
-                 studies=studies) %>% 
-    create_median_plot_data(pop=population,
-                            n=n) %>% 
-    median_plot()
-}
-
-# acc_corrplot<-function(a, # a list created with accuracyPMP()
-#                        object="acc" # what should be plotted? acc or TP?
-# ){
-#   
-#   ggcorrplot(as.data.frame(a[object]),   #a$acc,
-#              outline.col = "black",
-#              lab = TRUE)+
-#     scale_fill_gradient2(limit = c(0,1),
-#                          breaks=seq(0,1,0.1),
-#                          low = "blue", high =  "red",
-#                          mid = "white",
-#                          midpoint = 0.87)+
-#     scale_x_continuous(breaks = 1:a$studies)+
-#     #  scale_y_discrete(labels= substr(colnames(a$acc), 2, nchar(colnames(a$acc))))+
-#     labs(title = a$hypothesis_test,
-#          subtitle =paste("Populations:", paste(a$hyp_to_pop, collapse = ", "), collapse = " "),
-#          fill="Accuracy"
-#     )
-# }
 
 
 ##a custom corrlot with a many colors 
