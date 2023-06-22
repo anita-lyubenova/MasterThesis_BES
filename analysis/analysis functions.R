@@ -4,6 +4,52 @@ library(tidyverse)
 # library(gridExtra)
  library(ggpubr)
 
+#a function to mix a set of populations. the result is an array with dim[30,3, !1!, 1000, 8] - i.e., a single mixed population
+mix_pops<-function(pops, # a character vector of populations to mix
+                   probs = NULL, #a numeric vector indicating the probability of each population, default is equal probs
+                   data,
+                   seed=123
+){
+  set.seed(seed)
+  
+  #number of studies in the data
+  st<-dim(data)[[1]]
+  iter<-dim(data)[[4]]
+  n<-attributes(data)$n
+  
+  if(is.null(probs)){
+    probs<-rep(1/length(pops), length(pops))
+  }#end probs
+  
+  listn<-lapply(1:length(n), function(s){ 
+    listi<-lapply(1:iter, function(i){
+      l<-lapply(1:length(pops), function(p){
+        x<-dat[sample(1:st, size = probs[p]*st),,pops[p],i, s]
+        rownames(x)<-rep(pops[p], times=nrow(x))
+        return(x)
+      })
+      df<-rlist::list.rbind(l)
+    })
+    arri<-abind(listi, along = 3)
+    dim(arri)<-c(30,3,1,1000)
+    return(arri)
+  })
+  
+  arrn<-abind(listn, along = 5)
+  
+  dimnames(arrn)<-list(dimnames(data)[[1]],
+                       dimnames(data)[[2]],
+                       paste0("m_", paste0(pops, collapse = "*")),
+                       dimnames(data)[[4]],
+                       dimnames(data)[[5]]
+  )
+  
+  return(arrn)
+  
+  
+}# end mix_pop()
+
+
 #a function to compute aggregate PMPs for selected hypotheses from the BFs
 aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
                        hyp=c("H1", "Hu"),
