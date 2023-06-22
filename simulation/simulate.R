@@ -85,6 +85,7 @@ saveRDS(BFresults,file="simulation/output/BFresults.rds")
 BFresults[1:10]
 
 # add delta=-0.2----------------------------------------------------------
+remove(BFresults)
 delta=-0.2
 tau<-c(0,0.15, 0.3, 0.45)
 n = c(25,35,50,75,100,150,200,300)
