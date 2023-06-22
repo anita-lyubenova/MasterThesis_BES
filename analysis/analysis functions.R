@@ -208,6 +208,19 @@ accuracyPMP<-function(listPMP, #list created with aggregatePMP()
   
 }
 
+#a wrapper function to create a median plot for complement testing
+compl_med_plot<-function(data, #processed data created with pre-processing.R
+                         studies, #number of studies to aggregate
+                         population,
+                         n # sample size as a string 
+){
+  data %>% 
+    aggregatePMP(hyp=c("H1","Hc"),
+                 studies=studies) %>% 
+    create_median_plot_data(pop=population,
+                            n=n) %>% 
+    median_plot()
+}
 
 # acc_corrplot<-function(a, # a list created with accuracyPMP()
 #                        object="acc" # what should be plotted? acc or TP?
