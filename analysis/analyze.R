@@ -106,8 +106,13 @@ d<-compl_med_plot(dat,
                studies = 30,
                population = "delta0_tau0.45",
                n="300")
+mp.d0<-wrap_plots(a,b,c,d, ncol = 1)+
+  plot_annotation(tag_levels = 'A') + 
+  plot_layout(guides = 'collect')&
+  theme(legend.position='bottom')
 
-wrap_plots(a,b,c,d, ncol = 1)
+ggsave("analysis/output/mp.d0.png", plot = mp.d0, width = 5, height = 7, units = "in", dpi = 300, bg="white")
+
 ### delta = 0.2 ------------------------
 compl_med_plot(dat,
                studies = 30,
@@ -129,14 +134,12 @@ compl_med_plot(dat,
                n="300")
 
 
-mp.H1Hc.iu<- dat %>% 
-  aggregatePMP(hyp=c("H1","Hu"),
+dat %>% 
+  aggregatePMP(hyp=c("H1","Hc","Hu"),
                studies=15) %>% 
-  create_median_plot_data(pop="r0.13_pcor0.3_bmixed_p0",
+  create_median_plot_data(pop="delta0_tau0.45",
                           n="300") %>% 
-  median_plot()+
-  theme(legend.position = "none")+
-  labs(title = NULL)
+  median_plot()
 
 mp.H1Hc.icu<- dat %>% 
   aggregatePMP(hyp=c("H1","Hc","Hu"),
