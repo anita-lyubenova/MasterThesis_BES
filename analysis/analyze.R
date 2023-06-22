@@ -78,22 +78,56 @@ sum(H1.true)/n.studies
 #LOAD DATA ----------------------------------------------------
 
 #Final hpc data
-dat<-readRDS("pre-processing/output/processed_data.rds")
+dat<-readRDS("pre-processing/output/processed_data_combined.rds")
 dimnames(dat)[[3]]
 pops<-dimnames(dat)[[3]]
 dat[,,pops[14],1,1]
+tau<-attributes(dat)$tau
 #  MEDIAN PLOTS ------------------------------------------------------
 
-## Figure 1: H1+Hc --------------------------------------------------------------
-mp.H1Hc.ic<- dat %>% 
-  aggregatePMP(hyp=c("H1","Hc"),
-               studies=30) %>% 
-  create_median_plot_data(pop="delta0_tau0.45",
-                          n="200") %>% 
-  median_plot()#+
-  # theme(legend.position = "none")+
-  # labs(title = NULL)
-mp.H1Hc.ic
+
+## H1+Hc --------------------------------------------------------------
+
+### delta = 0 ------------------------
+a<-compl_med_plot(dat,
+               studies = 30,
+               population = "delta0_tau0",
+               n="300")
+
+b<-compl_med_plot(dat,
+               studies = 30,
+               population = "delta0_tau0.15",
+               n="300")
+c<-compl_med_plot(dat,
+               studies = 30,
+               population = "delta0_tau0.3",
+               n="300")
+d<-compl_med_plot(dat,
+               studies = 30,
+               population = "delta0_tau0.45",
+               n="300")
+
+wrap_plots(a,b,c,d, ncol = 1)
+### delta = 0.2 ------------------------
+compl_med_plot(dat,
+               studies = 30,
+               population = "delta0_tau0",
+               n="300")
+compl_med_plot(dat,
+               studies = 30,
+               population = "delta0_tau0.15",
+               n="300")
+
+compl_med_plot(dat,
+               studies = 30,
+               population = "delta0_tau0.3",
+               n="300")
+
+compl_med_plot(dat,
+               studies = 30,
+               population = "delta0_tau0.45",
+               n="300")
+
 
 mp.H1Hc.iu<- dat %>% 
   aggregatePMP(hyp=c("H1","Hu"),
@@ -268,7 +302,6 @@ TPR<-
   dat%>% 
   aggregatePMP(hyp=c("H1","Hc","Hu"),
                studies=30
-            #   subset = "dat[,,,,-c(1,3,11)]"
                ) %>% 
   accuracyPMP(hyp_to_pop = c(H1="delta0.2_tau0",
                              Hc="delta-0.1_tau0",
