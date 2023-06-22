@@ -113,27 +113,19 @@ mp.d0<-wrap_plots(a,b,c,d, ncol = 1)+
 
 ggsave("analysis/output/mp.d0.png", plot = mp.d0, width = 5, height = 7, units = "in", dpi = 300, bg="white")
 
-### delta = 0.2 ------------------------
-compl_med_plot(dat,
-               studies = 30,
-               population = "delta0_tau0",
-               n="300")
-compl_med_plot(dat,
-               studies = 30,
-               population = "delta0_tau0.15",
-               n="300")
+### mixed: delta ={-0.2, 0.2}  ------------------------
+dat_mixed<-mix_pops(pops=c("delta-0.2_tau0","delta0.2_tau0"), data=dat) %>% 
+  abind(dat,along = 3)
 
-compl_med_plot(dat,
-               studies = 30,
-               population = "delta0_tau0.3",
-               n="300")
+mp.mix<-dat_mixed %>% 
+  comparison_medplot(studies = 30,
+                     population = "mixed",
+                     n="300")
 
-compl_med_plot(dat,
-               studies = 30,
-               population = "delta0_tau0.45",
-               n="300")
+ggsave("analysis/output/mp.mixed.png", plot = mp.mix, width = 7, height = 7, units = "in", dpi = 300, bg="white")
 
 
+############################################################################
 dat %>% 
   aggregatePMP(hyp=c("H1","Hc","Hu"),
                studies=15) %>% 
