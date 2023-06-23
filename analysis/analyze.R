@@ -86,8 +86,6 @@ tau<-attributes(dat)$tau
 #  MEDIAN PLOTS ------------------------------------------------------
 
 
-## H1+Hc --------------------------------------------------------------
-
 ### delta = 0 ------------------------
 a<-compl_med_plot(dat,
                studies = 30,
@@ -114,16 +112,27 @@ mp.d0<-wrap_plots(a,b,c,d, ncol = 1)+
 ggsave("analysis/output/mp.d0.png", plot = mp.d0, width = 5, height = 7, units = "in", dpi = 300, bg="white")
 
 ### mixed: delta ={-0.2, 0.2}  ------------------------
+# Figure 1
 dat_mixed<-mix_pops(pops=c("delta-0.2_tau0","delta0.2_tau0"), data=dat) %>% 
   abind(dat,along = 3)
 
 mp.mix<-dat_mixed %>% 
   comparison_medplot(studies = 30,
                      population = "mixed",
-                     n="300")
+                     n="100")
 
 ggsave("analysis/output/mp.mixed.png", plot = mp.mix, width = 7, height = 7, units = "in", dpi = 300, bg="white")
 
+### tau= {0.15, 0.3} ---------------------------------------
+#Figure 2
+mp.tau0.15<-dat %>% 
+  comparison_medplot(studies = 30,
+                     population = "delta0.2_tau0.15",
+                     n="100")
+mp.tau0.3<-dat %>% 
+comparison_medplot(studies = 30,
+                   population = "delta0.2_tau0.3",
+                   n="100")
 
 ############################################################################
 dat %>% 
