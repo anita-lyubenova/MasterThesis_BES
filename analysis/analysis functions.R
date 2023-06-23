@@ -259,7 +259,7 @@ comparison_medplot<-function(data,
     compl_medplot(
       studies = studies,
       population = population,
-      n="300")+
+      n=n)+
     theme(legend.position = "none")+
     labs(title = NULL)
   
@@ -267,7 +267,7 @@ comparison_medplot<-function(data,
     unconstr_medplot(
       studies = studies,
       population = population,
-      n="300")+
+      n=n)+
     theme(legend.position = "none")+
     labs(title = NULL)
   
@@ -275,7 +275,7 @@ comparison_medplot<-function(data,
     conj_medplot(
       studies = studies,
       population = population,
-      n="300")+
+      n=n)+
     labs(title = NULL)
   
   mp<-wrap_plots(ic, iu, icu, ncol = 1)+ 
