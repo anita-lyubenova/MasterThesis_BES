@@ -144,7 +144,7 @@ mp.d0<-wrap_plots(a,b,c,d, ncol = 1)+
 
 ggsave("analysis/output/mp.d0.png", plot = mp.d0, width = 5, height = 7, units = "in", dpi = 300, bg="white")
 
-### mixed: delta ={-0.2, 0.2}  ------------------------
+### mixed: delta ={-0.2, 0.2} tau = 0 ------------------------
 # Figure 1
 dat_mixed<-mix_pops(pops=c("delta-0.2_tau0","delta0.2_tau0"), data=dat) %>% 
   abind(dat,along = 3)
@@ -156,40 +156,53 @@ mp.mix<-dat_mixed %>%
 
 ggsave("analysis/output/mp.mixed.png", plot = mp.mix, width = 7, height = 7, units = "in", dpi = 300, bg="white")
 
+### mixed: delta ={-0.2, 0.2} tau = 0.15 ------------------------
+# Figure 1
+dat_mixed<-mix_pops(pops=c("delta-0.2_tau0.15","delta0.2_tau0.15"), data=dat) %>% 
+  abind(dat,along = 3)
+
+mp.mix<-dat_mixed %>% 
+  comparison_medplot(studies = 30,
+                     population = "mixed",
+                     n="100")
+
+ggsave("analysis/output/mp.mixed_tau0.15.png", plot = mp.mix, width = 7, height = 7, units = "in", dpi = 300, bg="white")
+
+
 ### tau= {0.15, 0.3} ---------------------------------------
 #Figure 2
 mp.tau0.15<-dat %>% 
   comparison_medplot(studies = 30,
                      population = "delta0.2_tau0.15",
-                     n="100")
+                     n="200")
 mp.tau0.3<-dat %>% 
 comparison_medplot(studies = 30,
                    population = "delta0.2_tau0.3",
-                   n="100")
+                   n="200")
 
 mp.tau0.45<-dat %>% 
   comparison_medplot(studies = 30,
                      population = "delta0.2_tau0.45",
-                     n="100")
+                     n="200")
 mp.tau0.15[[1]]
 
-f2<-wrap_plots(mp.tau0.15[[1]],mp.tau0.15[[2]],mp.tau0.15[[3]], mp.tau0.3[[1]],mp.tau0.3[[2]],mp.tau0.3[[3]],
+f2<-wrap_plots( mp.tau0.3[[1]],mp.tau0.3[[2]],mp.tau0.3[[3]],mp.tau0.15[[1]],mp.tau0.15[[2]],mp.tau0.15[[3]],
                ncol = 2,
                byrow=FALSE)+ 
   plot_annotation(tag_levels = 'A') + #add labels A, B, C ...
   plot_layout(guides = 'collect')& #only one legend
   theme(legend.position='bottom') #put the legend below the plot
 #add titles
-f2[[1]]<-f2[[1]]+labs(title = "tau = .15")+
+f2[[1]]<-f2[[1]]+labs(title = "tau = .30")+
   theme(plot.title = element_text(hjust = 0.5))
-f2[[4]]<-f2[[4]]+labs(title = "tau = .30")+
+f2[[4]]<-f2[[4]]+labs(title = "tau = .15")+
   theme(plot.title = element_text(hjust = 0.5))
 for(i in c(1,2,4,5)){
   f2[[i]]<-f2[[i]]+ theme(legend.position = "none") +labs(x=NULL)
 }
 
 
-ggsave("analysis/output/Figure 2.png", plot = f2, width = 7, height = 5.7, units = "in", dpi = 300, bg="white")
+ggsave("analysis/output/Figure 2_n200.png", plot = f2, width = 7, height = 5.7, units = "in", dpi = 300, bg="white")
 
 ############################################################################
 dat %>% 
