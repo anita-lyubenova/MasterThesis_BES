@@ -440,15 +440,15 @@ TP_corrplot<-function(a# a list created with accuracyPMP() containgin TPRs
     
     
     pal<-c(  "#1344CD"  ,"#481568FF","#A67DC4" ,"#D5984D", "#FDE725FF","#1F968BFF")
-    
+    pal<-c(  "#1344CD"  ,"#3C4D89","#472c7a","#A67DC4" ,"#D5984D", "#FDE725FF","#92D642","#1F968BFF")
     ggplot(data = x, mapping = aes(x=t, y=n, fill=value))+
       geom_tile()+#color = "white"
       scale_fill_gradientn(colours =pal, #c("#481568FF","#ACAD94","#A77E82","#D2973F","#FDE725FF","#1F968BFF"), #  c("#481568FF","#AC82C9","#FDE725FF","#1F968BFF")
                            limit = c(0, 1),
-                           breaks=c(0,0.10,0.20, 0.30, 0.4,0.50,0.60,0.70,0.80, 0.87, 0.95, 1),
+                           breaks=c(0,0.10,0.20, 0.30, 0.4,0.50,0.60,0.70,0.80, 0.9, 1),
                            space = "Lab",
                            name = "TPR",
-                           values = scales::rescale(c(0,0.5,0.70,0.8,0.87,1))
+                           values = scales::rescale(c(0,0.3,0.5,0.6,0.70,0.8,0.9,1))
       )+
       geom_text(mapping = aes(x=t, y=n),
                 label = label.df,
