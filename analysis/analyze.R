@@ -3,6 +3,14 @@
 library(patchwork)
 source("analysis/analysis functions.R")
 
+#LOAD DATA ----------------------------------------------------
+
+#Final hpc data
+dat<-readRDS("pre-processing/output/processed_data_combined.rds")
+dimnames(dat)[[3]]
+pops<-dimnames(dat)[[3]]
+dat[,,pops[14],1,1]
+tau<-attributes(dat)$tau
 # TABLE 1 -----------------------------------------------------------------
 ## Prop studies originating from H1 (METHODS - Table 1, rows 4 & 5, last column)
 
@@ -40,6 +48,38 @@ H1.true<-sapply(1:nrow(betas), function(i){
 sum(H1.true)/n.studies
 
 
+# Predictive intervals -----------------------------------------------------
+dnorm(1,mean=0, sd=1)
+qnorm(p=c(0.025, 0.975), mean=0, sd=1)
+pnorm(q=0, 0.2,0.3)
+0-1.96*1
+pint<-function(delta, tau, percent = 0.95){
+  lb<-(1-percent)/2
+  int<-qnorm(p=c(lb, 1-lb),mean=delta, sd=tau)
+  prop<-pnorm(q=0, delta, tau)
+  c(int, prop) %>% setNames(c("lb", "ub", "prop<0"))
+}
+pint(0.2,0.3)
+
+
+deltas=c(0,0.2,0.5)
+taus=c(0.15,0.3,0.45)
+cond<-expand.grid(deltas,taus) %>% 
+  rename(delta=Var1,
+         tau=Var2)
+a<-sapply(1:nrow(cond), function(i){
+ pint(delta = cond[i,"delta"], tau=cond[i, "tau"], percent = 0.95)
+}) %>% t()
+
+b<-cbind(cond,a) %>%
+  round(2) %>% 
+  arrange(delta)
+
+write.table(b,
+            quote = FALSE,
+            row.names = FALSE,
+            sep="; ",
+            file="analysis/output/test_table.doc")
 
 ### cv = 0.50 ------------------------
 set.seed(123)
@@ -75,14 +115,7 @@ H1.true<-sapply(1:nrow(betas), function(i){
 sum(H1.true)/n.studies
 
 
-#LOAD DATA ----------------------------------------------------
 
-#Final hpc data
-dat<-readRDS("pre-processing/output/processed_data_combined.rds")
-dimnames(dat)[[3]]
-pops<-dimnames(dat)[[3]]
-dat[,,pops[14],1,1]
-tau<-attributes(dat)$tau
 #  MEDIAN PLOTS ------------------------------------------------------
 
 
@@ -133,6 +166,30 @@ mp.tau0.3<-dat %>%
 comparison_medplot(studies = 30,
                    population = "delta0.2_tau0.3",
                    n="100")
+
+mp.tau0.45<-dat %>% 
+  comparison_medplot(studies = 30,
+                     population = "delta0.2_tau0.45",
+                     n="100")
+mp.tau0.15[[1]]
+
+f2<-wrap_plots(mp.tau0.15[[1]],mp.tau0.15[[2]],mp.tau0.15[[3]], mp.tau0.3[[1]],mp.tau0.3[[2]],mp.tau0.3[[3]],
+               ncol = 2,
+               byrow=FALSE)+ 
+  plot_annotation(tag_levels = 'A') + #add labels A, B, C ...
+  plot_layout(guides = 'collect')& #only one legend
+  theme(legend.position='bottom') #put the legend below the plot
+#add titles
+f2[[1]]<-f2[[1]]+labs(title = "tau = .15")+
+  theme(plot.title = element_text(hjust = 0.5))
+f2[[4]]<-f2[[4]]+labs(title = "tau = .30")+
+  theme(plot.title = element_text(hjust = 0.5))
+for(i in c(1,2,4,5)){
+  f2[[i]]<-f2[[i]]+ theme(legend.position = "none") +labs(x=NULL)
+}
+
+
+ggsave("analysis/output/Figure 2.png", plot = f2, width = 7, height = 5.7, units = "in", dpi = 300, bg="white")
 
 ############################################################################
 dat %>% 
@@ -308,8 +365,8 @@ TPR<-
                studies=30
                ) %>% 
   accuracyPMP(hyp_to_pop = c(H1="delta0.2_tau0",
-                             Hc="delta-0.1_tau0",
-                             Hu="delta0.2_tau0.45"
+                             Hc="delta-0.2_tau0",
+                             Hu="delta0.2_tau0.3"
   )) %>% 
   TP_corrplot()
 
@@ -318,17 +375,16 @@ TPRs<-wrap_plots(TPR, ncol=1)+
   plot_layout(guides = 'collect')&
   theme(legend.position='bottom')
 
-TPRs[[1]]
 
 #remove x label
 for(i in c(1,2)){
   TPRs[[i]]<-TPRs[[i]] + labs(x=NULL)
 }
-TPRs[[1]]<-TPRs[[1]] + labs(subtitle="H1-population")
-TPRs[[2]]<-TPRs[[2]] + labs(subtitle="Hc-population")
-TPRs[[3]]<-TPRs[[3]] + labs(subtitle="Heterogeneous H1-population with cv = .86")
+TPRs[[1]]<-TPRs[[1]] + labs(subtitle="H1-population: delta = 0.2")
+TPRs[[2]]<-TPRs[[2]] + labs(subtitle="Hc-population: delta = -0.2")
+TPRs[[3]]<-TPRs[[3]] + labs(subtitle="Heterogeneous H1-population:  delta = 0.2, tau = .3")
 
-ggsave("analysis/output/Figure 3.png", plot = TPRs, width = 8, height = 8, units = "in", dpi = 300, bg="white")
+ggsave("analysis/output/Figure 3_tau0.3_rescaled.png", plot = TPRs, width = 8, height = 8, units = "in", dpi = 300, bg="white")
 
 
 #for presentation
@@ -351,8 +407,8 @@ accplot<-dat %>%
                #subset = "dat[,,,,-c(1,3,11)]"
                ) %>% 
   accuracyPMP(hyp_to_pop = c(H1="delta0.2_tau0",
-                             Hc="delta-0.1_tau0",
-                             Hu="delta0.2_tau0.45"
+                             Hc="delta-0.2_tau0",
+                             Hu="delta0.2_tau0.3"
   )) %>% 
   acc_corrplot(object = "acc")
 accplot
