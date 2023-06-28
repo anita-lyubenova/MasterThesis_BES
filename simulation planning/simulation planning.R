@@ -156,3 +156,66 @@ D_hist<-dat %>%
    scale_x_continuous(breaks = seq(-1.5,2.5,0.1))+
    scale_y_continuous(breaks = seq(0,17,1))+
   theme_minimal()
+
+# Predictive intervals ----------------------------------------------------
+#compute proportion o fthe predictive intervals that is different in sign than the overall delta
+
+## Load results data ----------------------------------------------------------------
+#list all sheets
+all.sheets<-excel_sheets("simulation planning/data/Linden & Honekopp main results.xlsx")
+MA.sheets<-all.sheets[2:4]
+#import all excel sheets, where each sheet becomes an element in the list dat_list
+datl <- lapply(MA.sheets, #for each name in all.sheets...
+               function(x){
+                 read_excel("simulation planning/data/Linden & Honekopp main results.xlsx", sheet = x) #... read the respective sheet into a list element
+               }
+)
+
+dat<-bind_rows(datl)
+
+pint<-function(delta, tau, percent = 0.95){
+  lb<-(1-percent)/2
+  int<-qnorm(p=c(lb, 1-lb),mean=delta, sd=tau)
+  prop<-pnorm(q=0, delta, tau)
+  c(int, prop) %>% setNames(c("lb", "ub", "prop<0"))
+}
+
+pint(0.2,0.3, 0.95)
+
+ints<-sapply(1:nrow(dat), function(i){
+  pint(delta = dat$d[i], tau = dat$T[i], 0.95)
+}) %>% t() %>% round(3)
+
+dat<-cbind(dat,ints)
+
+dat<-dat %>% 
+  mutate(prop_opposite = case_when(d>0 ~ `prop<0`,
+                                   d<0 ~ 1-`prop<0`
+                                   )
+         )
+
+dat$prop_opposite %>% hist
+
+sum(dat$prop_opposite>0.3)
+#20 out of 150 meta-analyses had proportion of the predictive interval with sign different than 
+# the overall effect larger than 0.3
+sum(dat$prop_opposite>0.25)
+
+
+dat %>% 
+  ggplot(aes(x=prop_opposite))+
+  geom_histogram(
+                 binwidth = 0.025, fill = "gray", color = "black",
+                 boundary=0.025)+
+  scale_x_continuous(breaks = seq(0,0.5,0.05))+
+  scale_y_continuous(breaks = seq(0,55,5))+
+  theme_minimal()+
+  theme( panel.grid.minor = element_line(color="white"))
+
+dat %>% 
+  ggplot(mapping=aes(x=`T`, y=prop_opposite, color=d))+
+  geom_point(shape=16, size=3)+
+  geom_smooth()+
+  scale_color_viridis_b()+
+  scale_y_continuous(limits = c(0,0.5))+
+  theme_minimal()
