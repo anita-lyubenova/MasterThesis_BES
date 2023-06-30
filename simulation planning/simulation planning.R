@@ -50,7 +50,7 @@ levels(ps.long$variable)<- c("Trim 10%", "Trim 20%")
 
 p.plot1<-ggplot(ps) +
   geom_histogram(aes(x = pwin1),
-                 binwidth = 0.1, fill = "#F8766D", color = scales::muted("#F8766D",50))+
+                 binwidth = 0.1,fill = "#F8766D", color = scales::muted("#F8766D",50))+
   #scale_x_continuous(breaks = seq(0,2, by=0.1))+
   geom_vline(xintercept=c(0.5,mean.win1), color="black")+
   # geom_text(mapping = aes(x=mean.win1+0.3,
@@ -219,3 +219,81 @@ dat %>%
   scale_color_viridis_b()+
   scale_y_continuous(limits = c(0,0.5))+
   theme_minimal()
+
+dat$k
+tau.I2_LH<-dat %>% 
+  filter(k<300) %>%
+  ggplot(mapping=aes(x=`T`, y=I2))+
+  geom_point(shape=16, size=3)+
+  geom_smooth()+
+  scale_color_viridis_b(n.breaks=6)+
+  scale_y_continuous(limits = c(0,100), breaks =seq(0,100, by=10))+
+  scale_x_continuous(limits = c(0,1), breaks =seq(0,1, by=0.1))+
+  theme_minimal()
+
+
+
+dat %>%
+  filter(k<300,
+         dat$abs_d<0.5) %>% 
+  ggplot(mapping=aes(x=k, y=I2, color=`T`))+
+  geom_point(shape=16, size=3)+
+  scale_x_continuous(limits = c(0,135), breaks =seq(0,140, by=10))+
+  scale_color_viridis_b(n.breaks=12)+
+  geom_smooth()
+# van Erp et al. -----------------------------------------------------------------
+
+dat_erp <- read_excel("simulation planning/data/van Erp et al. data.xlsx",.name_repair = "universal")
+
+tau.I2_erp<-dat_erp %>% 
+  filter(Type.of.ES=="Cohen's d") %>%
+  ggplot(mapping=aes(x=tau, y=I.2))+
+  geom_point(shape=16, size=3)+
+  geom_smooth()+
+  scale_y_continuous(limits = c(0,100), breaks =seq(0,100, by=10))+
+  scale_x_continuous(limits = c(0,1), breaks =seq(0,1, by=0.1))+
+  theme_minimal()
+
+library(patchwork)
+library(plotly)
+tau.I2_LH+tau.I2_erp
+
+dat_erp %>%
+  ggplot(mapping=aes(x=tau, y=Q))+
+  geom_point(shape=16, size=3)+
+  geom_smooth()+
+  # scale_y_continuous(limits = c(0,100), breaks =seq(0,100, by=10))+
+  # scale_x_continuous(limits = c(0,1), breaks =seq(0,1, by=0.1))+
+  theme_minimal() 
+
+
+dat_erp %>%
+  ggplot(mapping=aes(x=Reference, y=tau))+
+  geom_point(shape=16, size=3)+
+  geom_smooth()+
+  # scale_y_continuous(limits = c(0,100), breaks =seq(0,100, by=10))+
+  # scale_x_continuous(limits = c(0,1), breaks =seq(0,1, by=0.1))+
+  theme_minimal() 
+
+
+
+
+a<-dat_erp %>% 
+  group_by(Reference) %>% 
+  summarise(prop_larger0.30=sum(tau>0.30)) 
+
+table(a$prop_larger0.30)[2:8] %>% sum()
+#31 of the 61 meta-analyses reported 1 or more effects with tau larger than 0.3
+table(a$prop_larger0.30)[3:8] %>% sum()
+#16 of the 61 meta-analyses reported 2 or more effects with tau larger than 0.3
+
+#HOWEVER: it is not clear what are the effect sizes related to these tau... if they are large -> won't matter in conjoint testing
+
+
+
+
+
+
+
+
+
