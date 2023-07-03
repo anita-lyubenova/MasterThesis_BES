@@ -17,10 +17,24 @@ datl <- lapply(MA.sheets, #for each name in all.sheets...
 dat<-bind_rows(datl)
 
 # Set size T --------------------------------------------
-dat$k %>% hist()
+dat$k %>% mean()
+quantile(dat$k[dat$k<1000] )
 ts<-data.frame(twin1=winsor(dat$k, trim = .1))
 hist(ts$twin1)
-#HETREROGENEITY ----------------------------------------------------------------------------------------------------
+
+k.plot<- dat %>% 
+  filter(k<1000) %>%
+  ggplot() +
+   geom_histogram(aes(x = k),
+                 binwidth = 5, boundary=5,fill = "grey", color = "black"
+                 )+
+  scale_x_continuous(breaks = seq(0,170, by=10))+
+ 
+  theme_minimal()
+
+
+dat_erp
+filter(k<1000) %>%#HETREROGENEITY ----------------------------------------------------------------------------------------------------
 
 # T=p*d => p=T/d
 p=dat$T/dat$abs_d
@@ -222,7 +236,7 @@ dat %>%
 
 dat$k
 tau.I2_LH<-dat %>% 
-  filter(k<300) %>%
+  filter() %>%
   ggplot(mapping=aes(x=`T`, y=I2))+
   geom_point(shape=16, size=3)+
   geom_smooth()+
@@ -241,6 +255,23 @@ dat %>%
   scale_x_continuous(limits = c(0,135), breaks =seq(0,140, by=10))+
   scale_color_viridis_b(n.breaks=12)+
   geom_smooth()
+
+tau.d_LH <- dat %>% 
+  ggplot(mapping=aes(x=abs_d, y=`T`))+
+  geom_point(shape=1, size=3)+
+  geom_smooth(method='lm')+
+  scale_color_viridis_b(n.breaks=6)+
+   scale_y_continuous(limits = c(0,1), breaks =seq(0,1, by=0.10))+
+   scale_x_continuous(limits = c(0,2.5), breaks =seq(0,2.5, by=0.2))+
+  theme_minimal()
+tau_d_lm<-lm(`T`~abs_d, dat)
+
+nd<-data.frame(abs_d=seq(0,1.5, by=0.1)) %>% 
+  mutate(pred_tau=predict(tau_d_lm, newdata=nd),
+         PI.50 = predict(tau_d_lm, newdata=nd, interval="prediction", level=0.50)[,2:3],
+         PI.80 = predict(tau_d_lm, newdata=nd, interval="prediction", level=0.80)[,2:3]
+         )
+nd
 # van Erp et al. -----------------------------------------------------------------
 
 dat_erp <- read_excel("simulation planning/data/van Erp et al. data.xlsx",.name_repair = "universal")
