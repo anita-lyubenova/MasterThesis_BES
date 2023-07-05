@@ -63,7 +63,7 @@ pint(0.2,0.3)
 
 
 deltas=c(0,0.2,0.5)
-taus=c(0.15,0.3,0.45)
+taus=c(0.15,0.3,0.40,0.45)
 cond<-expand.grid(deltas,taus) %>% 
   rename(delta=Var1,
          tau=Var2)
