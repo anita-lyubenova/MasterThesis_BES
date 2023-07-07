@@ -84,16 +84,19 @@ obtain_BF_full<-function(N,delta,tau,hypotheses="d>0"){
     rownames_to_column() %>%
     pull(var=BF.u, name = rowname)
   
-    return(c(BF,d,var_d))
+  names(study_delta)<-"study_delta"
+  names(var_d) <- "var_d"
+    return(c(study_delta,d,var_d,BF))
 }
 
 
 studies=30
-iter=300
+iter=500
 delta=0
 tau=1
 N=300
 
+system.time({
 set.seed(123)
 reps_aggrBF10<-lapply(1:iter, function(r) {
   
@@ -101,8 +104,7 @@ reps_aggrBF10<-lapply(1:iter, function(r) {
     obtain_BF_full(N=N, delta=delta, tau=tau)
     }) %>%
     rlist::list.rbind() %>%
-    as.data.frame() %>% 
-    rename(var=V5)
+    as.data.frame() 
   
   logBF<-BF %>% 
     dplyr::select(-Hu) %>% 
@@ -114,35 +116,45 @@ reps_aggrBF10<-lapply(1:iter, function(r) {
   aggrPMP1<-exp(aggrlogBFic)/(exp(aggrlogBFic)+1)
   
   logBF %>% 
-    mutate(
+    mutate(iter=r,
            aggrlogBFic=aggrlogBFic,
            aggrPMP1=aggrPMP1
            ) %>% 
     return()
   
 })
-
+})
 #add iteration indicator
 a<-reps_aggrBF10 %>%
-  rlist::list.rbind() %>% 
-  mutate(iter=rep(1:iter, each=studies))
+  rlist::list.rbind() 
 
-saveRDS(a, file = "simulation/output/investigate simulation failure(1).RDS")
+saveRDS(a, file = "simulation/output2/a.RDS")
 
 nrow(a)
 colnames(a)
 a$PMP1 %>% unique() %>% hist()
 a$logBFic %>% unique() %>% hist() # the distribution of BFic is normal around 0 - makes sense
 a$aggrlogBFic%>% unique() %>% hist()
-plot()
+
+d_x_PMP1<-a %>% 
+  filter(iter<10) %>% 
+  ggplot(aes(x=d, y=PMP1))+
+  geom_point()+
+  facet_wrap(~iter, labeller = "label_both")+
+  labs(x="Sample Cohen's D",y="Individual PMP1")+
+  theme_bw()
+
+ggsave(d_x_PMP1, device = "png", filename = "simulation/output2/d_x_PMP1.png")
+
 
 a %>% 
   filter(iter<10) %>% 
     ggplot()+
     geom_jitter(aes(x=iter, y=PMP1),width = 0.3, height = 0)+
-    geom_point(aes(x=iter, y =aggrPMP1))
+    geom_point(aes(x=iter, y =aggrPMP1))+
     scale_x_continuous(breaks = seq(1,10,1))+
     theme_minimal()+
     theme(panel.grid.minor.x=element_line(colour = "darkgrey"))
+  
 
 
