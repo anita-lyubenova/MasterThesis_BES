@@ -45,8 +45,11 @@ step2$d %>% hist()
 step2$var %>% hist()
 #the variance is nicely skewed
 
-d=1.1
+delta=0.5
+tau=0.9
+#d=1.1
 N=300
+hypotheses="d>0"
 # Step 3) ----------------------------------------
 obtain_BF_full<-function(N,delta,tau,hypotheses="d>0"){
   # 1) sample study_delta
@@ -70,7 +73,7 @@ obtain_BF_full<-function(N,delta,tau,hypotheses="d>0"){
   
   # 3) obtain BF
   names(d) <- "d"
-  names(var_d) <- "var"
+  
   bain_list <- bain(d,
                     hypotheses,
                     n = N,
@@ -84,67 +87,62 @@ obtain_BF_full<-function(N,delta,tau,hypotheses="d>0"){
     return(c(BF,d,var_d))
 }
 
+
+studies=30
+iter=300
+delta=0
+tau=1
+N=300
+
 set.seed(123)
-set.seed(234)
-step3<-lapply(1:10, function(i){obtain_BF_full(N=300, delta=0, tau=1)}) %>% rlist::list.rbind() %>% as.data.frame()
-
-log3<-step3 %>% 
-  dplyr::select(H1, Hc) %>% 
-  log() %>% 
-  mutate(BFic=H1-Hc)
-
-aggr_l_BFic<-sum(log3$BFic)
-
-PMP<-c(PMP,exp(aggr_l_BFic)/(exp(aggr_l_BFic)+1))
-
-set.seed(234)
-
-reps_aggrBF10<-lapply(1:10, function(r) {
+reps_aggrBF10<-lapply(1:iter, function(r) {
   
-  step3<-lapply(1:10, function(i){obtain_BF_full(N=300, delta=0, tau=1)}) %>% rlist::list.rbind() %>% as.data.frame()
+  BF<-lapply(1:studies, function(i){
+    obtain_BF_full(N=N, delta=delta, tau=tau)
+    }) %>%
+    rlist::list.rbind() %>%
+    as.data.frame() %>% 
+    rename(var=V5)
   
-  log3<-step3 %>% 
+  logBF<-BF %>% 
     dplyr::select(-Hu) %>% 
-    mutate_at(H1,Hc, log)
-    mutate(BFic=H1-Hc)
+    mutate_at(c("H1","Hc"), log) %>% 
+    mutate(logBFic=H1-Hc,
+           PMP1=exp(logBFic)/(exp(logBFic)+1))
   
-  aggr_l_BFic<-sum(log3$BFic)
-  PMP<-exp(aggr_l_BFic)/(exp(aggr_l_BFic)+1)
+  aggrlogBFic<-sum(logBF$logBFic)
+  aggrPMP1<-exp(aggrlogBFic)/(exp(aggrlogBFic)+1)
   
-  log3 %>% 
+  logBF %>% 
     mutate(
-           aggr_l_BFic=aggr_l_BFic,
-           PMP=PMP
+           aggrlogBFic=aggrlogBFic,
+           aggrPMP1=aggrPMP1
            ) %>% 
     return()
   
-  
 })
-reps<-reps_aggrBF10 %>%
+
+#add iteration indicator
+a<-reps_aggrBF10 %>%
   rlist::list.rbind() %>% 
-  mutate(rep=rep(1:10, each=1000))
+  mutate(iter=rep(1:iter, each=studies))
 
+saveRDS(a, file = "simulation/output/investigate simulation failure(1).RDS")
 
-reps$PMP %>% unique() %>% hist()
-reps$aggr_l_BFic %>% unique() %>% hist()
+nrow(a)
+colnames(a)
+a$PMP1 %>% unique() %>% hist()
+a$logBFic %>% unique() %>% hist() # the distribution of BFic is normal around 0 - makes sense
+a$aggrlogBFic%>% unique() %>% hist()
+plot()
 
-# step3$H1 %>% hist()
-# step3$Hc %>% hist()
-# step3_l<-step3[,c(1,3)] %>% 
-#   reshape2::melt() %>% 
-#   rename(hyp=variable,
-#          BF=value)
-# step3_l %>% 
-#   ggplot(aes(x=BF, group=hyp, fill=hyp), alpha=0.2)+
-#   geom_histogram(aes(y=..count..))+
-#   theme_minimal()
-# 
-# step3_l %>% 
-#   group_by(hyp) %>% 
-#   summarise(n=n(),
-#             mean=mean(BF),
-#             median=median(BF)
-#             )
-# sum(log(step3$H1))
-# sum(log(step3$Hc2))
+a %>% 
+  filter(iter<10) %>% 
+    ggplot()+
+    geom_jitter(aes(x=iter, y=PMP1),width = 0.3, height = 0)+
+    geom_point(aes(x=iter, y =aggrPMP1))
+    scale_x_continuous(breaks = seq(1,10,1))+
+    theme_minimal()+
+    theme(panel.grid.minor.x=element_line(colour = "darkgrey"))
+
 
