@@ -293,7 +293,28 @@ saveRDS(BFresults,file="simulation/output/BFresults_d0_tau0.75.rds")
 
 
 
+# add d=0, tau=0 ----------------------------------
+
+delta=0
+tau<-0
+N = c(300)
+studies=60
+iterations=100
+hypothesis="d>0"
+
+system.time({
+BFresults<-sapply(1:(iterations*studies), function(j){
+  study_delta<-rnorm(1,delta,tau)
+  obtain_BF(N,study_delta,hypotheses="d>0")
+  
+}) %>%
+  t()
+
+})
+
+dim(BFresults)
 
 
+saveRDS(BFresults,file="simulation/output/BFresults_d0_tau0_[6000 x 3].rds")
 
 

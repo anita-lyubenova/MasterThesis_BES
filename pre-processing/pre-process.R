@@ -312,3 +312,16 @@ attributes(comb)<-c(attributes(comb),
                        cattr)
 
 saveRDS(comb, file="pre-processing/output/processed_data_combined.rds")
+
+
+
+#extra d0 tau0 -----------------
+library(dplyr)
+library(abind)
+
+source("pre-processing/pre-processing functions.R")
+
+a<-readRDS(file= "simulation/output/BFresults_d0_tau0_[6000 x 3].rds")
+a[,2]<-1
+
+
