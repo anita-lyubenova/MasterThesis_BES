@@ -124,7 +124,6 @@ reps_aggrBF10<-lapply(1:iter, function(r) {
   
 })
 })
-#add iteration indicator
 a<-reps_aggrBF10 %>%
   rlist::list.rbind() 
 
@@ -157,4 +156,114 @@ a %>%
     theme(panel.grid.minor.x=element_line(colour = "darkgrey"))
   
 
+iter_x_PMP<-a %>% 
+  filter(iter<=20) %>% 
+  ggplot()+
+  geom_violin(aes(x=factor(iter), y=PMP1), fill=NA, color="grey") + 
+  geom_jitter(aes(x=factor(iter), y=PMP1),width = 0.3, height = 0)+
+  geom_point(aes(x=iter, y =aggrPMP1), shape=23, color="red",fill="red", size=3)+
+#  scale_x_continuous(breaks = seq(1,10,1))+
+  theme_bw()+
+  theme(panel.grid.minor.x=element_line(colour = "darkgrey"))
 
+ggsave(iter_x_PMP, device = "png", filename = "simulation/output2/iter_x_PMP.png")
+
+
+
+iter_x_BF<-a %>% 
+  filter(iter<=20) %>% 
+  ggplot()+
+  geom_violin(aes(x=factor(iter), y=logBFic), fill=NA, color="grey") + 
+  geom_jitter(aes(x=factor(iter), y=logBFic),width = 0.3, height = 0)+
+  geom_point(aes(x=iter, y =aggrlogBFic), shape=23, color="red",fill="red", size=3)+
+  #  scale_x_continuous(breaks = seq(1,10,1))+
+  theme_bw()+
+  theme(panel.grid.minor.x=element_line(colour = "darkgrey"))
+
+
+
+ggsave(iter_x_BF, device = "png", filename = "simulation/output2/iter_x_BF.png")
+
+library(patchwork)
+
+iter_x_aggr<-iter_x_PMP/iter_x_BF
+
+ggsave(iter_x_aggr, device = "png", filename = "simulation/output2/iter_x_aggr.png")
+
+
+a %>% 
+  filter(iter==1) %>% 
+  pull(logBFic) %>% 
+  sum
+
+sum(a$aggrlogBFic %>% unique() >0 )/iter
+sum(a$aggrPMP1 %>% unique() >0.5 )/iter
+
+# if there is a large number of studies, wiill the aggregate PMP converge to the middle?
+# Rationale: in small sets (k=30) it is likely that there is a larger prop of studies supporting one of the hyps.
+# However, in large sets (e.g., k=50) the set might be more balanced
+
+#Result: Aggregating more studies only results in more diverging aggregate BFic across iterations
+
+studies=200
+iter=20
+delta=0
+tau=1
+N=300
+
+system.time({
+  set.seed(123)
+  reps_aggrBF200<-lapply(1:iter, function(r) {
+    
+    BF<-lapply(1:studies, function(i){
+      obtain_BF_full(N=N, delta=delta, tau=tau)
+    }) %>%
+      rlist::list.rbind() %>%
+      as.data.frame() 
+    
+    logBF<-BF %>% 
+      dplyr::select(-Hu) %>% 
+      mutate_at(c("H1","Hc"), log) %>% 
+      mutate(logBFic=H1-Hc,
+             PMP1=exp(logBFic)/(exp(logBFic)+1))
+    
+    aggrlogBFic<-sum(logBF$logBFic)
+    aggrPMP1<-exp(aggrlogBFic)/(exp(aggrlogBFic)+1)
+    
+    logBF %>% 
+      mutate(iter=r,
+             aggrlogBFic=aggrlogBFic,
+             aggrPMP1=aggrPMP1
+      ) %>% 
+      return()
+    
+  })
+})
+
+b<-reps_aggrBF200 %>%
+  rlist::list.rbind() 
+
+
+iter_x_PMP200<-b %>% 
+  ggplot()+
+  geom_violin(aes(x=factor(iter), y=PMP1), fill=NA, color="grey") + 
+ # geom_jitter(aes(x=factor(iter), y=PMP1),width = 0.3, height = 0)+
+  geom_point(aes(x=iter, y =aggrPMP1), shape=23, color="red",fill="red", size=3)+
+  #  scale_x_continuous(breaks = seq(1,10,1))+
+  theme_bw()+
+  theme(panel.grid.minor.x=element_line(colour = "darkgrey"))
+
+iter_x_BF200<-b %>% 
+  ggplot()+
+  geom_violin(aes(x=factor(iter), y=logBFic), fill=NA, color="grey") + 
+ # geom_jitter(aes(x=factor(iter), y=logBFic),width = 0.3, height = 0)+
+  geom_point(aes(x=iter, y =aggrlogBFic), shape=23, color="red",fill="red", size=3)+
+  scale_y_continuous(breaks = seq(-50,50,5))+
+  geom_hline(yintercept=0, size=0.5)+
+  theme_bw()+
+  theme(panel.grid.minor.x=element_line(colour = "darkgrey"))
+
+
+iter_x_aggr200<-iter_x_PMP200/iter_x_BF200
+
+ggsave(iter_x_aggr200, device = "png", filename = "simulation/output2/iter_x_aggr200.png")
