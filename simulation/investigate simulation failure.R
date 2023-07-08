@@ -1,3 +1,14 @@
+#What I've learned:
+# - The simulation procedure seems to be okay - across iterations there is no larger proportion of aggr PMPs supporting H1
+# - It is normal for the aggrPMPs to be 0 or 1 (reproduced):
+#     - The individual BFs are normally distributed around 0
+#     - The aggregate BFs can be very small and very large across itreations
+#     - The aggregate BFs are more diverging (larger and smaller) with large number of aggregated studies
+#     - The individual PMPs are a logistic function of the Cohen's D.
+#     - The individual PMPs cover the whole range from 0 to 1
+#     - Because the aggregated BFs usually have very large absolute values, the PMPs tend to be either 1 or 0
+# => THe aberrant behavior of the PMPs in complement testing under large tau must be due to aggregation failure
+
 # Simulation steps:
 # 1) sample study_delta
 # 2) generate data
@@ -89,7 +100,7 @@ obtain_BF_full<-function(N,delta,tau,hypotheses="d>0"){
     return(c(study_delta,d,var_d,BF))
 }
 
-
+## t=30, iter=500 ----------------------------------------------------------------
 studies=30
 iter=500
 delta=0
@@ -199,6 +210,7 @@ a %>%
 sum(a$aggrlogBFic %>% unique() >0 )/iter
 sum(a$aggrPMP1 %>% unique() >0.5 )/iter
 
+## t=200, iter=20 ----------------------------------------------------------------
 # if there is a large number of studies, wiill the aggregate PMP converge to the middle?
 # Rationale: in small sets (k=30) it is likely that there is a larger prop of studies supporting one of the hyps.
 # However, in large sets (e.g., k=50) the set might be more balanced
@@ -267,3 +279,81 @@ iter_x_BF200<-b %>%
 iter_x_aggr200<-iter_x_PMP200/iter_x_BF200
 
 ggsave(iter_x_aggr200, device = "png", filename = "simulation/output2/iter_x_aggr200.png")
+
+## t=40, iter=1000 ----------------------------------------------------------------
+studies=40
+iter=1000
+delta=0
+tau=1
+N=300
+
+system.time({
+  set.seed(123)
+  BF<-lapply(1:iter, function(r) {
+    
+    BF<-lapply(1:studies, function(i){
+      obtain_BF_full(N=N, delta=delta, tau=tau)
+    }) %>%
+      rlist::list.rbind() %>%
+      as.data.frame() 
+    
+    logBF<-BF %>% 
+      dplyr::select(-Hu) %>% 
+      mutate_at(c("H1","Hc"), log) %>% 
+      mutate(logBFic=H1-Hc,
+             PMP1=exp(logBFic)/(exp(logBFic)+1))
+    
+    aggrlogBFic<-sum(logBF$logBFic)
+    aggrPMP1<-exp(aggrlogBFic)/(exp(aggrlogBFic)+1)
+    
+    logBF %>% 
+      mutate(iter=r,
+             aggrlogBFic=aggrlogBFic,
+             aggrPMP1=aggrPMP1
+      ) %>% 
+      return()
+    
+  })
+})
+
+manyi<-BF %>%
+  rlist::list.rbind() 
+
+
+#What proportion of the aggregate BFs and PMPs are larger than 0, 0.5, respectively?
+# Should be 50%, however, the main simulation showed larger prop. of PMPs supporting H1 (i.e., larger than 0.5)
+
+sum(manyi$aggrlogBFic %>% unique() >0 )/iter
+sum(manyi$aggrPMP1 %>% unique() >0.5 )/iter
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
