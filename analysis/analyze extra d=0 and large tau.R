@@ -7,18 +7,13 @@ extra<-readRDS(file="pre-processing/output/processed_data_BF_d0_t0.45.rds")
 dat<-readRDS("pre-processing/output/processed_data_combined.rds")
 dimnames(dat)[[3]]
 
+# tau=0.45 ---------------------------------
 main<-dat[,,"delta0_tau0.45",,, drop=FALSE]
 
 t60<-abind(main, extra, along = 1)
 dimnames(t60)[[1]]<-1:60
 
-compl_medplot(t60, 
-              studies = 60,
-              population = "delta0_tau0.45",
-              n="300")
-x<-t60
-dim(extra)
-dimnames(nom_t)
+#adjust the
 #a function to compute aggregate PMPs for selected hypotheses from the BFs
 aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
                        hyp=c("H1", "Hc"),
@@ -57,6 +52,17 @@ aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
   return(PMP_t)
 }
 
+compl_medplot(t60, 
+              studies = 60,
+              population = "delta0_tau0.45",
+              n="300")
+x<-t60
+dim(extra)
+PMP_t<-aggregatePMP(x=t60, # a 5 dim array with structure [t, BF, pop, iter, n]
+                    hyp=c("H1", "Hc"),
+                    studies=60)
+
+
 dim(PMP_t$PMP)
 
 create_median_plot_data(PMP_t,
@@ -64,11 +70,8 @@ create_median_plot_data(PMP_t,
                         n="300") %>% 
   median_plot()
 
-dim(PMP_t)
+## jittered PMPs ----------------------
 melted<-PMP_t$PMP[10,,1,,"300"] %>% reshape2::melt()
-
-
-
 
 ggplot(melted, aes(y=value, x=factor(Var1))) +
   geom_violin()+ 
@@ -78,9 +81,17 @@ ggplot(melted, aes(y=value, x=factor(Var1))) +
 
 melted<-PMP_t$PMP[c(5,10,30,40,50,60),,1,,"300"] %>% reshape2::melt()
 
-ggplot(melted, aes(y=value, x=factor(Var1), color=factor(Var2))) +
+jittered_PMPs_tau0.45<-
+  melted %>% 
+  rename(studies=Var1,
+         Hypothesis=Var2,
+         aggrPMP=value) %>% 
+ggplot(aes(y=aggrPMP, x=factor(studies), color=factor(Hypothesis))) +
   geom_point(shape=1, position = position_jitterdodge(jitter.width = 0.5,
-                                                      jitter.height = 0.2))
+                                                      jitter.height = 0.18))+
+  labs(x="studies", y="Aggregated PMPs", subtitle = "H1 vs Hc, delta=0, tau=0.45, n=300")+
+  scale_y_continuous(breaks = seq(0,1, by=0.2))+
+  theme_minimal()
 
 
 
@@ -107,21 +118,53 @@ tau75_PMP<-tau75 %>% aggregatePMP( # a 5 dim array with structure [t, BF, pop, i
                        hyp=c("H1", "Hc"),
                        studies=60
 ) 
-create_median_plot_data(tau75_PMP,
+mp.d0_tau0.75<-create_median_plot_data(tau75_PMP,
                         "delta0_tau0.75",
                         n="300") %>% 
   median_plot()
-  
+
+ggsave("analysis/output/mp.d0_tau0.75.png", plot = mp.d0_tau0.75, width = 7, height = 4, units = "in", dpi = 300, bg="white")
+
 melted<-tau75_PMP$PMP[c(5,10,20,30,40,50,60),,1,,"300"] %>% reshape2::melt()
-ggplot(melted, aes(y=value, x=factor(Var1), color=factor(Var2))) +
+
+jittered_PMPs_tau0.75<-
+  melted %>% 
+  rename(studies=Var1,
+         Hypothesis=Var2,
+         aggrPMP=value) %>% 
+  ggplot(aes(y=aggrPMP, x=factor(studies), color=factor(Hypothesis))) +
   geom_point(shape=1, position = position_jitterdodge(jitter.width = 0.5,
-                                                      jitter.height = 0.2))
+                                                      jitter.height = 0.18))+
+  labs(x="studies", y="Aggregated PMPs", subtitle = "H1 vs Hc, delta=0, tau=0.75, n=300")+
+  scale_y_continuous(breaks = seq(0,1, by=0.2))+
+  theme_minimal()
 
 
 
 
+jittered<-jittered_PMPs_tau0.45/jittered_PMPs_tau0.75
+
+ggsave("analysis/output/jittered.png", plot = jittered, width = 12, height = 12, units = "in", dpi = 300, bg="white")
 
 
+#tau=0 -----------------------------------------------------------------------------
+tau0_PMP<-
+  dat[,,"delta0_tau0",,, drop=FALSE] %>% 
+  aggregatePMP( # a 5 dim array with structure [t, BF, pop, iter, n]
+    hyp=c("H1", "Hc"),
+    studies=30
+) 
+melted<-tau0_PMP$PMP[c(5,10,20,30),,1,,"300"] %>% reshape2::melt()
 
-
+jittered_PMPs_tau0<-
+  melted %>% 
+  rename(studies=Var1,
+         Hypothesis=Var2,
+         aggrPMP=value) %>% 
+  ggplot(aes(y=aggrPMP, x=factor(studies), color=factor(Hypothesis))) +
+  geom_point(shape=1, position = position_jitterdodge(jitter.width = 0.5,
+                                                      jitter.height = 0.18))+
+  labs(x="studies", y="Aggregated PMPs", subtitle = "H1 vs Hc, delta=0, tau=0, n=300")+
+  scale_y_continuous(breaks = seq(0,1, by=0.2))+
+  theme_minimal()
 
