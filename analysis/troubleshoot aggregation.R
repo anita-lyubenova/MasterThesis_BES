@@ -2,7 +2,7 @@ source("analysis/analysis functions.R")
 
 #Load data
 tau75<-readRDS(file="pre-processing/output/processed_data_BF_d0_t0.75.rds")
-
+dat<-readRDS("pre-processing/output/processed_data_combined.rds")
 #a function to compute aggregate PMPs for selected hypotheses from the BFs
 aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
                        hyp=c("H1", "Hu"),
@@ -67,47 +67,235 @@ hyp_index<-substr(hyp,2,2)
 search_terms <- paste0(hyp, collapse = "|")
 BF<-tau75
 BF<-BF[1:studies,str_subset(dimnames(BF)[[2]], search_terms),,,,drop=FALSE]
-
-################################################################
 logBF<-log(BF)
-
-#aggregate logBFiu and logBFcu
+#aggregate BFs
 aggrlogBFiu<-apply(logBF, MARGIN = c(2,3,4,5), cumsum)
 
-#Compute aggrPMPs
-#put BFiu and BFic in the final dimension
-nom<-aperm(exp(aggrlogBFiu), perm=c(1,3,4,5,2))
-#the result in the cells is BFiu+BFcu; thus the resulting array has 4 dimension (1 dim reduced)
-#denom<-rowSums(nom, dims = 4) 
-denom=nom[,,,,1,drop=FALSe]+nom[,,,,2,drop=FALSe]
-#copy the array in a 5th dimension; e.g. denom_repl[,,,,1]==denom_repl[,,,,2]
+#compute aggrPMPs
+nom=aperm(aggrBFiu, perm=c(1,3,4,5,2))
+denom=rowSums(nom, dims = 4) 
+##copy the array in a 5th dimension, so that it has the same dim as nom; e.g. denom_repl[,,,,1]==denom_repl[,,,,2]
 denom_repl<-replicate(length(hyp),denom)
-#divide each BFiu/cu by the respective slice of the 5th dim of denom_repl
+#compute PMPs
 aggrPMP_perm<-nom/denom_repl
-dimnames(aggrPMP_perm)
 aggrPMP<-aperm(aggrPMP_perm,perm=c(1,5,2,3,4))
 dimnames(aggrPMP)[[2]]<-paste0("PMP", c(hyp_index))
 
-sum(aggrPMP[60,"PMP1",1 ,,"300"] >0.5)
 
-sum(is.na(denom_repl))
+x=tau75
+#a function to compute aggregate PMPs for selected hypotheses from the BFs
+aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
+                       hyp=c("H1", "Hu"),
+                       studies=10, #number of studies to aggregate over, max 40,
+                       subset=NULL
+){
+  # #subset if specified, while retaining the attributes
+  # if(!is.null(subset)){
+  #   att<-attributes(x)
+  #   att<-att[names(att)[-grep("dim", names(att))]]
+  #   x<-eval(parse(text = subset))
+  #   attributes(x)<-c(attributes(x), att)
+  # }
+  # 
+  hyp_index<-substr(hyp,2,2)
+  search_terms <- paste0(hyp, collapse = "|")
+  BF<-x
+  BF<-BF[1:studies,str_subset(dimnames(BF)[[2]], search_terms),,,,drop=FALSE]
+  
+  #aggregate BFs
+  aggrBFiu<-apply(BF, MARGIN = c(2,3,4,5), cumprod)
+  
+  #compute aggrPMPs
+  #move the                                    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx hypotheses-dimension to the last dimension
+  nom=aperm(aggrBFiu, perm=c(1,3,4,5,2))
+  #sum the aggrBFiu
+  denom=rowSums(nom, dims = 4) 
+  ##copy the array in a 5th dimension, so that it has the same dim as nom; e.g. denom_repl[,,,,1]==denom_repl[,,,,2]
+  denom_repl<-replicate(length(hyp),denom)
+  #compute PMPs
+  aggrPMP_perm<-nom/denom_repl
+  aggrPMP<-aperm(aggrPMP_perm,perm=c(1,5,2,3,4))
+  dimnames(aggrPMP)[[2]]<-paste0("PMP", c(hyp_index))
+  
+  
+  aggrPMP<-  rlist::list.append(attributes(x), PMP=aggrPMP, hypothesis_test = paste(hyp, collapse = " vs. ")) 
+  return(aggrPMP)
+} # end aggregatePMP
+
+
+#aggregate
+tau75_PMP<-tau75 %>% aggregatePMP( # a 5 dim array with structure [t, BF, pop, iter, n]
+  hyp=c("H1", "Hc"),
+  studies=60
+) 
+
+create_median_plot_data(tau75_PMP,
+                        "delta0_tau0.75",
+                        n="300") %>% 
+  median_plot()
+
+sum(is.na(tau75_PMP$PMP))
+length(tau75_PMP$PMP)
+
+sum(BF==0)
+
+sum(aggrBFiu==0)
+sum(aggrBFiu==Inf)
+
+sum(aggrlogBFiu==1)
+
+sum(is.na(nom))
+sum(nom==Inf)
+sum(nom==0)
+
+sum(is.na(denom))
+sum(denom==0)
 sum(denom_repl==0)
+#all NA cases in aggrPMP_perm are the cases in which the denominator == 0
+sum(which(denom_repl==0) == which(is.na(aggrPMP_perm)))
+# these are the cases in which aggrPMP_perm must be 0?
+# It doesn't make much sense because the denomitaor is the sum of the aggr support  for all hypotheses
+# that is, if it is 0, it means that the support for all hypotheses is 0... which is impossible
 
-BF[,1,,,,drop=FALSE]+BF[,2,,,,drop=FALSE]
+denom0ind<-which(denom_repl==0, arr.ind = T)
+denom0ind
 
-###################################################################
+nom[1:58  ,  1,  149  ,  7 ,  ]
+BF[1:58,,1,149,7]
 
-logBF<-log(BF)
+#This is not the case when PMP
 
-#compute logBFic
-logBFic<-logBF[,1,,,,drop=FALSE]-logBF[,2,,,,drop=FALSE]
-#aggregate cumulatively BFic
-aggrlogBFic<-apply(logBFic, MARGIN = c(2,3,4,5), cumsum)
 
-aggrBFic<-exp(aggrlogBFic)
 
-aggrPMPi<-aggrBFic/(aggrBFic+1)
 
-replicate(length(hyp),aggrPMPi)
+sum(aggrPMP_perm==0, na.rm = T)
+sum(is.na(aggrPMP_perm))
+sum(aggrPMP_perm==Inf)
 
-dim(aggrPMPi)
+logBF[1:2,1,1,1,1]
+sum(-0.2561809, -1.6508689)
+aggrlogBFiu[1:2,1,1,1,1]
+
+aggrBFiu[1:2,1,1,1,1] %>% log()
+
+sum(round(log(aggrBFiu),digits=2)!=round(aggrlogBFiu, digits=2))
+which(round(log(aggrBFiu),digits=2)!=round(aggrlogBFiu, digits=2), arr.ind = T)
+
+
+log(aggrBFiu)[58,1,1,149 ,7]
+aggrlogBFiu[58,1,1,149 ,7]
+
+aggrBFiu[58,1,1,149 ,7]
+log(0)
+
+exp(aggrlogBFiu[58,1,1,149 ,7])
+
+# functional forms of PMPs ------------------------------
+
+bf=seq(0, 1000, by=0.1)
+
+pmp=bf/(bf+1)
+
+plot(bf,pmp, type="l")
+
+
+logbf=log(bf)
+lpmp=log(bf)/(log(bf)+0) # makes no sense
+logpmp=log(bf/(bf+1)) #<=>
+logpmp=log(bf)-log(bf+1)
+plot(log(bf),logpmp, type="l")
+
+
+# bf_ic
+
+
+bfic=bfiu/bfcu
+
+ci=0.5
+bfiu=fi/ci = fi/0.5
+
+=> fi= 0.5*bfiu
+
+bfcu = (1-fi)/(1-ci) = (1-fi)/0.5
+
+bfcu=(1-0.5*bfiu)/0.5 = 2-bfiu
+
+bfiu=seq(0, 2, by=0.01)
+bfiu=rgamma(n=10000, shape = 1.5, rate=0.5)
+density(bfiu) %>% plot(type="l")
+
+bfcu = (1-0.5*bfiu)/0.5
+bfiu[1:10]
+bfcu[1:10]
+
+
+pmp=bfiu/(bfiu+bfcu)
+plot(bfiu, pmp, type="l")
+
+bfic=bfiu/bfcu
+pmp=bfic/(bfic+1)
+plot(bfic, pmp, type="l")
+
+
+logpmp=log(bfiu)-log(bfiu+bfic) # =>
+logpmp = log(bfiu)- log(2)
+plot(log(bfiu),logpmp, type="l")
+
+
+logpmp = log(bfic) - log(bfic+1)# <=>
+logpmp = log(bfic) - log1p(bfic)
+plot(exp(log(bfic)),exp(logpmp), type="l")
+
+
+## multiple studies -----------------------
+logpmp=log(bfiu)-log(bfiu_1*bfiu_2*...*bfiu_t + bfcu_1*bfcu_2*...*bfcu_t)
+
+plot(bfiu)
+plot(log(bfiu))
+
+
+
+x=dat
+studies=30
+#a function to compute aggregate PMPs for selected hypotheses from the BFs
+aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
+                       hyp=c("H1", "Hu"),
+                       studies=10, #number of studies to aggregate over, max 40,
+                       subset=NULL
+){
+  # #subset if specified, while retaining the attributes
+  # if(!is.null(subset)){
+  #   att<-attributes(x)
+  #   att<-att[names(att)[-grep("dim", names(att))]]
+  #   x<-eval(parse(text = subset))
+  #   attributes(x)<-c(attributes(x), att)
+  # }
+  # 
+  hyp_index<-substr(hyp,2,2)
+  
+  search_terms <- paste0(hyp, collapse = "|")
+  BF<-x
+  BF<-BF[1:studies,str_subset(dimnames(BF)[[2]], search_terms),,,,drop=FALSE]
+  
+  #aggregate BFs
+  aggrBFiu<-apply(BF, MARGIN = c(2,3,4,5), cumprod)
+  
+  #compute aggrPMPs
+  #move the                                    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx hypotheses-dimension to the last dimension
+  nom=aperm(aggrBFiu, perm=c(1,3,4,5,2))
+  #sum the aggrBFiu
+  denom=rowSums(nom, dims = 4) 
+  ##copy the array in a 5th dimension, so that it has the same dim as nom; e.g. denom_repl[,,,,1]==denom_repl[,,,,2]
+  denom_repl<-replicate(length(hyp),denom)
+  #compute PMPs
+  aggrPMP_perm<-nom/denom_repl
+  aggrPMP<-aperm(aggrPMP_perm,perm=c(1,5,2,3,4))
+  dimnames(aggrPMP)[[2]]<-paste0("PMP", c(hyp_index))
+  
+  
+  aggrPMP<-  rlist::list.append(attributes(x), PMP=aggrPMP, hypothesis_test = paste(hyp, collapse = " vs. ")) 
+  return(aggrPMP)
+} # end aggregatePMP
+
+
+
