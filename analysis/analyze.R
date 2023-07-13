@@ -87,20 +87,20 @@ tau<-attributes(dat)$tau
 
 
 ### delta = 0 ------------------------
-a<-compl_med_plot(dat,
+a<-compl_medplot(dat,
                studies = 30,
                population = "delta0_tau0",
                n="300")
 
-b<-compl_med_plot(dat,
+b<-compl_medplot(dat,
                studies = 30,
                population = "delta0_tau0.15",
                n="300")
-c<-compl_med_plot(dat,
+c<-compl_medplot(dat,
                studies = 30,
                population = "delta0_tau0.3",
                n="300")
-d<-compl_med_plot(dat,
+d<-compl_medplot(dat,
                studies = 30,
                population = "delta0_tau0.45",
                n="300")
@@ -110,7 +110,11 @@ mp.d0<-wrap_plots(a,b,c,d, ncol = 1)+
   theme(legend.position='bottom')
 
 ggsave("analysis/output/mp.d0.png", plot = mp.d0, width = 5, height = 7, units = "in", dpi = 300, bg="white")
+PMP<-dat %>% 
+  aggregatePMP(hyp=c("H1","Hc"),
+               studies=20)
 
+sum(is.na(PMP$PMP))
 ### mixed: delta ={-0.2, 0.2}  ------------------------
 # Figure 1
 dat_mixed<-mix_pops(pops=c("delta-0.2_tau0","delta0.2_tau0"), data=dat) %>% 
