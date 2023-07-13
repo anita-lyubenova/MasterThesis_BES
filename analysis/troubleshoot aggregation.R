@@ -162,6 +162,13 @@ denom0ind
 
 nom[1:58  ,  1,  149  ,  7 ,  ]
 BF[1:58,,1,149,7]
+# d = 0 & large tau => 
+#  the effect can be large positive and negative =>
+#  some studies in the set will show max support for H1 while others will show minimum support for H1
+#  for different studies in the set H1 will be 0 and 2 (max); same goes for Hc
+#  when at least one Bfiu and BFcu in the set is 0 => the aggrBFiu = 0 AND aggrBFcu = 0 => 
+#  aggregate support for both studies is 0 =>
+#  aggrPMP = NA, because of division by 0
 
 #This is not the case when PMP
 
