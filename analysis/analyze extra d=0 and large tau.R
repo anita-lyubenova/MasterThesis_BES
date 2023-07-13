@@ -13,7 +13,7 @@ main<-dat[,,"delta0_tau0.45",,, drop=FALSE]
 t60<-abind(main, extra, along = 1)
 dimnames(t60)[[1]]<-1:60
 
-#adjust the
+#adjust the dims=2
 #a function to compute aggregate PMPs for selected hypotheses from the BFs
 aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
                        hyp=c("H1", "Hc"),
@@ -122,6 +122,7 @@ mp.d0_tau0.75<-create_median_plot_data(tau75_PMP,
                         "delta0_tau0.75",
                         n="300") %>% 
   median_plot()
+
 
 ggsave("analysis/output/mp.d0_tau0.75.png", plot = mp.d0_tau0.75, width = 7, height = 4, units = "in", dpi = 300, bg="white")
 
