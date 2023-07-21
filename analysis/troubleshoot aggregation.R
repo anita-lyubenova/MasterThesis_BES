@@ -58,7 +58,7 @@ sum(tau75_PMP$PMP[30,"PMP1",1 ,,"300"] >0.5)
 
 # troubleshoot aggregatePMP-----------------------------------------------
 
-## aggregate logBFs-------------------
+## aggr logBFs-------------------
 
 hyp=c("H1", "Hc")
 studies=60
@@ -82,21 +82,9 @@ aggrPMP<-aperm(aggrPMP_perm,perm=c(1,5,2,3,4))
 dimnames(aggrPMP)[[2]]<-paste0("PMP", c(hyp_index))
 
 
+## aggr non-log BFs-------------------
 x=tau75
-#a function to compute aggregate PMPs for selected hypotheses from the BFs
-aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
-                       hyp=c("H1", "Hu"),
-                       studies=10, #number of studies to aggregate over, max 40,
-                       subset=NULL
-){
-  # #subset if specified, while retaining the attributes
-  # if(!is.null(subset)){
-  #   att<-attributes(x)
-  #   att<-att[names(att)[-grep("dim", names(att))]]
-  #   x<-eval(parse(text = subset))
-  #   attributes(x)<-c(attributes(x), att)
-  # }
-  # 
+
   hyp_index<-substr(hyp,2,2)
   search_terms <- paste0(hyp, collapse = "|")
   BF<-x
@@ -116,26 +104,8 @@ aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
   aggrPMP_perm<-nom/denom_repl
   aggrPMP<-aperm(aggrPMP_perm,perm=c(1,5,2,3,4))
   dimnames(aggrPMP)[[2]]<-paste0("PMP", c(hyp_index))
-  
-  
-  aggrPMP<-  rlist::list.append(attributes(x), PMP=aggrPMP, hypothesis_test = paste(hyp, collapse = " vs. ")) 
-  return(aggrPMP)
-} # end aggregatePMP
 
 
-#aggregate
-tau75_PMP<-tau75 %>% aggregatePMP( # a 5 dim array with structure [t, BF, pop, iter, n]
-  hyp=c("H1", "Hc"),
-  studies=60
-) 
-
-create_median_plot_data(tau75_PMP,
-                        "delta0_tau0.75",
-                        n="300") %>% 
-  median_plot()
-
-sum(is.na(tau75_PMP$PMP))
-length(tau75_PMP$PMP)
 
 sum(BF==0)
 
@@ -151,6 +121,7 @@ sum(nom==0)
 sum(is.na(denom))
 sum(denom==0)
 sum(denom_repl==0)
+
 #all NA cases in aggrPMP_perm are the cases in which the denominator == 0
 sum(which(denom_repl==0) == which(is.na(aggrPMP_perm)))
 # these are the cases in which aggrPMP_perm must be 0?
@@ -199,7 +170,7 @@ exp(aggrlogBFiu[58,1,1,149 ,7])
 
 # functional forms of PMPs ------------------------------
 
-bf=seq(0, 1000, by=0.1)
+bf=seq(0, 2, by=0.1)
 
 pmp=bf/(bf+1)
 
@@ -261,23 +232,17 @@ plot(bfiu)
 plot(log(bfiu))
 
 
-
+#tau=0.45 -------------------------------
 x=dat
 studies=30
+hyp=c("H1", "Hc")
 #a function to compute aggregate PMPs for selected hypotheses from the BFs
 aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
                        hyp=c("H1", "Hu"),
                        studies=10, #number of studies to aggregate over, max 40,
                        subset=NULL
 ){
-  # #subset if specified, while retaining the attributes
-  # if(!is.null(subset)){
-  #   att<-attributes(x)
-  #   att<-att[names(att)[-grep("dim", names(att))]]
-  #   x<-eval(parse(text = subset))
-  #   attributes(x)<-c(attributes(x), att)
-  # }
-  # 
+
   hyp_index<-substr(hyp,2,2)
   
   search_terms <- paste0(hyp, collapse = "|")
@@ -288,7 +253,7 @@ aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
   aggrBFiu<-apply(BF, MARGIN = c(2,3,4,5), cumprod)
   
   #compute aggrPMPs
-  #move the                                    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx hypotheses-dimension to the last dimension
+  #move the hypotheses-dimension to the last dimension
   nom=aperm(aggrBFiu, perm=c(1,3,4,5,2))
   #sum the aggrBFiu
   denom=rowSums(nom, dims = 4) 
@@ -304,5 +269,58 @@ aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
   return(aggrPMP)
 } # end aggregatePMP
 
+PMP.45<-dat %>% aggregatePMP(
+             hyp=hyp,
+             studies = studies)
+create_median_plot_data(PMP.45,
+                        "delta0_tau0.45",
+                        n="300") %>% 
+  median_plot()
 
 
+sum(PMP.45$PMP[30,"PMP1","delta0_tau0.45" ,,"300"] >0.5)/1000
+
+## initial aggregation ------------------------------
+
+#a function to compute aggregate PMPs for selected hypotheses from the BFs
+aggregatePMP<-function(x, # a 5 dim array with structure [t, BF, pop, iter, n]
+                       hyp=c("H1", "Hu"),
+                       studies=10, #number of studies to aggregate over, max 40,
+                       subset=NULL
+){
+  #subset if specified, while retaining the attributes
+  if(!is.null(subset)){
+    att<-attributes(x)
+    att<-att[names(att)[-grep("dim", names(att))]]
+    x<-eval(parse(text = subset))
+    attributes(x)<-c(attributes(x), att)
+  }
+  
+  hyp_index<-substr(hyp,2,2)
+  search_terms <- paste0(hyp, collapse = "|")
+  BF<-x
+  BF<-BF[1:studies,str_subset(dimnames(BF)[[2]], search_terms),,,,drop=FALSE]
+  
+  nom<-aperm(BF, perm=c(1,3,4,5,2))
+  denom<-rowSums(nom, dims = 4)
+  PMP_perm<-nom/replicate(length(hyp),denom)
+  
+  #placeholder for tha aggregated PMPs
+  PMP_t<-PMP_perm
+  for(t in 2:studies){ #the PMPs of the first study remain the same, thus iterate from t=2
+    nom_t<-PMP_t[t-1,,,,]*nom[t,,,,]#multiply the previous PMPs with the current BFs
+    denom_t<-rowSums(nom_t, dims=3)
+    PMP_t[t,,,,]<-nom_t/replicate(length(hyp), denom_t)
+  }
+  
+  PMP_t<-aperm(PMP_t, perm = c(1,5,2,3,4))
+  dimnames(PMP_t)[[2]]<-paste0("PMP", c(hyp_index))
+  
+  PMP_t<-  rlist::list.append(attributes(x), PMP=PMP_t, hypothesis_test = paste(hyp, collapse = " vs. ")) 
+  return(PMP_t)
+}
+
+PMP.45_old<-dat %>% aggregatePMP(
+                             hyp=hyp,
+                             studies = studies)
+sum(PMP.45_old$PMP[30,"PMP1","delta0_tau0.45" ,,"300"] >0.5)/1000
