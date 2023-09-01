@@ -327,16 +327,49 @@ sum(manyi$aggrlogBFic %>% unique() >0 )/iter
 sum(manyi$aggrPMP1 %>% unique() >0.5 )/iter
 
 
+# hypotheses="d<0" ------------------------
+studies=40
+iter=1000
+delta=0
+tau=1
+N=300
+
+system.time({
+  set.seed(123)
+  BF<-lapply(1:iter, function(r) {
+    
+    BF<-lapply(1:studies, function(i){
+      obtain_BF_full(N=N, delta=delta, tau=tau, hypotheses = "d<0")
+    }) %>%
+      rlist::list.rbind() %>%
+      as.data.frame() 
+    
+    logBF<-BF %>% 
+      dplyr::select(-Hu) %>% 
+      mutate_at(c("H1","Hc"), log) %>% 
+      mutate(logBFic=H1-Hc,
+             PMP1=exp(logBFic)/(exp(logBFic)+1))
+    
+    aggrlogBFic<-sum(logBF$logBFic)
+    aggrPMP1<-exp(aggrlogBFic)/(exp(aggrlogBFic)+1)
+    
+    logBF %>% 
+      mutate(iter=r,
+             aggrlogBFic=aggrlogBFic,
+             aggrPMP1=aggrPMP1
+      ) %>% 
+      return()
+    
+  })
+})
+saveRDS(BF, file = "simulation/output2/BF_dsmaller0.RDS")
 
 
 
+ds0<-BF %>% rlist::list.rbind()
+ds0$aggrPMP1 %>% unique() >0.5 %>% sum()
 
-
-
-
-
-
-
+sum(unique(ds0$aggrPMP1)>0.5)
 
 
 
