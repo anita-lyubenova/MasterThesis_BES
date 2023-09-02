@@ -17,77 +17,126 @@ library(MASS)
 library(BFpack)
 # library(Rcpp)
 # library(RcppArmadillo)
-generate_d <- function(N, delta){
-  
-  # generate control group summary statistics
+
+
+gen_BF<-function(delta, N, hypothesis="X1>X0"){
   Y_C <- rnorm(n = N / 2, mean = 0, sd = 1)
-  ybar_C <- mean(Y_C)
-  sd_C <- sd(Y_C)
-  
-  # generate treatment group summary statistics
   Y_T <- rnorm(n = N / 2, mean = delta, sd = 1)
-  ybar_T <- mean(Y_T)
-  sd_T <- sd(Y_T)
   
-  # calculate Cohen's d
-  sd_pool <- sqrt((sd_C^2 + sd_T^2) / 2)
-  d <- (ybar_T - ybar_C) / sd_pool
+  dat<-data.frame(Y=c(Y_T,Y_C),
+                  X=as.factor(c(rep(1,times=length(Y_T)),
+                                rep(0,times=length(Y_C))
+                  ))
+  )
   
-  return(d)
+  # lmod<-lm(Y~0+X,dat)
+  # BFp_lm <- BF(lmod,hypothesis="X1>X0", complement=TRUE)
+  # BFp_lm$BFtable_confirmatory
+  
+  lm(Y~0+X,dat) %>% 
+    BF(hypothesis, complement=TRUE) %$% BFtable_confirmatory %>% 
+    as.data.frame() %$%
+    BF %>% 
+    setNames(c("H1", "Hc"))
 }
 
-
-# calculate variance of Cohen's d 
-compute_var <- function(N, d){
-  4 / N + d^2 / (2 * (N - 2))
-}
-
-
-# obtain a bain object, including Bayes factors and 
-# posterior model probabilities (PMPs)              
-get_bain <- function(d, var, N, hypotheses){
-  names(d) <- "d"
-  bain_list <- bain(d,
-                    hypotheses,
-                    n = N,
-                    Sigma = var) 
-  return(bain_list$fit)
-}
-
-
-obtain_BF<-function(N,delta,hypotheses="d>0"){
-  d<-generate_d(N, delta) 
-  var<-compute_var(N, d)
-  get_bain(d, var, N, hypotheses) %>% # %$% BF.u %>%
-        as.data.frame() %>%
-        rownames_to_column() %>%
-        pull(var=BF.u, name = rowname) %>%
-       # setNames(c("H1", "Hc")) %>%
-        return()
-}
-# delta=0.3
-# tau=0.2
-# study_delta<-rnorm(1,delta,tau)
-# obtain_BF(100,0.3,hypotheses="d>0")
 
 #a function to simulate a matrix with dim [studies*iter, 2]
 sim_t_x_i<-function(delta,
                     tau,
                     N,  #sample size
-                    hypothesis=c( "d>0"),
+                    hypothesis=c("X1>X0"),
                     studies=5,
                     iterations=10
 ){
-
-
   sapply(1:(iterations*studies), function(j){
+    #sample study-level delta
     study_delta<-rnorm(1,delta,tau)
-    obtain_BF(N,study_delta,hypotheses="d>0")
-
+    #generate BFiu and BFcu
+    gen_BF(delta=study_delta,N=N,hypothesis=hypothesis)
+    
   }) %>%
     t() %>%
     return()
 }
+
+
+
+# generate_d <- function(N, delta){
+#   
+#   # generate control group summary statistics
+#   Y_C <- rnorm(n = N / 2, mean = 0, sd = 1)
+#   ybar_C <- mean(Y_C)
+#   sd_C <- sd(Y_C)
+#   
+#   # generate treatment group summary statistics
+#   Y_T <- rnorm(n = N / 2, mean = delta, sd = 1)
+#   ybar_T <- mean(Y_T)
+#   sd_T <- sd(Y_T)
+#   
+#   # calculate Cohen's d
+#   sd_pool <- sqrt((sd_C^2 + sd_T^2) / 2)
+#   d <- (ybar_T - ybar_C) / sd_pool
+#   
+#   return(d)
+# }
+# 
+# 
+# # calculate variance of Cohen's d 
+# compute_var <- function(N, d){
+#   4 / N + d^2 / (2 * (N - 2))
+# }
+# 
+# 
+# # obtain a bain object, including Bayes factors and 
+# # posterior model probabilities (PMPs)              
+# get_bain <- function(d, var, N, hypotheses){
+#   names(d) <- "d"
+#   bain_list <- bain(d,
+#                     hypotheses,
+#                     n = N,
+#                     Sigma = var) 
+#   return(bain_list$fit)
+# }
+# 
+# 
+# obtain_BF<-function(N,delta,hypotheses="d>0"){
+#   d<-generate_d(N, delta) 
+#   var<-compute_var(N, d)
+#   get_bain(d, var, N, hypotheses) %>% # %$% BF.u %>%
+#         as.data.frame() %>%
+#         rownames_to_column() %>%
+#         pull(var=BF.u, name = rowname) %>%
+#        # setNames(c("H1", "Hc")) %>%
+#         return()
+# }
+# # delta=0.3
+# # tau=0.2
+# # study_delta<-rnorm(1,delta,tau)
+# # obtain_BF(100,0.3,hypotheses="d>0")
+# 
+# #a function to simulate a matrix with dim [studies*iter, 2]
+# sim_t_x_i<-function(delta,
+#                     tau,
+#                     N,  #sample size
+#                     hypothesis=c( "d>0"),
+#                     studies=5,
+#                     iterations=10
+# ){
+# 
+# 
+#   sapply(1:(iterations*studies), function(j){
+#     study_delta<-rnorm(1,delta,tau)
+#     obtain_BF(N,study_delta,hypotheses="d>0")
+# 
+#   }) %>%
+#     t() %>%
+#     return()
+# }
+
+
+
+
 
 # sim_t_x_i(delta=0.3,
 #                     tau=0.13,

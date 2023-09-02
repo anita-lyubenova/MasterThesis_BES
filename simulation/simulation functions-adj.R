@@ -18,11 +18,72 @@ library(BFpack)
 # library(Rcpp)
 # library(RcppArmadillo)
 
+
+gen_BF<-function(delta, N, hypothesis="X1>X0"){
+  Y_C <- rnorm(n = N / 2, mean = 0, sd = 1)
+  Y_T <- rnorm(n = N / 2, mean = delta, sd = 1)
+  
+  dat<-data.frame(Y=c(Y_T,Y_C),
+                  X=as.factor(c(rep(1,times=length(Y_T)),
+                                rep(0,times=length(Y_C))
+                  ))
+  )
+  
+  # lmod<-lm(Y~0+X,dat)
+  # BFp_lm <- BF(lmod,hypothesis="X1>X0", complement=TRUE)
+  # BFp_lm$BFtable_confirmatory
+  
+  lm(Y~0+X,dat) %>% 
+    BF(hypothesis, complement=TRUE) %$% BFtable_confirmatory %>% 
+    as.data.frame() %$%
+    BF %>% 
+    setNames(c("H1", "Hc"))
+}
+
+
+#a function to simulate a matrix with dim [studies*iter, 2]
+sim_t_x_i<-function(delta,
+                    tau,
+                    N,  #sample size
+                    hypothesis=c("X1>X0"),
+                    studies=5,
+                    iterations=10
+){
+  sapply(1:(iterations*studies), function(j){
+    #sample study-level delta
+    study_delta<-rnorm(1,delta,tau)
+    #generate BFiu and BFcu
+    gen_BF(delta=study_delta,N=N,hypothesis=hypothesis)
+    
+  }) %>%
+    t() %>%
+    return()
+}
+
+#studies*iter = 100 =>
+# user  system elapsed 
+# 2.56    0.07    2.68 
+
+#studies*iter = 1000 =>
+# user  system elapsed 
+# 19.17    0.41   19.75
+system.time({
+  sim_t_x_i(delta=0.2,
+          tau=0.2,
+          N=300,
+          hypothesis = "X1>X0",
+          studies = 10,
+          iterations = 100)
+})
+
+
+gen_BF(delta=0.2,N=300)
 delta=0.2
 N=300
 
 Y_C <- rnorm(n = N / 2, mean = 0, sd = 1)
 Y_T <- rnorm(n = N / 2, mean = delta, sd = 1)
+
 
 mean(Y_T)
 mean(Y_C)
@@ -36,16 +97,16 @@ ttest$estimate[1]-ttest$estimate[2]
 BFp_ttest<-BF(ttest,hypothesis="difference>0", complement=TRUE)
 bain_ttest<-bain(ttest,hypothesis="x>y")
 
-dat<-data.frame(Y=c(Y_T,Y_C),
-           X=as.factor(c(rep(1,times=length(Y_T)),
-               rep(0,times=length(Y_C))
-               ))
-           )
+
+lmod_noint<-lm(Y~0+X,dat)
 lmod<-lm(Y~X,dat)
+
+
+BFp_lm_noint<-BF(lmod_noint,hypothesis="X1>X0", complement=TRUE)
+BFp_lm_noint$BFtable_confirmatory
+
 BFp_lm<-BF(lmod,hypothesis="X1>0", complement=TRUE)
 BFp_lm$BFtable_confirmatory
-
-bain(lmod,hypothesis="X1>0")
 
 
 ##############################################
