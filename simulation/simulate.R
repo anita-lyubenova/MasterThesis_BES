@@ -14,13 +14,14 @@ library(parallel)
 ## 1 par ------------------------------------
 
 remove(BFresults)
+
 #parallelize the outermost loop
-delta=c(-0.1,0,0.2,0.5)
-tau<-c(0,0.15, 0.3, 0.45)
+delta=c(-0.2,-0.1,0,0.2,0.5)
+tau<-c(0,0.15, 0.2, 0.3, 0.45)
 n = c(25,35,50,75,100,150,200,300)
 studies=30
 iter=1000
-hypothesis="d>0"
+hypothesis="X1>X0"
 
 #create combinations of conditions
 cond<-expand.grid(delta,tau, n) %>% 
@@ -41,7 +42,7 @@ clusterEvalQ(cl, {
   library(tidyverse)
   library(BFpack)
 })
-clusterExport(cl=cl, c("compute_var","obtain_BF", "generate_d","get_bain","sim_t_x_i"))
+clusterExport(cl=cl, c("gen_BF","sim_t_x_i"))
 
 clusterExport(cl=cl, varlist=c("cond","hypothesis", "seed", "iter", "studies"),envir = environment())
 
@@ -83,217 +84,217 @@ saveRDS(BFresults,file="simulation/output/BFresults.rds")
 
 
 BFresults[1:10]
-
-# add delta=-0.2----------------------------------------------------------
-remove(BFresults)
-delta=-0.2
-tau<-c(0,0.15, 0.3, 0.45)
-n = c(25,35,50,75,100,150,200,300)
-studies=30
-iter=1000
-hypothesis="d>0"
-
-#create combinations of conditions
-cond<-expand.grid(delta,tau, n) %>% 
-  rename(delta=Var1, tau=Var2, n=Var3) %>% 
-  mutate(pop_name=paste0("delta", delta, "_tau", tau,"_n",n))
-
-ncores<-7
-seed=1000
-
-print( paste0("Prep cluster: ",Sys.time()))
-
-cl<-makeCluster(ncores)
-clusterSetRNGStream(cl, iseed=seed)
-
-clusterEvalQ(cl, {
-  library(MASS)
-  library(magrittr)
-  library(tidyverse)
-  library(BFpack)
-})
-clusterExport(cl=cl, c("compute_var","obtain_BF", "generate_d","get_bain","sim_t_x_i"))
-
-clusterExport(cl=cl, varlist=c("cond","hypothesis", "seed", "iter", "studies"),envir = environment())
-
-print(paste0("Start sim: ",Sys.time()))
-
-BFresults<-parLapply(cl,
-                     1:nrow(cond),
-                     function(i){
-                       
-                       listel<-sim_t_x_i(cond$delta[i],
-                                         cond$tau[i],
-                                         cond$n[i], 
-                                         hypothesis="d>0",
-                                         studies=studies,
-                                         iterations=iter
-                       )
-                       
-                       attributes(listel)$pop_name<-cond[i,"pop_name"]
-                       return(listel)
-                     }
-)
-
-stopCluster(cl)
-print(paste0("End sim: ",Sys.time()))
-
-nams<- sapply(BFresults,function(x) return(attributes(x)$pop_name))
-names(BFresults)<-nams
-
-attributes(BFresults)<-list(hypothesis=hypothesis,
-                            complexity=0.5,
-                            delta=delta,
-                            tau=tau,
-                            seed=seed,
-                            iterations=iter,
-                            studies=studies,
-                            n=n)
-
-saveRDS(BFresults,file="simulation/output/BFresults_delta-0.2.rds")
-
-#add d=0, tau=0.45 -----------------------------------------------------
-
-delta=0
-tau<-0.45
-n = c(25,35,50,75,100,150,200,300)
-studies=30
-iter=1000
-hypothesis="d>0"
-
-#create combinations of conditions
-cond<-expand.grid(delta,tau, n) %>% 
-  rename(delta=Var1, tau=Var2, n=Var3) %>% 
-  mutate(pop_name=paste0("delta", delta, "_tau", tau,"_n",n))
-
-ncores<-7
-seed=1234
-
-print( paste0("Prep cluster: ",Sys.time()))
-
-cl<-makeCluster(ncores)
-clusterSetRNGStream(cl, iseed=seed)
-
-clusterEvalQ(cl, {
-  library(MASS)
-  library(magrittr)
-  library(tidyverse)
-  library(BFpack)
-})
-clusterExport(cl=cl, c("compute_var","obtain_BF", "generate_d","get_bain","sim_t_x_i"))
-
-clusterExport(cl=cl, varlist=c("cond","hypothesis", "seed", "iter", "studies"),envir = environment())
-
-print(paste0("Start sim: ",Sys.time()))
-
-BFresults<-parLapply(cl,
-                     1:nrow(cond),
-                     function(i){
-                       
-                       listel<-sim_t_x_i(cond$delta[i],
-                                         cond$tau[i],
-                                         cond$n[i], 
-                                         hypothesis="d>0",
-                                         studies=studies,
-                                         iterations=iter
-                       )
-                       
-                       attributes(listel)$pop_name<-cond[i,"pop_name"]
-                       return(listel)
-                     }
-)
-
-stopCluster(cl)
-print(paste0("End sim: ",Sys.time()))
-
-nams<- sapply(BFresults,function(x) return(attributes(x)$pop_name))
-names(BFresults)<-nams
-
-attributes(BFresults)<-list(hypothesis=hypothesis,
-                            complexity=0.5,
-                            delta=delta,
-                            tau=tau,
-                            seed=seed,
-                            iterations=iter,
-                            studies=studies,
-                            n=n)
-
-saveRDS(BFresults,file="simulation/output/BFresults_d0_tau0.45.rds")
-
-
-
-
-#add d=0, tau=0.75 -----------------------------------------------------
-
-delta=0
-tau<-0.75
-n = c(25,35,50,75,100,150,200,300)
-studies=60
-iter=1000
-hypothesis="d>0"
-
-#create combinations of conditions
-cond<-expand.grid(delta,tau, n) %>% 
-  rename(delta=Var1, tau=Var2, n=Var3) %>% 
-  mutate(pop_name=paste0("delta", delta, "_tau", tau,"_n",n))
-
-ncores<-7
-seed=1234
-
-print( paste0("Prep cluster: ",Sys.time()))
-
-cl<-makeCluster(ncores)
-clusterSetRNGStream(cl, iseed=seed)
-
-clusterEvalQ(cl, {
-  library(MASS)
-  library(magrittr)
-  library(tidyverse)
-  library(BFpack)
-})
-clusterExport(cl=cl, c("compute_var","obtain_BF", "generate_d","get_bain","sim_t_x_i"))
-
-clusterExport(cl=cl, varlist=c("cond","hypothesis", "seed", "iter", "studies"),envir = environment())
-
-print(paste0("Start sim: ",Sys.time()))
-
-BFresults<-parLapply(cl,
-                     1:nrow(cond),
-                     function(i){
-                       
-                       listel<-sim_t_x_i(cond$delta[i],
-                                         cond$tau[i],
-                                         cond$n[i], 
-                                         hypothesis="d>0",
-                                         studies=studies,
-                                         iterations=iter
-                       )
-                       
-                       attributes(listel)$pop_name<-cond[i,"pop_name"]
-                       return(listel)
-                     }
-)
-
-stopCluster(cl)
-print(paste0("End sim: ",Sys.time()))
-
-nams<- sapply(BFresults,function(x) return(attributes(x)$pop_name))
-names(BFresults)<-nams
-
-attributes(BFresults)<-list(hypothesis=hypothesis,
-                            complexity=0.5,
-                            delta=delta,
-                            tau=tau,
-                            seed=seed,
-                            iterations=iter,
-                            studies=studies,
-                            n=n)
-
-saveRDS(BFresults,file="simulation/output/BFresults_d0_tau0.75.rds")
-
-
-
-
-
-
-
+# 
+# # add delta=-0.2----------------------------------------------------------
+# remove(BFresults)
+# delta=-0.2
+# tau<-c(0,0.15, 0.3, 0.45)
+# n = c(25,35,50,75,100,150,200,300)
+# studies=30
+# iter=1000
+# hypothesis="d>0"
+# 
+# #create combinations of conditions
+# cond<-expand.grid(delta,tau, n) %>% 
+#   rename(delta=Var1, tau=Var2, n=Var3) %>% 
+#   mutate(pop_name=paste0("delta", delta, "_tau", tau,"_n",n))
+# 
+# ncores<-7
+# seed=1000
+# 
+# print( paste0("Prep cluster: ",Sys.time()))
+# 
+# cl<-makeCluster(ncores)
+# clusterSetRNGStream(cl, iseed=seed)
+# 
+# clusterEvalQ(cl, {
+#   library(MASS)
+#   library(magrittr)
+#   library(tidyverse)
+#   library(BFpack)
+# })
+# clusterExport(cl=cl, c("compute_var","obtain_BF", "generate_d","get_bain","sim_t_x_i"))
+# 
+# clusterExport(cl=cl, varlist=c("cond","hypothesis", "seed", "iter", "studies"),envir = environment())
+# 
+# print(paste0("Start sim: ",Sys.time()))
+# 
+# BFresults<-parLapply(cl,
+#                      1:nrow(cond),
+#                      function(i){
+#                        
+#                        listel<-sim_t_x_i(cond$delta[i],
+#                                          cond$tau[i],
+#                                          cond$n[i], 
+#                                          hypothesis="d>0",
+#                                          studies=studies,
+#                                          iterations=iter
+#                        )
+#                        
+#                        attributes(listel)$pop_name<-cond[i,"pop_name"]
+#                        return(listel)
+#                      }
+# )
+# 
+# stopCluster(cl)
+# print(paste0("End sim: ",Sys.time()))
+# 
+# nams<- sapply(BFresults,function(x) return(attributes(x)$pop_name))
+# names(BFresults)<-nams
+# 
+# attributes(BFresults)<-list(hypothesis=hypothesis,
+#                             complexity=0.5,
+#                             delta=delta,
+#                             tau=tau,
+#                             seed=seed,
+#                             iterations=iter,
+#                             studies=studies,
+#                             n=n)
+# 
+# saveRDS(BFresults,file="simulation/output/BFresults_delta-0.2.rds")
+# 
+# #add d=0, tau=0.45 -----------------------------------------------------
+# 
+# delta=0
+# tau<-0.45
+# n = c(25,35,50,75,100,150,200,300)
+# studies=30
+# iter=1000
+# hypothesis="d>0"
+# 
+# #create combinations of conditions
+# cond<-expand.grid(delta,tau, n) %>% 
+#   rename(delta=Var1, tau=Var2, n=Var3) %>% 
+#   mutate(pop_name=paste0("delta", delta, "_tau", tau,"_n",n))
+# 
+# ncores<-7
+# seed=1234
+# 
+# print( paste0("Prep cluster: ",Sys.time()))
+# 
+# cl<-makeCluster(ncores)
+# clusterSetRNGStream(cl, iseed=seed)
+# 
+# clusterEvalQ(cl, {
+#   library(MASS)
+#   library(magrittr)
+#   library(tidyverse)
+#   library(BFpack)
+# })
+# clusterExport(cl=cl, c("compute_var","obtain_BF", "generate_d","get_bain","sim_t_x_i"))
+# 
+# clusterExport(cl=cl, varlist=c("cond","hypothesis", "seed", "iter", "studies"),envir = environment())
+# 
+# print(paste0("Start sim: ",Sys.time()))
+# 
+# BFresults<-parLapply(cl,
+#                      1:nrow(cond),
+#                      function(i){
+#                        
+#                        listel<-sim_t_x_i(cond$delta[i],
+#                                          cond$tau[i],
+#                                          cond$n[i], 
+#                                          hypothesis="d>0",
+#                                          studies=studies,
+#                                          iterations=iter
+#                        )
+#                        
+#                        attributes(listel)$pop_name<-cond[i,"pop_name"]
+#                        return(listel)
+#                      }
+# )
+# 
+# stopCluster(cl)
+# print(paste0("End sim: ",Sys.time()))
+# 
+# nams<- sapply(BFresults,function(x) return(attributes(x)$pop_name))
+# names(BFresults)<-nams
+# 
+# attributes(BFresults)<-list(hypothesis=hypothesis,
+#                             complexity=0.5,
+#                             delta=delta,
+#                             tau=tau,
+#                             seed=seed,
+#                             iterations=iter,
+#                             studies=studies,
+#                             n=n)
+# 
+# saveRDS(BFresults,file="simulation/output/BFresults_d0_tau0.45.rds")
+# 
+# 
+# 
+# 
+# #add d=0, tau=0.75 -----------------------------------------------------
+# 
+# delta=0
+# tau<-0.75
+# n = c(25,35,50,75,100,150,200,300)
+# studies=60
+# iter=1000
+# hypothesis="d>0"
+# 
+# #create combinations of conditions
+# cond<-expand.grid(delta,tau, n) %>% 
+#   rename(delta=Var1, tau=Var2, n=Var3) %>% 
+#   mutate(pop_name=paste0("delta", delta, "_tau", tau,"_n",n))
+# 
+# ncores<-7
+# seed=1234
+# 
+# print( paste0("Prep cluster: ",Sys.time()))
+# 
+# cl<-makeCluster(ncores)
+# clusterSetRNGStream(cl, iseed=seed)
+# 
+# clusterEvalQ(cl, {
+#   library(MASS)
+#   library(magrittr)
+#   library(tidyverse)
+#   library(BFpack)
+# })
+# clusterExport(cl=cl, c("compute_var","obtain_BF", "generate_d","get_bain","sim_t_x_i"))
+# 
+# clusterExport(cl=cl, varlist=c("cond","hypothesis", "seed", "iter", "studies"),envir = environment())
+# 
+# print(paste0("Start sim: ",Sys.time()))
+# 
+# BFresults<-parLapply(cl,
+#                      1:nrow(cond),
+#                      function(i){
+#                        
+#                        listel<-sim_t_x_i(cond$delta[i],
+#                                          cond$tau[i],
+#                                          cond$n[i], 
+#                                          hypothesis="d>0",
+#                                          studies=studies,
+#                                          iterations=iter
+#                        )
+#                        
+#                        attributes(listel)$pop_name<-cond[i,"pop_name"]
+#                        return(listel)
+#                      }
+# )
+# 
+# stopCluster(cl)
+# print(paste0("End sim: ",Sys.time()))
+# 
+# nams<- sapply(BFresults,function(x) return(attributes(x)$pop_name))
+# names(BFresults)<-nams
+# 
+# attributes(BFresults)<-list(hypothesis=hypothesis,
+#                             complexity=0.5,
+#                             delta=delta,
+#                             tau=tau,
+#                             seed=seed,
+#                             iterations=iter,
+#                             studies=studies,
+#                             n=n)
+# 
+# saveRDS(BFresults,file="simulation/output/BFresults_d0_tau0.75.rds")
+# 
+# 
+# 
+# 
+# 
+# 
+# 
