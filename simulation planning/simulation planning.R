@@ -322,9 +322,29 @@ table(a$prop_larger0.30)[3:8] %>% sum()
 
 
 
+#Distributions of effects -------------------------------------------------------
+# (Linden & Hönekopp)
+
+#list all sheets
+all.sheets.raw<-excel_sheets("simulation planning/data/Linden & Hönekopp raw data.xlsx")
 
 
+#subset the meta-analyes only
+MA.sheets.raw<-grep("\\d{4}$",all.sheets.raw, value = TRUE)
+#import all excel sheets, where each sheet becomes an element in the list dat_list
+rawdatl <- lapply(MA.sheets.raw, #for each name in all.sheets...
+                  function(x){
+                    read_excel("simulation planning/data/Linden & Hönekopp raw data.xlsx", sheet = x) #... read the respective sheet into a list element
+                  }
+)
 
+d_hists<-vector("list", 150)
+for(i in 1:150){
+  d_hists[[i]]<-hist(rawdatl[[i]]$d_obs)
+}
 
-
+par(mfrow=c(5,5))
+for(i in 1:25){
+  plot(d_hists[[i]])
+}
 
