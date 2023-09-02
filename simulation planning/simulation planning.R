@@ -59,10 +59,9 @@ filter(k<1000)
 #coefficient of variation p
 # T=p*d => p=T/d
 p=dat$T/dat$abs_d
-p
-hist(p)
 
-#winsorized mean
+
+# #winsorized mean
 mean.win1<-psych::winsor.mean(p, trim = 0.1)
 psych::winsor.sd(p, trim = 0.1)
 p.win1<-psych::winsor(p, trim=0.1)
@@ -133,6 +132,7 @@ n.win<-winsor(rawdat$N, trim = .1)
 hist(n.win)
 
 simulations.n<-c(25,50,75,100,150,200,300,500)
+simulations.n<-c(25,35,50,75,100,150,200,300)
 
 # ss<-data.frame(raw.n=rawdat$N,
 #                nwin1=winsor(rawdat$N, trim = .1),
@@ -145,7 +145,7 @@ ss<-data.frame(raw.n=rawdat$N,
 dist_n<-ggplot(ss) +
   geom_histogram(aes(x = nwin1),
                  binwidth = 10, fill = "#619CFF", color = scales::muted("#619CFF",50))+
-  scale_x_continuous(breaks = seq(0,500, by=50))+
+  scale_x_continuous(breaks = seq(0,500, by=25))+
   scale_y_continuous(breaks=seq(0,800, 100))+
   geom_vline(xintercept=simulations.n, color="black")+
   theme_minimal()+
@@ -156,7 +156,7 @@ dist_n<-ggplot(ss) +
 
 dist_n
 
-ggsave("simulation planning/output/hist_n.png", plot = dist_n, width = 4, height = 2.5, units = "in", dpi = 300, bg="white")
+ggsave("simulation planning/output/hist_n2.png", plot = dist_n, width = 7, height = 2.5, units = "in", dpi = 300, bg="white")
 
 # Tau ---------------------------------------------------------------
 
@@ -178,10 +178,14 @@ ggsave("simulation planning/output/hist_tau.png", plot = tau_hist, width = 8, he
 D_hist<-dat %>% 
   ggplot()+
   geom_histogram(aes(x=d),
-                 binwidth = 0.1,fill = "gray", color = scales::muted("gray"))+
-   scale_x_continuous(breaks = seq(-1.5,2.5,0.1))+
-   scale_y_continuous(breaks = seq(0,17,1))+
+                 binwidth = 0.2,fill = "lightgrey", color = "darkgrey")+
+   scale_x_continuous(breaks = seq(-1.5,2.5,0.2))+
+   #scale_y_continuous(breaks = seq(0,17,1))+
+  geom_vline(xintercept = c(-0.2,-0.1,0,0.2,0.5), color="red")+
   theme_minimal()
+D_hist
+
+ggsave("simulation planning/output/hist_D.png", plot = D_hist, width = 8, height = 2, units = "in", dpi = 300, bg="white")
 
 # Predictive intervals ----------------------------------------------------
 #compute proportion o fthe predictive intervals that is different in sign than the overall delta
