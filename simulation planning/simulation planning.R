@@ -3,6 +3,8 @@ library(dplyr)
 library(psych)
 library(ggplot2)
 
+#DATA -------------------------------------------------------------
+## Aggregated -----------------------------------
 
 #list all sheets
 all.sheets<-excel_sheets("simulation planning/data/Linden & Honekopp main results.xlsx")
@@ -15,6 +17,24 @@ datl <- lapply(MA.sheets, #for each name in all.sheets...
 )
 
 dat<-bind_rows(datl)
+
+## Study-level-----------------------------------------------------
+
+#list all sheets
+all.sheets.raw<-excel_sheets("simulation planning/data/Linden & Hönekopp raw data.xlsx")
+
+
+#subset the meta-analyes only
+MA.sheets.raw<-grep("\\d{4}$",all.sheets.raw, value = TRUE)
+#import all excel sheets, where each sheet becomes an element in the list dat_list
+rawdatl <- lapply(MA.sheets.raw, #for each name in all.sheets...
+                  function(x){
+                    read_excel("simulation planning/data/Linden & Hönekopp raw data.xlsx", sheet = x) #... read the respective sheet into a list element
+                  }
+)
+
+rawdat<-bind_rows(rawdatl)
+
 
 # Set size T --------------------------------------------
 dat$k %>% mean()
@@ -34,8 +54,9 @@ k.plot<- dat %>%
 
 
 dat_erp
-filter(k<1000) %>%#HETREROGENEITY ----------------------------------------------------------------------------------------------------
-
+filter(k<1000)
+#Heterogeneity ----------------------------------------------------------------------------------------------------
+#coefficient of variation p
 # T=p*d => p=T/d
 p=dat$T/dat$abs_d
 p
@@ -103,22 +124,8 @@ ggsave("simulation planning/output/hist_p.png", plot = p.plot1, width = 4, heigh
 
 
 
-# SAMPLE SIZES --------------------------------------------------------------------------------------------
+# Sample sizes --------------------------------------------------------------------------------------------
 
-#list all sheets
-all.sheets.raw<-excel_sheets("simulation planning/data/Linden & Hönekopp raw data.xlsx")
-
-
-#subset the meta-analyes only
-MA.sheets.raw<-grep("\\d{4}$",all.sheets.raw, value = TRUE)
-#import all excel sheets, where each sheet becomes an element in the list dat_list
-rawdatl <- lapply(MA.sheets.raw, #for each name in all.sheets...
-                   function(x){
-                     read_excel("simulation planning/data/Linden & Hönekopp raw data.xlsx", sheet = x) #... read the respective sheet into a list element
-                   }
-)
-
-rawdat<-bind_rows(rawdatl)
 hist(rawdat$N)
 summary(rawdat$N)
 
@@ -157,10 +164,15 @@ dat$T %>% hist
 tau_hist<-dat %>% 
   ggplot()+
   geom_histogram(aes(x=T),
-                 binwidth = 0.025, fill = "gray", color = scales::muted("gray"))+
+                 binwidth = 0.05,
+                 fill = "lightgray", color = "darkgrey")+
   scale_x_continuous(breaks = seq(0,1,0.05))+
-  scale_y_continuous(breaks = seq(0,15,1))+
+ # scale_y_continuous(breaks = seq(0,15,1))+
+  geom_vline(xintercept = c(0,0.15, 0.30, 0.45), color="red")+
   theme_minimal()
+tau_hist
+
+ggsave("simulation planning/output/hist_tau.png", plot = tau_hist, width = 8, height = 2, units = "in", dpi = 300, bg="white")
 
 # Cohens D ----------------------------------------------------
 D_hist<-dat %>% 
