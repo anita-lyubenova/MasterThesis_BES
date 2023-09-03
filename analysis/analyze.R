@@ -5,47 +5,47 @@ source("analysis/analysis functions.R")
 
 #LOAD DATA ----------------------------------------------------
 
-#Final hpc data
-dat<-readRDS("pre-processing/output/processed_data_combined.rds")
+dat<-readRDS("pre-processing/output/processed_data.rds")
 dimnames(dat)[[3]]
 pops<-dimnames(dat)[[3]]
-dat[,,pops[14],1,1]
-tau<-attributes(dat)$tau
+tau<-as.numeric(attributes(dat)$tau)
+delta<-as.numeric(attributes(dat)$delta)
+
 # TABLE 1 -----------------------------------------------------------------
 ## Prop studies originating from H1 (METHODS - Table 1, rows 4 & 5, last column)
 
 ### cv=0.86 -----------------------------
-set.seed(123)
-r2=0.13
-pcor=0.3
-ratio_beta<-c(3,2,1)
-p<-0.86
-n.studies=10000
-#sample new ratios from a log-normal distribution  
-#with mean = ratio, and sd=p*ratio
-m<-ratio_beta
-s=p*ratio_beta
-# in order to draw from a log-normal dist with these mean and sd
-# the location and shape parameters must be reparametrized
-#https://msalganik.wordpress.com/2017/01/21/making-sense-of-the-rlnorm-function-in-r/comment-page-1/
-location <- log(m^2 / sqrt(s^2 + m^2))
-shape <- sqrt(log(1 + (s^2 / m^2)))
-
-betas<-c()
-
-for(i in 1:n.studies){
-  new_ratio<-c()
-  for(r in 1:length(ratio_beta)){
-    new_ratio[r]<-rlnorm(n=1, location[r], shape[r])
-  }
-  
-  betas<-rbind(betas,coefs(r2, new_ratio, cormat(pcor, length(new_ratio)), "normal"))
-}
-
-H1.true<-sapply(1:nrow(betas), function(i){
-  betas[i,1]> betas[i,2] & betas[i,2] > betas[i,3]
-})
-sum(H1.true)/n.studies
+# set.seed(123)
+# r2=0.13
+# pcor=0.3
+# ratio_beta<-c(3,2,1)
+# p<-0.86
+# n.studies=10000
+# #sample new ratios from a log-normal distribution  
+# #with mean = ratio, and sd=p*ratio
+# m<-ratio_beta
+# s=p*ratio_beta
+# # in order to draw from a log-normal dist with these mean and sd
+# # the location and shape parameters must be reparametrized
+# #https://msalganik.wordpress.com/2017/01/21/making-sense-of-the-rlnorm-function-in-r/comment-page-1/
+# location <- log(m^2 / sqrt(s^2 + m^2))
+# shape <- sqrt(log(1 + (s^2 / m^2)))
+# 
+# betas<-c()
+# 
+# for(i in 1:n.studies){
+#   new_ratio<-c()
+#   for(r in 1:length(ratio_beta)){
+#     new_ratio[r]<-rlnorm(n=1, location[r], shape[r])
+#   }
+#   
+#   betas<-rbind(betas,coefs(r2, new_ratio, cormat(pcor, length(new_ratio)), "normal"))
+# }
+# 
+# H1.true<-sapply(1:nrow(betas), function(i){
+#   betas[i,1]> betas[i,2] & betas[i,2] > betas[i,3]
+# })
+# sum(H1.true)/n.studies
 
 
 # Predictive intervals -----------------------------------------------------
@@ -53,6 +53,7 @@ dnorm(1,mean=0, sd=1)
 qnorm(p=c(0.025, 0.975), mean=0, sd=1)
 pnorm(q=0, 0.2,0.3)
 0-1.96*1
+
 pint<-function(delta, tau, percent = 0.95){
   lb<-(1-percent)/2
   int<-qnorm(p=c(lb, 1-lb),mean=delta, sd=tau)
@@ -64,7 +65,7 @@ pint(0.2,0.3)
 
 deltas=c(0,0.2,0.5)
 taus=c(0.15,0.3,0.40,0.45)
-cond<-expand.grid(deltas,taus) %>% 
+cond<-expand.grid(delta,tau) %>% 
   rename(delta=Var1,
          tau=Var2)
 a<-sapply(1:nrow(cond), function(i){
@@ -81,38 +82,38 @@ write.table(b,
             sep="; ",
             file="analysis/output/test_table.doc")
 
-### cv = 0.50 ------------------------
-set.seed(123)
-r2=0.13
-pcor=0.3
-ratio_beta<-c(3,2,1)
-p<-0.50
-n.studies=10000
-#sample new ratios from a log-normal distribution  
-#with mean = ratio, and sd=p*ratio
-m<-ratio_beta
-s=p*ratio_beta
-# in order to draw from a log-normal dist with these mean and sd
-# the location and shape parameters must be reparametrized
-#https://msalganik.wordpress.com/2017/01/21/making-sense-of-the-rlnorm-function-in-r/comment-page-1/
-location <- log(m^2 / sqrt(s^2 + m^2))
-shape <- sqrt(log(1 + (s^2 / m^2)))
-
-betas<-c()
-
-for(i in 1:n.studies){
-  new_ratio<-c()
-  for(r in 1:length(ratio_beta)){
-    new_ratio[r]<-rlnorm(n=1, location[r], shape[r])
-  }
-  
-  betas<-rbind(betas,coefs(r2, new_ratio, cormat(pcor, length(new_ratio)), "normal"))
-}
-
-H1.true<-sapply(1:nrow(betas), function(i){
-  betas[i,1]> betas[i,2] & betas[i,2] > betas[i,3]
-})
-sum(H1.true)/n.studies
+# ### cv = 0.50 ------------------------
+# set.seed(123)
+# r2=0.13
+# pcor=0.3
+# ratio_beta<-c(3,2,1)
+# p<-0.50
+# n.studies=10000
+# #sample new ratios from a log-normal distribution  
+# #with mean = ratio, and sd=p*ratio
+# m<-ratio_beta
+# s=p*ratio_beta
+# # in order to draw from a log-normal dist with these mean and sd
+# # the location and shape parameters must be reparametrized
+# #https://msalganik.wordpress.com/2017/01/21/making-sense-of-the-rlnorm-function-in-r/comment-page-1/
+# location <- log(m^2 / sqrt(s^2 + m^2))
+# shape <- sqrt(log(1 + (s^2 / m^2)))
+# 
+# betas<-c()
+# 
+# for(i in 1:n.studies){
+#   new_ratio<-c()
+#   for(r in 1:length(ratio_beta)){
+#     new_ratio[r]<-rlnorm(n=1, location[r], shape[r])
+#   }
+#   
+#   betas<-rbind(betas,coefs(r2, new_ratio, cormat(pcor, length(new_ratio)), "normal"))
+# }
+# 
+# H1.true<-sapply(1:nrow(betas), function(i){
+#   betas[i,1]> betas[i,2] & betas[i,2] > betas[i,3]
+# })
+# sum(H1.true)/n.studies
 
 
 
@@ -120,20 +121,20 @@ sum(H1.true)/n.studies
 
 
 ### delta = 0 ------------------------
-a<-compl_med_plot(dat,
+a<-compl_medplot(dat,
                studies = 30,
                population = "delta0_tau0",
                n="300")
 
-b<-compl_med_plot(dat,
+b<-compl_medplot(dat,
                studies = 30,
                population = "delta0_tau0.15",
                n="300")
-c<-compl_med_plot(dat,
+c<-compl_medplot(dat,
                studies = 30,
                population = "delta0_tau0.3",
                n="300")
-d<-compl_med_plot(dat,
+d<-compl_medplot(dat,
                studies = 30,
                population = "delta0_tau0.45",
                n="300")
@@ -202,7 +203,7 @@ for(i in c(1,2,4,5)){
 }
 
 
-ggsave("analysis/output/Figure 2_n200.png", plot = f2, width = 7, height = 5.7, units = "in", dpi = 300, bg="white")
+ggsave("analysis/output/Figure 2_d0.2_n200.png", plot = f2, width = 7, height = 5.7, units = "in", dpi = 300, bg="white")
 
 ############################################################################
 dat %>% 
