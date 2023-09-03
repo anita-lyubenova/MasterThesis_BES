@@ -13,7 +13,7 @@ source("simulation/simulation functions.R")
 library(parallel)
 ## 1 par ------------------------------------
 
-remove(BFresults)
+#remove(BFresults)
 
 #parallelize the outermost loop
 delta=c(-0.2,-0.1,0,0.2,0.5)
@@ -55,7 +55,7 @@ BFresults<-parLapply(cl,
                      listel<-sim_t_x_i(cond$delta[i],
                                        cond$tau[i],
                                        cond$n[i], 
-                                       hypothesis="d>0",
+                                       hypothesis=hypothesis,
                                        studies=studies,
                                        iterations=iter
                      )
@@ -67,6 +67,14 @@ BFresults<-parLapply(cl,
 
 stopCluster(cl)
 print(paste0("End sim: ",Sys.time()))
+
+#Time estimate
+# 200 cond; 3 studiess, 10 iter;
+#From: 15:19:29 to 15:19:58
+# 30 sec 
+# there will be 1000 more itertions =>
+# Time estimate = 30sec*1000iter/3600 = 8.33 hours
+
 
 nams<- sapply(BFresults,function(x) return(attributes(x)$pop_name))
 names(BFresults)<-nams
