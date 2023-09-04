@@ -46,7 +46,7 @@ PMPlist<-aggregatePMP(dat, # a 5 dim array with structure [t, BF, pop, iter, n]
                        studies=40, #number of studies to aggregate over, max 40,
                        subset=NULL
 )
-PMPlist$PMP[,,"delta0_tau0.45",2,"300"]
+PMPlist$PMP[,,"delta0_tau0.45",4,"300"]
 PMPlist$PMP[30,,"delta0_tau0.45",,"300"]
 sum(PMPlist$PMP[30,"PMP1","delta0_tau0.45",,"300"]>0.5)
 
@@ -78,3 +78,28 @@ melted %>%
   group_by(Var1,Var2) %>% 
   summarise(prop_larger.5=sum(value>0.5)/1000)
 
+# aggregation ------------------------------------------------
+d<-dat[,,"delta0_tau0.45",4,"300"]
+PMPlist$PMP[,,"delta0_tau0.45",4,"300"]
+
+aggrBFiu<-cumprod(d[,"H1"])
+aggrBFcu<-cumprod(d[,"Hc"])
+
+aggrPMP1<-numeric(length(aggrBFiu))
+aggrPMPc<-numeric(length(aggrBFiu))
+
+for(i in 1:length(aggrBFiu)){
+  aggrPMP1[i]<- aggrBFiu[i]/(aggrBFiu[i]+aggrBFcu[i])
+  aggrPMPc[i]<- aggrBFcu[i]/(aggrBFiu[i]+aggrBFcu[i])
+}
+
+
+manual_aggr<-cbind(aggrPMP1,aggrPMPc)
+func_aggr<-PMPlist$PMP[,,"delta0_tau0.45",4,"300"]
+round(manual_aggr,digits=3)==round(func_aggr,digits=3)
+#the manual aggregation is the same as the one with the function
+
+
+sum(dat[,"H1","delta0_tau0.45",,"300"]==0)
+sum(dat[4,"Hc","delta0_tau0.45",,"300"]==0)
+sum(dat[,"Hc","delta0_tau0.45",3,"300"]==0)
